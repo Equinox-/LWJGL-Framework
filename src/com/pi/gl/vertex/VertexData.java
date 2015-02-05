@@ -1,13 +1,14 @@
-package com.pi.gl.mesh;
+package com.pi.gl.vertex;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
+import java.lang.reflect.Field;
 
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
 import com.pi.gl.buffers.GLGenericBuffer;
+import com.pi.io.FileUtil;
 import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.VectorBuff;
 
@@ -28,25 +29,30 @@ public class VertexData<E> {
 				E itm = vertexClass.newInstance();
 				int head = i * layout.byteSize;
 				for (int j = 0; j < layout.attrMapping.length; j++) {
-					if (layout.attrMapping[j] != null) {
-						layout.attrMapping[j].setAccessible(true);
-						if (layout.attrMapping[j].getType().isAssignableFrom(
-								VectorBuff.class)) {
-							layout.attrMapping[j].set(
+					Field attr = layout.attrMapping[j];
+					if (attr != null) {
+						attr.setAccessible(true);
+						if (attr.getType().isAssignableFrom(VectorBuff.class)) {
+							attr.set(
 									itm,
 									new VectorBuff(this.bufferObject
 											.floatImageAt(head
 													+ layout.attrOffset[j]), 0,
 											layout.attrSize[j]));
-						} else if (layout.attrMapping[j].getType()
-								.isAssignableFrom(Matrix4.class)) {
-							layout.attrMapping[j]
-									.set(itm,
-											new Matrix4(
-													this.bufferObject
-															.floatImageAt(head
-																	+ layout.attrOffset[j]),
-													0));
+						} else if (attr.getType().isAssignableFrom(
+								Matrix4.class)) {
+							attr.set(
+									itm,
+									new Matrix4(this.bufferObject
+											.floatImageAt(head
+													+ layout.attrOffset[j]), 0));
+						} else if (attr.getType().isAssignableFrom(
+								BufferColor.class)) {
+							attr.set(
+									itm,
+									new BufferColor(this.bufferObject
+											.getBacking(), head
+											+ layout.attrOffset[j]));
 						}
 					}
 				}
@@ -76,17 +82,15 @@ public class VertexData<E> {
 						Matrix4.class)) {
 					for (int r = 0; r < layout.attrSize[j]; r++)
 						GL20.glVertexAttribPointer(lay.layout() + r,
-								layout.attrSize[j], layout.attrType[j], false,
-								layout.byteSize, layout.attrOffset[j] + r
-										* layout.attrSize[j] * 4);
+								layout.attrSize[j], layout.attrType[j],
+								layout.attrNormalize[j], layout.byteSize,
+								layout.attrOffset[j] + r * layout.attrSize[j]
+										* 4);
 				} else {
-					System.out.println("Args: " + lay.layout() + ","
-							+ layout.attrSize[j] + "," + layout.attrType[j]
-							+ "," + false + "," + layout.byteSize + ","
-							+ layout.attrOffset[j]);
 					GL20.glVertexAttribPointer(lay.layout(),
-							layout.attrSize[j], layout.attrType[j], false,
-							layout.byteSize, layout.attrOffset[j]);
+							layout.attrSize[j], layout.attrType[j],
+							layout.attrNormalize[j], layout.byteSize,
+							layout.attrOffset[j]);
 				}
 			}
 		}

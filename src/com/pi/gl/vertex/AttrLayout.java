@@ -1,4 +1,4 @@
-package com.pi.gl.mesh;
+package com.pi.gl.vertex;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,6 +1,5 @@
-package com.pi.gl.mesh;
+package com.pi.gl.vertex;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
 import org.lwjgl.opengl.GL11;
@@ -15,6 +14,7 @@ public class VertexLayout {
 	final int byteSize;
 	final Field[] attrMapping;
 	final int[] attrOffset, attrSize, attrType;
+	final boolean[] attrNormalize;
 
 	public VertexLayout(Class<?> clazz) {
 		int structSize = 0;
@@ -22,6 +22,7 @@ public class VertexLayout {
 		attrOffset = new int[MAX_ATTR_COUNT];
 		attrSize = new int[MAX_ATTR_COUNT];
 		attrType = new int[MAX_ATTR_COUNT];
+		attrNormalize = new boolean[MAX_ATTR_COUNT];
 
 		for (Field f : clazz.getDeclaredFields()) {
 			AttrLayout layout = f.getAnnotation(AttrLayout.class);
@@ -38,6 +39,7 @@ public class VertexLayout {
 					structSize += 4 * layout.dimension();
 					attrType[attrID] = GL11.GL_FLOAT;
 					attrSize[attrID] = layout.dimension();
+					attrNormalize[attrID] = false;
 				}/*
 				 * else if (type.isPrimitive()) { // Primitive type structSize += PrimitiveInfo.sizeof(type); attrSize[attrID] = 1;
 				 * attrType[attrID] = }
@@ -50,6 +52,17 @@ public class VertexLayout {
 					attrSize[attrID] = layout.dimension() >= 0 ? layout
 							.dimension() : 4;
 					attrType[attrID] = GL11.GL_FLOAT;
+					attrNormalize[attrID] = false;
+				} else if (type.isAssignableFrom(BufferColor.class)) {
+					structSize += 4;
+					if (layout.dimension() >= 0 && layout.dimension() != 4
+							&& layout.dimension() != 3)
+						throw new RuntimeException(
+								"Non 3/4-D colors aren't supported.");
+					attrSize[attrID] = layout.dimension() >= 0 ? layout
+							.dimension() : 4;
+					attrType[attrID] = GL11.GL_UNSIGNED_BYTE;
+					attrNormalize[attrID] = true;
 				} else {
 					System.err.println("Warning: You tried to mark "
 							+ f.getName() + " of type " + type.getSimpleName()

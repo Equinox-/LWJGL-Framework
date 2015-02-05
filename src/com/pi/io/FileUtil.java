@@ -14,4 +14,28 @@ public class FileUtil {
 		f.close();
 		return string.toString();
 	}
+
+	public static String hexDump(byte[] data) {
+		StringBuilder res = new StringBuilder();
+		int nl = 0;
+		int space = 0;
+		for (int i = 0; i < data.length; i++) {
+			if (space == 0 && nl == 0)
+				res.append(i + "\t");
+			if ((data[i] & 0xF0) == 0)
+				res.append('0');
+			res.append(Integer.toString(data[i] & 0xFF, 16));
+			space++;
+			if (space >= 2) {
+				space = 0;
+				res.append(' ');
+				nl++;
+			}
+			if (nl >= 10) {
+				res.append('\n');
+				nl = 0;
+			}
+		}
+		return res.toString();
+	}
 }

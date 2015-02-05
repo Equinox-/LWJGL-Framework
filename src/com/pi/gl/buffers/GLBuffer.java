@@ -1,6 +1,7 @@
 package com.pi.gl.buffers;
 
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
 
 import org.lwjgl.opengl.GL15;
 
@@ -133,5 +134,9 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 
 	public int size() {
 		return size;
+	}
+
+	public E getBacking() {
+		return data;
 	}
 }
