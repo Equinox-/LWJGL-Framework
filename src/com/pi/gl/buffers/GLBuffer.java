@@ -73,7 +73,9 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 
 		int ahI = accessHint == null ? 0 : accessHint.ordinal();
 		int mhI = modifyHint == null ? 0 : modifyHint.ordinal();
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferPtr);
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, size, HINT_TABLE[ahI][mhI]);
+		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 	}
 
 	public void gpuFree() {
@@ -91,6 +93,9 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 	}
 
 	public void syncToGPU() {
+		if (bufferPtr == -1)
+			throw new RuntimeException(
+					"Can't sync to GPU when no buffer object exists.");
 		data.position(0);
 		data.limit(data.capacity());
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferPtr);
@@ -99,6 +104,9 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 	}
 
 	public void syncFromGPU() {
+		if (bufferPtr == -1)
+			throw new RuntimeException(
+					"Can't sync from GPU when no buffer object exists.");
 		if (data == null)
 			data = genBuffer(size);
 		data.position(0);
@@ -121,5 +129,9 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 	@Override
 	public int getID() {
 		return bufferPtr;
+	}
+
+	public int size() {
+		return size;
 	}
 }
