@@ -1,6 +1,5 @@
 package com.pi.core.glsl;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
