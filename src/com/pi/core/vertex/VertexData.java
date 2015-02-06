@@ -1,4 +1,4 @@
-package com.pi.gl.vertex;
+package com.pi.core.vertex;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -7,8 +7,7 @@ import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
-import com.pi.gl.buffers.GLGenericBuffer;
-import com.pi.io.FileUtil;
+import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.VectorBuff;
 

@@ -1,4 +1,4 @@
-package com.pi.gl.buffers;
+package com.pi.core.buffers;
 
 import java.nio.FloatBuffer;
 

@@ -1,4 +1,4 @@
-package com.pi.gl.vertex;
+package com.pi.core.vertex;
 
 import java.lang.reflect.Field;
 

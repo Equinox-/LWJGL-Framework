@@ -1,4 +1,4 @@
-package com.pi.gl.vertex;
+package com.pi.core.vertex;
 
 import java.awt.Color;
 import java.nio.ByteBuffer;

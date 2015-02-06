@@ -1,4 +1,4 @@
-package com.pi.gl.util;
+package com.pi.core.util;
 
 import org.lwjgl.opengl.GL11;
 

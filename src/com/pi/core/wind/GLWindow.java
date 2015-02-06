@@ -1,18 +1,18 @@
-package com.pi.gl;
+package com.pi.core.wind;
 
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.system.MemoryUtil;
 
 public abstract class GLWindow {
-	private long windowID;
+	private final long windowID;
 	private boolean running;
-	GLFWErrorCallback errorCallback;
-	GLFWKeyCallback keyCallback;
+
+	private final GLWindowEvents windowEvents;
+	private GLFWErrorCallback errorCallback;
 
 	public GLWindow() {
 		if (GLFW.glfwInit() != GL11.GL_TRUE)
@@ -32,9 +32,10 @@ public abstract class GLWindow {
 			System.exit(1);
 		}
 
+		windowEvents = new GLWindowEvents(this);
+
 		GLFW.glfwMakeContextCurrent(windowID);
 		GLContext.createFromCurrent();
-
 		GLFW.glfwSwapInterval(1);
 	}
 
@@ -45,11 +46,9 @@ public abstract class GLWindow {
 	public abstract void dispose();
 
 	public void start() {
-
 		errorCallback = Callbacks.errorCallbackPrint(System.err);
-		keyCallback = GLFW.GLFWKeyCallback(this::onKeyEvent);
 		GLFW.glfwSetErrorCallback(errorCallback);
-		GLFW.glfwSetKeyCallback(windowID, keyCallback);
+		windowEvents.bind();
 
 		init();
 
@@ -61,12 +60,16 @@ public abstract class GLWindow {
 		}
 
 		dispose();
-		keyCallback.release();
 		errorCallback.release();
+		windowEvents.release();
 
 		GLFW.glfwDestroyWindow(windowID);
 		GLFW.glfwTerminate();
 		System.exit(0);
+	}
+
+	public GLWindowEvents getEvents() {
+		return windowEvents;
 	}
 
 	public long getWindowID() {
@@ -76,11 +79,4 @@ public abstract class GLWindow {
 	public void shutdown() {
 		running = false;
 	}
-
-	public void onKeyEvent(long window, int key, int scancode, int action,
-			int mods) {
-		if (key == GLFW.GLFW_KEY_ESCAPE && action != GLFW.GLFW_RELEASE)
-			shutdown();
-	}
-
 }

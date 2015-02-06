@@ -1,34 +1,39 @@
-package com.pi.gl.util;
+package com.pi.core.glsl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
+import com.pi.core.util.Bindable;
+import com.pi.core.util.GLIdentifiable;
 import com.pi.io.FileUtil;
 
 public class ShaderProgram implements Bindable, GLIdentifiable {
 	private static ShaderProgram currentShader;
+
 	private int programID;
 	private final List<Integer> attachedObjects;
 
+	private Map<String, Integer> uniforms;
+
 	public ShaderProgram() {
+		this.uniforms = new HashMap<>();
 		this.programID = GL20.glCreateProgram();
-		attachedObjects = new ArrayList<>(2);
+		this.attachedObjects = new ArrayList<>(2);
 	}
 
-	private static int compileShader(InputStream src, int type)
-			throws InstantiationException, IOException {
+	private static int compileShader(String src, int type)
+			throws InstantiationException {
 		int shader = GL20.glCreateShader(type);
-		try {
-			GL20.glShaderSource(shader, FileUtil.readStreamFully(src));
-		} catch (IOException e) {
-			GL20.glDeleteShader(shader);
-			throw e;
-		}
+		GL20.glShaderSource(shader, src);
 		GL20.glCompileShader(shader);
 		if (GL20.glGetShaderi(shader, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
 			String log = GL20.glGetShaderInfoLog(shader, 1024);
@@ -40,7 +45,8 @@ public class ShaderProgram implements Bindable, GLIdentifiable {
 
 	public ShaderProgram fragment(InputStream src) {
 		try {
-			attachedObjects.add(compileShader(src, GL20.GL_FRAGMENT_SHADER));
+			attachedObjects.add(compileShader(FileUtil.readStreamFully(src),
+					GL20.GL_FRAGMENT_SHADER));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -49,7 +55,8 @@ public class ShaderProgram implements Bindable, GLIdentifiable {
 
 	public ShaderProgram vertex(InputStream src) {
 		try {
-			attachedObjects.add(compileShader(src, GL20.GL_VERTEX_SHADER));
+			attachedObjects.add(compileShader(FileUtil.readStreamFully(src),
+					GL20.GL_VERTEX_SHADER));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -65,6 +72,7 @@ public class ShaderProgram implements Bindable, GLIdentifiable {
 			System.err.println(GL20.glGetProgramInfoLog(programID, 1024));
 			throw new RuntimeException();
 		}
+		loadUniforms();
 		return this;
 	}
 
@@ -76,6 +84,10 @@ public class ShaderProgram implements Bindable, GLIdentifiable {
 		}
 		GL20.glDeleteProgram(programID);
 		programID = -1;
+	}
+
+	public boolean using() {
+		return currentShader == this;
 	}
 
 	@Override
@@ -93,9 +105,38 @@ public class ShaderProgram implements Bindable, GLIdentifiable {
 
 	public static void unbind() {
 		GL20.glUseProgram(0);
+		currentShader = null;
 	}
 
 	public static ShaderProgram current() {
 		return currentShader;
+	}
+
+	private void loadUniforms() {
+		int uniformCount = GL20.glGetProgrami(programID,
+				GL20.GL_ACTIVE_UNIFORMS);
+		int uniformLength = GL20.glGetProgrami(programID,
+				GL20.GL_ACTIVE_UNIFORM_MAX_LENGTH);
+		IntBuffer sizeBuff = BufferUtils.createIntBuffer(1);
+		IntBuffer typeBuff = BufferUtils.createIntBuffer(1);
+		for (int i = 0; i < uniformCount; i++) {
+			String name = GL20.glGetActiveUniform(programID, i, uniformLength,
+					sizeBuff, typeBuff);
+			int location = GL20.glGetUniformLocation(programID, name);
+			uniforms.put(name, location);
+		}
+	}
+
+	public int uniform(String name) {
+		Integer v = uniforms.get(name);
+		if (v == null) {
+			v = GL20.glGetUniformLocation(programID, name);
+			if (v == -1)
+				System.err
+						.println("Tried to query shader for invalid uniform: "
+								+ name);
+			uniforms.put(name, v);
+		}
+		return v;
 	}
 }

@@ -1,11 +1,10 @@
-package com.pi.gl.buffers;
+package com.pi.core.buffers;
 
 import java.nio.Buffer;
-import java.nio.ByteBuffer;
 
 import org.lwjgl.opengl.GL15;
 
-import com.pi.gl.util.GLIdentifiable;
+import com.pi.core.util.GLIdentifiable;
 
 abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 		GLIdentifiable {

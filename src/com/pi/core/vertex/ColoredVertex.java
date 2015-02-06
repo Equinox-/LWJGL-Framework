@@ -1,4 +1,4 @@
-package com.pi.gl.vertex;
+package com.pi.core.vertex;
 
 import com.pi.math.vector.VectorBuff;
 
