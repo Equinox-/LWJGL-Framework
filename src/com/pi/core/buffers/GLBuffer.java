@@ -39,10 +39,16 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 		this.size = data.capacity();
 		this.data = data;
 		this.bufferPtr = -1;
+
+		this.accessHint = BufferAccessHint.DRAW;
+		this.modifyHint = BufferModifyHint.STATIC;
 	}
 
 	@SuppressWarnings("unchecked")
 	public R access(BufferAccessHint a) {
+		if (a == null)
+			throw new IllegalArgumentException(
+					"The buffer access hint must not be null.");
 		if (bufferPtr != -1)
 			throw new RuntimeException(
 					"Can't change buffer hints while allocated on the GPU");
@@ -52,6 +58,9 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 
 	@SuppressWarnings("unchecked")
 	public R modify(BufferModifyHint a) {
+		if (a == null)
+			throw new IllegalArgumentException(
+					"The buffer modify hint must not be null.");
 		if (bufferPtr != -1)
 			throw new RuntimeException(
 					"Can't change buffer hints while allocated on the GPU");
@@ -65,8 +74,8 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 			gpuFree();
 		bufferPtr = GL15.glGenBuffers();
 
-		int ahI = accessHint == null ? 0 : accessHint.ordinal();
-		int mhI = modifyHint == null ? 0 : modifyHint.ordinal();
+		int ahI = accessHint.ordinal();
+		int mhI = modifyHint.ordinal();
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferPtr);
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, size, HINT_TABLE[ahI][mhI]);
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
