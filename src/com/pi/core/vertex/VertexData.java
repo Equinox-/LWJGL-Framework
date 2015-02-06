@@ -10,11 +10,12 @@ import org.lwjgl.opengl.GL30;
 import com.pi.core.buffers.BufferAccessHint;
 import com.pi.core.buffers.BufferModifyHint;
 import com.pi.core.buffers.GLGenericBuffer;
+import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.VectorBuff;
 
-public class VertexData<E> implements GPUObject {
+public class VertexData<E> implements GPUObject, GLIdentifiable {
 	public final E[] vertexDB;
 	private final VertexLayout layout;
 	private final GLGenericBuffer bufferObject;
@@ -86,8 +87,9 @@ public class VertexData<E> implements GPUObject {
 	/**
 	 * If you changed the vertex data you need to resync the buffer. This does that.
 	 */
-	public void syncToGPU() {
-		bufferObject.syncToGPU();
+	@Override
+	public void gpuUpload() {
+		bufferObject.gpuUpload();
 	}
 
 	@Override
@@ -153,5 +155,10 @@ public class VertexData<E> implements GPUObject {
 			}
 		}
 		GL30.glBindVertexArray(0);
+	}
+
+	@Override
+	public int getID() {
+		return vao;
 	}
 }

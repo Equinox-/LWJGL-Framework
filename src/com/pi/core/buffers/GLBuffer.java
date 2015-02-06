@@ -88,7 +88,8 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 		data = null;
 	}
 
-	public void syncToGPU() {
+	@Override
+	public void gpuUpload() {
 		if (bufferPtr == -1)
 			throw new RuntimeException(
 					"Can't sync to GPU when no buffer object exists.");
@@ -99,7 +100,8 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 	}
 
-	public void syncFromGPU() {
+	@Override
+	public void gpuDownload() {
 		if (bufferPtr == -1)
 			throw new RuntimeException(
 					"Can't sync from GPU when no buffer object exists.");

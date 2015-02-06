@@ -42,6 +42,8 @@ public abstract class GLWindow {
 	public abstract void init();
 
 	public abstract void render();
+	
+	public abstract void update();
 
 	public abstract void dispose();
 
@@ -56,6 +58,7 @@ public abstract class GLWindow {
 		while (running && GLFW.glfwWindowShouldClose(windowID) != GL11.GL_TRUE) {
 			render();
 			GLFW.glfwPollEvents();
+			update();
 			GLFW.glfwSwapBuffers(windowID);
 		}
 
@@ -78,5 +81,9 @@ public abstract class GLWindow {
 
 	public void shutdown() {
 		running = false;
+	}
+	
+	public void setTitle(String s) {
+		GLFW.glfwSetWindowTitle(windowID, s);
 	}
 }

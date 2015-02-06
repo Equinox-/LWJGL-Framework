@@ -3,6 +3,7 @@ package com.pi.core.buffers;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL15;
@@ -10,6 +11,11 @@ import org.lwjgl.opengl.GL15;
 public class GLGenericBuffer extends GLBuffer<ByteBuffer, GLGenericBuffer> {
 	public GLGenericBuffer(int size) {
 		super(BufferUtils.createByteBuffer(size));
+	}
+
+	public ShortBuffer shortImageAt(int i) {
+		super.data.position(i);
+		return super.data.asShortBuffer();
 	}
 
 	public IntBuffer integerImageAt(int i) {
