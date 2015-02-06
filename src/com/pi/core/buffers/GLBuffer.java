@@ -5,21 +5,14 @@ import java.nio.Buffer;
 import org.lwjgl.opengl.GL15;
 
 import com.pi.core.util.GLIdentifiable;
+import com.pi.core.util.GPUObject;
 
 abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
-		GLIdentifiable {
-	public static enum AccessHint {
-		DRAW, READ, COPY
-	}
-
-	public static enum ModifyHint {
-		STATIC, DYNAMIC, STREAM;
-	}
-
+		GLIdentifiable, GPUObject {
 	private static final int[][] HINT_TABLE;
 	static {
-		AccessHint[] ahv = AccessHint.values();
-		ModifyHint[] mhv = ModifyHint.values();
+		BufferAccessHint[] ahv = BufferAccessHint.values();
+		BufferModifyHint[] mhv = BufferModifyHint.values();
 		HINT_TABLE = new int[ahv.length][mhv.length];
 		for (int a = 0; a < ahv.length; a++) {
 			for (int m = 0; m < mhv.length; m++) {
@@ -35,8 +28,8 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 		}
 	}
 
-	private AccessHint accessHint;
-	private ModifyHint modifyHint;
+	private BufferAccessHint accessHint;
+	private BufferModifyHint modifyHint;
 
 	private final int size;
 	protected E data;
@@ -49,7 +42,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 	}
 
 	@SuppressWarnings("unchecked")
-	public R access(AccessHint a) {
+	public R access(BufferAccessHint a) {
 		if (bufferPtr != -1)
 			throw new RuntimeException(
 					"Can't change buffer hints while allocated on the GPU");
@@ -58,7 +51,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 	}
 
 	@SuppressWarnings("unchecked")
-	public R modify(ModifyHint a) {
+	public R modify(BufferModifyHint a) {
 		if (bufferPtr != -1)
 			throw new RuntimeException(
 					"Can't change buffer hints while allocated on the GPU");
@@ -66,6 +59,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 		return (R) this;
 	}
 
+	@Override
 	public void gpuAlloc() {
 		if (bufferPtr != -1)
 			gpuFree();
@@ -78,8 +72,10 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 	}
 
+	@Override
 	public void gpuFree() {
-		GL15.glDeleteBuffers(bufferPtr);
+		if (bufferPtr >= 0)
+			GL15.glDeleteBuffers(bufferPtr);
 		bufferPtr = -1;
 	}
 

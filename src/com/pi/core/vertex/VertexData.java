@@ -7,14 +7,18 @@ import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
+import com.pi.core.buffers.BufferAccessHint;
+import com.pi.core.buffers.BufferModifyHint;
 import com.pi.core.buffers.GLGenericBuffer;
+import com.pi.core.util.GPUObject;
 import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.VectorBuff;
 
-public class VertexData<E> {
+public class VertexData<E> implements GPUObject {
 	public final E[] vertexDB;
-	private GLGenericBuffer bufferObject;
 	private final VertexLayout layout;
+	private final GLGenericBuffer bufferObject;
+	private int vao = -1;
 
 	@SuppressWarnings("unchecked")
 	public VertexData(Class<E> vertexClass, int count) {
@@ -22,8 +26,25 @@ public class VertexData<E> {
 		this.layout = new VertexLayout(vertexClass);
 		this.layout.validate();
 		this.bufferObject = new GLGenericBuffer(layout.byteSize * count);
+		link();
+	}
+
+	public VertexData<E> access(BufferAccessHint a) {
+		this.bufferObject.access(a);
+		return this;
+	}
+
+	public VertexData<E> modify(BufferModifyHint a) {
+		this.bufferObject.modify(a);
+		return this;
+	}
+
+	private void link() {
+		@SuppressWarnings("unchecked")
+		Class<E> vertexClass = (Class<E>) vertexDB.getClass()
+				.getComponentType();
 		// Allocate and link to the GL Generic Buffer.
-		for (int i = 0; i < count; i++) {
+		for (int i = 0; i < vertexDB.length; i++) {
 			try {
 				E itm = vertexClass.newInstance();
 				int head = i * layout.byteSize;
@@ -62,15 +83,23 @@ public class VertexData<E> {
 		}
 	}
 
-	private int vao;
+	/**
+	 * If you changed the vertex data you need to resync the buffer. This does that.
+	 */
+	public void syncToGPU() {
+		bufferObject.syncToGPU();
+	}
 
-	public void loadToGPU() {
+	@Override
+	public void gpuAlloc() {
+		if (vao >= 0)
+			gpuFree();
+
 		// Dump the buffer
 		vao = GL30.glGenVertexArrays();
 		GL30.glBindVertexArray(vao);
 
 		bufferObject.gpuAlloc();
-		bufferObject.syncToGPU();
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferObject.getID());
 
 		for (int j = 0; j < layout.attrMapping.length; j++) {
@@ -95,6 +124,13 @@ public class VertexData<E> {
 		}
 
 		GL30.glBindVertexArray(0);
+	}
+
+	@Override
+	public void gpuFree() {
+		if (vao >= 0)
+			GL30.glDeleteVertexArrays(vao);
+		bufferObject.gpuFree();
 	}
 
 	public void activate() {

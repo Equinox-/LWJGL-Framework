@@ -38,7 +38,7 @@ public final class BufferColor {
 	public void setColor(Color src) {
 		set(src.getRed(), src.getGreen(), src.getBlue(), src.getAlpha());
 	}
-
+	
 	public String toString() {
 		return (backer.get(offset) & 0xFF) + ","
 				+ (backer.get(offset + 1) & 0xFF) + ","
