@@ -43,7 +43,7 @@ public class Model<E> implements GPUObject {
 			for (int i = 0; i < indices.length; i++)
 				sbuffer.put(i, (short) indices[i]);
 			break;
-		case 3:
+		case 4:
 			indexType = GL11.GL_UNSIGNED_INT;
 			IntBuffer ibuffer = indexBuffer.integerImageAt(0);
 			for (int i = 0; i < indices.length; i++)
