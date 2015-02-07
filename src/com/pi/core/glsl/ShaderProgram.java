@@ -13,9 +13,10 @@ import org.lwjgl.opengl.GL20;
 
 import com.pi.core.util.Bindable;
 import com.pi.core.util.GLIdentifiable;
+import com.pi.core.util.GPUObject;
 import com.pi.io.FileUtil;
 
-public class ShaderProgram implements Bindable, GLIdentifiable {
+public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 	private static ShaderProgram currentShader;
 
 	private int programID;
@@ -25,8 +26,15 @@ public class ShaderProgram implements Bindable, GLIdentifiable {
 
 	public ShaderProgram() {
 		this.uniforms = new HashMap<>();
-		this.programID = GL20.glCreateProgram();
 		this.attachedObjects = new ArrayList<>(2);
+		this.programID = -1;
+	}
+
+	@Override
+	public void gpuAlloc() {
+		if (this.programID >= 0)
+			gpuFree();
+		this.programID = GL20.glCreateProgram();
 	}
 
 	private static int compileShader(String src, int type)
@@ -63,6 +71,9 @@ public class ShaderProgram implements Bindable, GLIdentifiable {
 	}
 
 	public ShaderProgram link() {
+		if (programID < 0)
+			throw new IllegalStateException(
+					"The shader program is not allocated.");
 		for (int obj : attachedObjects)
 			GL20.glAttachShader(programID, obj);
 		GL20.glLinkProgram(programID);
@@ -75,7 +86,8 @@ public class ShaderProgram implements Bindable, GLIdentifiable {
 		return this;
 	}
 
-	public void dispose() {
+	@Override
+	public void gpuFree() {
 		unbind();
 		for (int obj : attachedObjects) {
 			GL20.glDetachShader(programID, obj);

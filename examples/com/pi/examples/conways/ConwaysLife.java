@@ -37,6 +37,7 @@ public class ConwaysLife extends GLWindow {
 		ShaderProgram p = new ShaderProgram();
 		p.vertex(ConwaysLife.class.getResourceAsStream(name + ".vs"));
 		p.fragment(ConwaysLife.class.getResourceAsStream(name + ".fs"));
+		p.gpuAlloc();
 		p.link();
 		return p;
 	}
@@ -127,8 +128,8 @@ public class ConwaysLife extends GLWindow {
 		textures.getFront().gpuFree();
 		textures.getBack().gpuFree();
 		plane.gpuFree();
-		render.dispose();
-		conway.dispose();
+		render.gpuFree();
+		conway.gpuFree();
 	}
 
 	public static void main(String[] args) {

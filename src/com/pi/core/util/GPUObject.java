@@ -7,7 +7,7 @@ public interface GPUObject {
 	public void gpuAlloc();
 
 	/**
-	 * Uploads this object to the GPU.
+	 * Uploads this object to the GPU. (Not always supported)
 	 */
 	public default void gpuUpload() {
 		throw new UnsupportedOperationException(getClass()
