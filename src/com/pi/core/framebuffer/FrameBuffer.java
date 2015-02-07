@@ -180,7 +180,7 @@ public class FrameBuffer implements GPUObject, GLIdentifiable, Bindable {
 	public FrameBufferAttachable getStencilAttachment() {
 		return stencilAttachment;
 	}
-	
+
 	public Set<FrameBufferAttachable> getColorAttachments() {
 		return colorAttachments;
 	}

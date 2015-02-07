@@ -20,7 +20,7 @@ public class Camera3rdExplore implements Camera {
 	private double prevScroll;
 	private float offset;
 	private Matrix4 pose;
-	
+
 	private float scrollOffsetRate = .1f;
 	private float panRate = .01f;
 	private float fineZoomRate = 0.01f;
@@ -43,7 +43,7 @@ public class Camera3rdExplore implements Camera {
 		final float deltaY = (float) (yPos.get(0) - prevY);
 
 		double currScroll = window.getEvents().getScrollY();
-		offset += (currScroll - prevScroll) *scrollOffsetRate;
+		offset += (currScroll - prevScroll) * scrollOffsetRate;
 		prevScroll = currScroll;
 
 		Vector camPos = new VectorND((float) xPos.get(0)
@@ -86,14 +86,14 @@ public class Camera3rdExplore implements Camera {
 			}
 		} else if (GLFW.glfwGetKey(window.getWindowID(), GLFW.GLFW_KEY_F3) == GLFW.GLFW_PRESS) {
 			// fine zoom
-			offset += deltaY *fineZoomRate;
+			offset += deltaY * fineZoomRate;
 		} else if (GLFW.glfwGetKey(window.getWindowID(), GLFW.GLFW_KEY_F2) == GLFW.GLFW_PRESS
 				|| GLFW.glfwGetMouseButton(window.getWindowID(), 2) == GLFW.GLFW_PRESS) {
 			// Move
 			if (deltaX != 0 || deltaY != 0)
 				pose.multiplyInto(tmpMatrix.makeIdentity().setTranslation(
 						deltaX * panRate * (Math.abs(offset) / 5.0f),
-						-deltaY *panRate * (Math.abs(offset) / 5.0f), 0));
+						-deltaY * panRate * (Math.abs(offset) / 5.0f), 0));
 		}
 		prevCamPos = camPos;
 	}
