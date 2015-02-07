@@ -10,6 +10,7 @@ import com.pi.core.model.Model;
 import com.pi.core.texture.DataTexture;
 import com.pi.core.texture.Texture;
 import com.pi.core.texture.TextureWrap;
+import com.pi.core.util.DoubleBuffered;
 import com.pi.core.vertex.AttrLayout;
 import com.pi.core.vertex.VertexData;
 import com.pi.core.wind.GLWindow;
@@ -24,11 +25,8 @@ public class ConwaysLife extends GLWindow {
 		VectorBuff pos;
 	}
 
-	private FrameBuffer frontFB;
-	private DataTexture frontTex;
-
-	private FrameBuffer backFB;
-	private DataTexture backTex;
+	private DoubleBuffered<FrameBuffer> frameBuffers;
+	private DoubleBuffered<DataTexture> textures;
 
 	private ShaderProgram conway;
 	private ShaderProgram render;
@@ -48,25 +46,25 @@ public class ConwaysLife extends GLWindow {
 		GL11.glEnable(GL11.GL_TEXTURE_2D);
 		super.setSize(W, H);
 
-		frontTex = new DataTexture(1, W, H);
-		frontTex.wrap(TextureWrap.REPEAT, TextureWrap.REPEAT);
-		frontTex.gpuAlloc();
+		textures = new DoubleBuffered<>(new DataTexture(1, W, H),
+				new DataTexture(1, W, H));
+		textures.getFront().wrap(TextureWrap.REPEAT, TextureWrap.REPEAT)
+				.gpuAlloc();
+		textures.getBack().wrap(TextureWrap.REPEAT, TextureWrap.REPEAT)
+				.gpuAlloc();
 
-		frontFB = new FrameBuffer();
-		frontFB.attachColor(frontTex);
-		frontFB.gpuAlloc();
-
-		backTex = new DataTexture(1, W, H);
-		backTex.wrap(TextureWrap.REPEAT, TextureWrap.REPEAT);
-		for (Vector[] vv : backTex.vectors)
+		for (Vector[] vv : textures.getBack().vectors)
 			for (Vector v : vv)
 				v.setV(Math.random() > 0.75 ? 1 : 0);
-		backTex.gpuAlloc();
-		backTex.gpuUpload();
+		textures.getBack().gpuUpload();
 
-		backFB = new FrameBuffer();
-		backFB.attachColor(backTex);
-		backFB.gpuAlloc();
+		frameBuffers = new DoubleBuffered<>(new FrameBuffer(),
+				new FrameBuffer());
+		frameBuffers.getFront().attachColor(textures.getFront());
+		frameBuffers.getFront().gpuAlloc();
+
+		frameBuffers.getBack().attachColor(textures.getBack());
+		frameBuffers.getBack().gpuAlloc();
 
 		conway = createShader("conway");
 		conway.bind();
@@ -101,15 +99,15 @@ public class ConwaysLife extends GLWindow {
 		GL13.glActiveTexture(GL13.GL_TEXTURE0);
 
 		conway.bind();
-		backTex.bind();
-		frontFB.bind();
+		textures.getBack().bind();
+		frameBuffers.getFront().bind();
 		plane.render();
 		FrameBuffer.unbind();
 		Texture.unbind();
 		ShaderProgram.unbind();
 
 		render.bind();
-		frontTex.bind();
+		textures.getFront().bind();
 		plane.render();
 		Texture.unbind();
 		ShaderProgram.unbind();
@@ -118,21 +116,16 @@ public class ConwaysLife extends GLWindow {
 
 	@Override
 	public void update() {
-		// Swap buffers
-		DataTexture backTexOld = backTex;
-		FrameBuffer backFBOld = backFB;
-		backTex = frontTex;
-		backFB = frontFB;
-		frontTex = backTexOld;
-		frontFB = backFBOld;
+		textures.flip();
+		frameBuffers.flip();
 	}
 
 	@Override
 	public void dispose() {
-		frontFB.gpuFree();
-		frontTex.gpuFree();
-		backFB.gpuFree();
-		backTex.gpuFree();
+		frameBuffers.getFront().gpuFree();
+		frameBuffers.getBack().gpuFree();
+		textures.getFront().gpuFree();
+		textures.getBack().gpuFree();
 		plane.gpuFree();
 		render.dispose();
 		conway.dispose();
