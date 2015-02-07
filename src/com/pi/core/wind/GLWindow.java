@@ -7,6 +7,8 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.system.MemoryUtil;
 
+import com.pi.core.model.BasicShapes;
+
 public abstract class GLWindow {
 	private final long windowID;
 	private boolean running;
@@ -66,6 +68,8 @@ public abstract class GLWindow {
 		errorCallback.release();
 		windowEvents.release();
 
+		// Kill BasicShapes
+		BasicShapes.removeShapes();
 		GLFW.glfwDestroyWindow(windowID);
 		GLFW.glfwTerminate();
 		System.exit(0);

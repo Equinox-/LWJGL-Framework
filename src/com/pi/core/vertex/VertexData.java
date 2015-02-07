@@ -16,18 +16,21 @@ import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.VectorBuff;
 
 public class VertexData<E> implements GPUObject, GLIdentifiable {
-	public final E[] vertexDB;
+	public E[] vertexDB;
+	private final Class<E> vertexClass;
+	private final int count;
 	private final VertexLayout layout;
 	private final GLGenericBuffer bufferObject;
 	private int vao = -1;
 
-	@SuppressWarnings("unchecked")
 	public VertexData(Class<E> vertexClass, int count) {
-		this.vertexDB = (E[]) Array.newInstance(vertexClass, count);
+		this.vertexClass = vertexClass;
+		this.count = count;
 		this.layout = new VertexLayout(vertexClass);
 		this.layout.validate();
 		this.bufferObject = new GLGenericBuffer(layout.byteSize * count);
-		link();
+		
+		cpuAlloc();
 	}
 
 	public VertexData<E> access(BufferAccessHint a) {
@@ -40,10 +43,10 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 		return this;
 	}
 
-	private void link() {
-		@SuppressWarnings("unchecked")
-		Class<E> vertexClass = (Class<E>) vertexDB.getClass()
-				.getComponentType();
+	@SuppressWarnings("unchecked")
+	public void cpuAlloc() {
+		this.bufferObject.cpuAlloc();
+		this.vertexDB = (E[]) Array.newInstance(vertexClass, count);
 		// Allocate and link to the GL Generic Buffer.
 		for (int i = 0; i < vertexDB.length; i++) {
 			try {
@@ -82,6 +85,11 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+	
+	public void cpuFree() {
+		this.bufferObject.cpuFree();
+		this.vertexDB = null;
 	}
 
 	/**

@@ -8,7 +8,7 @@ import org.lwjgl.opengl.GL20;
 import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.VectorBuff;
 
-public class VertexLayout {
+class VertexLayout {
 	private static final int MAX_ATTR_COUNT = 64; // Realistically 16 on most GPUs
 
 	final int byteSize;
