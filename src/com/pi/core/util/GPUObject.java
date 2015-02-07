@@ -9,7 +9,10 @@ public interface GPUObject {
 	/**
 	 * Uploads this object to the GPU.
 	 */
-	public void gpuUpload();
+	public default void gpuUpload() {
+		throw new UnsupportedOperationException(getClass()
+				+ " doesn't support uploading to GPU");
+	}
 
 	/**
 	 * Downloads this object from the GPU. (Not always supported)

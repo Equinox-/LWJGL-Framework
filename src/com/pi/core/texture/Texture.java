@@ -35,17 +35,20 @@ public abstract class Texture implements GPUObject, Bindable,
 	}
 
 	private int texture;
-	private int internalFormat, mipmapLevels;
+	private final int internalFormat;
 
 	private final int width, height;
+	private int mipmapLevels;
 
 	private TextureWrap sWrap, tWrap;
 	private TextureFilter mipmapFilter;
 	private TextureFilter minFilter, magFilter;
 
-	public Texture(int width, int height) {
+	public Texture(int width, int height, int internalFormat) {
 		this.width = width;
 		this.height = height;
+		this.internalFormat = internalFormat;
+
 		this.texture = -1;
 
 		this.sWrap = TextureWrap.REPEAT;
@@ -54,6 +57,8 @@ public abstract class Texture implements GPUObject, Bindable,
 		this.mipmapFilter = TextureFilter.NEAREST;
 		this.minFilter = TextureFilter.LINEAR;
 		this.magFilter = TextureFilter.LINEAR;
+
+		this.mipmapLevels = 0;
 	}
 
 	public Texture wrap(TextureWrap sWrap, TextureWrap tWrap) {
@@ -91,14 +96,6 @@ public abstract class Texture implements GPUObject, Bindable,
 			throw new IllegalStateException(
 					"Can't change the number of mipmap levels when texture is allocated.");
 		this.mipmapLevels = mipmapLevels;
-		return this;
-	}
-
-	public Texture internalFormat(int format) {
-		if (texture >= 0)
-			throw new IllegalStateException(
-					"Can't change the internal format when texture is allocated.");
-		this.internalFormat = format;
 		return this;
 	}
 

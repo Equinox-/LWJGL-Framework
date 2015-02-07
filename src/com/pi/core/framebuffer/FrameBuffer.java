@@ -140,12 +140,6 @@ public class FrameBuffer implements GPUObject, GLIdentifiable, Bindable {
 	}
 
 	@Override
-	public void gpuUpload() {
-		throw new UnsupportedOperationException(
-				"Framebuffers don't need to be uploaded.");
-	}
-
-	@Override
 	public void gpuFree() {
 		if (fbo >= 0)
 			GL30.glDeleteFramebuffers(fbo);
