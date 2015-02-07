@@ -42,7 +42,7 @@ public abstract class GLWindow {
 	public abstract void init();
 
 	public abstract void render();
-	
+
 	public abstract void update();
 
 	public abstract void dispose();
@@ -82,8 +82,16 @@ public abstract class GLWindow {
 	public void shutdown() {
 		running = false;
 	}
-	
+
 	public void setTitle(String s) {
 		GLFW.glfwSetWindowTitle(windowID, s);
+	}
+
+	public void setSize(int w, int h) {
+		GLFW.glfwSetWindowSize(windowID, w, h);
+	}
+
+	public void setPosition(int x, int y) {
+		GLFW.glfwSetWindowPos(windowID, x, y);
 	}
 }

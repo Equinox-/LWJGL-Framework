@@ -7,11 +7,12 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL45;
 
+import com.pi.core.framebuffer.FrameBufferAttachable;
 import com.pi.core.util.Bindable;
-import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 
-public abstract class Texture implements GPUObject, GLIdentifiable, Bindable {
+public abstract class Texture implements GPUObject, Bindable,
+		FrameBufferAttachable {
 	private static Texture currentTexture;
 
 	private static final int[][] MIPMAP_FILTER_TABLE;
