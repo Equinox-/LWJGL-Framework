@@ -9,8 +9,10 @@ import java.util.Map;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 
+import com.pi.core.texture.Texture;
 import com.pi.core.util.Bindable;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
@@ -22,12 +24,15 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 	private int programID;
 	private final List<Integer> attachedObjects;
 
-	private Map<String, Integer> uniforms;
+	private Map<String, ShaderUniform> uniforms;
+	
+	Texture[] samplers;
 
 	public ShaderProgram() {
 		this.uniforms = new HashMap<>();
 		this.attachedObjects = new ArrayList<>(2);
 		this.programID = -1;
+		this.samplers = new Texture[16];
 	}
 
 	@Override
@@ -134,20 +139,31 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 			String name = GL20.glGetActiveUniform(programID, i, uniformLength,
 					sizeBuff, typeBuff);
 			int location = GL20.glGetUniformLocation(programID, name);
-			uniforms.put(name, location);
+			uniforms.put(name, new ShaderUniform(this, name, sizeBuff.get(0),
+					typeBuff.get(0), location));
 		}
 	}
 
-	public int uniform(String name) {
-		Integer v = uniforms.get(name);
+	public ShaderUniform uniform(String name) {
+		ShaderUniform v = uniforms.get(name);
 		if (v == null) {
-			v = GL20.glGetUniformLocation(programID, name);
-			if (v == -1)
+			int l = GL20.glGetUniformLocation(programID, name);
+			if (l == -1)
 				System.err
 						.println("Tried to query shader for invalid uniform: "
 								+ name);
-			uniforms.put(name, v);
+			uniforms.put(name, v = new ShaderUniform(this, name, -1, -1, l));
 		}
 		return v;
+	}
+
+	public void bindSamplers() {
+		for (int i = 0; i < samplers.length; i++) {
+			GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
+			if (samplers[i] == null)
+				Texture.unbind();
+			else
+				samplers[i].bind();
+		}
 	}
 }

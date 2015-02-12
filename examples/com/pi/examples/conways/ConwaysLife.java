@@ -69,14 +69,12 @@ public class ConwaysLife extends GLWindow {
 
 		conway = createShader("conway");
 		conway.bind();
-		GL20.glUniform1i(conway.uniform("state"), 0);
-		GL20.glUniform2f(conway.uniform("viewport"), W, H);
+		conway.uniform("viewport").vector(W, H);
 		ShaderProgram.unbind();
 
 		render = createShader("render");
 		render.bind();
-		GL20.glUniform1i(render.uniform("state"), 0);
-		GL20.glUniform2f(render.uniform("viewport"), W, H);
+		render.uniform("viewport").vector(W, H);
 		ShaderProgram.unbind();
 
 		VertexData<SimpleVertex> plVerts = new VertexData<>(SimpleVertex.class,
@@ -97,10 +95,10 @@ public class ConwaysLife extends GLWindow {
 	public void render() {
 		// Run update
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
-		GL13.glActiveTexture(GL13.GL_TEXTURE0);
 
 		conway.bind();
-		textures.getBack().bind();
+		conway.uniform("state").texture(textures.getBack());
+		conway.bindSamplers();
 		frameBuffers.getFront().bind();
 		plane.render();
 		FrameBuffer.unbind();
@@ -108,7 +106,8 @@ public class ConwaysLife extends GLWindow {
 		ShaderProgram.unbind();
 
 		render.bind();
-		textures.getFront().bind();
+		render.uniform("state").texture(textures.getFront());
+		render.bindSamplers();
 		plane.render();
 		Texture.unbind();
 		ShaderProgram.unbind();

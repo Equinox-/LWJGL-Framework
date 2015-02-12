@@ -39,6 +39,17 @@ public final class BufferColor {
 		set(src.getRed(), src.getGreen(), src.getBlue(), src.getAlpha());
 	}
 
+	public ByteBuffer getAccessor() {
+		int po = backer.position();
+		int lim = backer.limit();
+		backer.position(offset);
+		backer.limit(offset + 4);
+		ByteBuffer buf = backer.slice();
+		backer.limit(lim);
+		backer.position(po);
+		return buf;
+	}
+
 	@Override
 	public String toString() {
 		return (backer.get(offset) & 0xFF) + ","
