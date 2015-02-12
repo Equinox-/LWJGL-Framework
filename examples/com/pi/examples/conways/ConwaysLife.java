@@ -1,8 +1,6 @@
 package com.pi.examples.conways;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-import org.lwjgl.opengl.GL20;
 
 import com.pi.core.framebuffer.FrameBuffer;
 import com.pi.core.glsl.ShaderProgram;

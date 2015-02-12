@@ -34,7 +34,7 @@ public class ShaderOnTexture implements GPUObject {
 	}
 
 	public void render(ShaderProgram prog) {
-		GL11.glViewport(0, 0, result.getWidth(), result.getHeight());
+		GL11.glViewport(0, 0, result.getWidth() + 1, result.getHeight());
 		fbo.bind();
 		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 		prog.bind();

@@ -11,6 +11,9 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL32;
+import org.lwjgl.opengl.GL40;
+import org.lwjgl.opengl.GL43;
 
 import com.pi.core.texture.Texture;
 import com.pi.core.util.Bindable;
@@ -25,7 +28,20 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 	private final List<Integer> attachedObjects;
 
 	private Map<String, ShaderUniform> uniforms;
-	
+
+	private final static Map<String, Integer> SHADER_TYPE_MAP;
+	static {
+		SHADER_TYPE_MAP = new HashMap<>();
+		SHADER_TYPE_MAP.put("GL_VERTEX_SHADER", GL20.GL_VERTEX_SHADER);
+		SHADER_TYPE_MAP.put("GL_TESS_CONTROL_SHADER",
+				GL40.GL_TESS_CONTROL_SHADER);
+		SHADER_TYPE_MAP.put("GL_TESS_EVALUATION_SHADER",
+				GL40.GL_TESS_EVALUATION_SHADER);
+		SHADER_TYPE_MAP.put("GL_GEOMETRY_SHADER", GL32.GL_GEOMETRY_SHADER);
+		SHADER_TYPE_MAP.put("GL_FRAGMENT_SHADER", GL20.GL_FRAGMENT_SHADER);
+		SHADER_TYPE_MAP.put("GL_COMPUTE_SHADER", GL43.GL_COMPUTE_SHADER);
+	}
+
 	Texture[] samplers;
 
 	public ShaderProgram() {
@@ -69,6 +85,38 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 		try {
 			attachedObjects.add(compileShader(FileUtil.readStreamFully(src),
 					GL20.GL_VERTEX_SHADER));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		return this;
+	}
+
+	public ShaderProgram joined(InputStream src) {
+		try {
+			String[] lines = FileUtil.readStreamFully(src).split("(\r|)\n");
+			StringBuilder tmp = new StringBuilder();
+			String type = null;
+			int typeV = 0;
+			for (String line : lines) {
+				if (line.trim().startsWith("//")) {
+					if (tmp.length() > 0 && type != null) {
+						attachedObjects
+								.add(compileShader(tmp.toString(), typeV));
+						tmp.setLength(0);
+					}
+					String ttype = line.trim().substring(2).trim()
+							.toUpperCase();
+					Integer rt = SHADER_TYPE_MAP.get(ttype);
+					if (rt != null) {
+						type = ttype;
+						typeV = rt;
+					}
+				} else
+					tmp.append(line).append("\n");
+			}
+			if (tmp.length() > 0 && type != null) {
+				attachedObjects.add(compileShader(tmp.toString(), typeV));
+			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
