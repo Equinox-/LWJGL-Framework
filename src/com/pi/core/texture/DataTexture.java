@@ -84,12 +84,6 @@ public class DataTexture extends Texture {
 	}
 
 	@Override
-	public Texture filter(TextureFilter mipmap, TextureFilter minFilter,
-			TextureFilter magFilter) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Texture mipmapLevels(int mipmapLevels) {
 		throw new UnsupportedOperationException();
 	}
