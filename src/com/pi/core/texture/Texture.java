@@ -11,8 +11,7 @@ import com.pi.core.framebuffer.FrameBufferAttachable;
 import com.pi.core.util.Bindable;
 import com.pi.core.util.GPUObject;
 
-public abstract class Texture implements GPUObject, Bindable,
-		FrameBufferAttachable {
+public class Texture implements GPUObject, Bindable, FrameBufferAttachable {
 	private static Texture currentTexture;
 
 	private static final int[][] MIPMAP_FILTER_TABLE;
@@ -140,6 +139,7 @@ public abstract class Texture implements GPUObject, Bindable,
 				tmpH >>= 1;
 			}
 		}
+		commitParameters();
 		unbind();
 	}
 

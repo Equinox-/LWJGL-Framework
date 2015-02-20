@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
 
 import com.pi.core.vertex.VertexData;
 import com.pi.core.vertex.VertexTypes.NDCVertex2D;
@@ -36,7 +35,7 @@ public class BasicShapes {
 			plVerts.vertexDB[2].pos.setV(1, 1);
 			plVerts.vertexDB[3].pos.setV(-1, 1);
 			ndcScreenQuad = new Model<>(plVerts,
-					new int[] { 0, 1, 2, 0, 2, 3 }, GL11.GL_TRIANGLES);
+					new int[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.TRIANGLES);
 			ndcScreenQuad.gpuAlloc();
 			ndcScreenQuad.gpuUpload();
 			plVerts.cpuFree();

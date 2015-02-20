@@ -125,8 +125,7 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 
 	public ShaderProgram link() {
 		if (programID < 0)
-			throw new IllegalStateException(
-					"The shader program is not allocated.");
+			gpuAlloc();
 		for (int obj : attachedObjects)
 			GL20.glAttachShader(programID, obj);
 		GL20.glLinkProgram(programID);

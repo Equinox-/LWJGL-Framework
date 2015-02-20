@@ -5,6 +5,7 @@ import org.lwjgl.opengl.GL11;
 import com.pi.core.framebuffer.FrameBuffer;
 import com.pi.core.glsl.ShaderProgram;
 import com.pi.core.model.Model;
+import com.pi.core.model.PrimitiveType;
 import com.pi.core.texture.DataTexture;
 import com.pi.core.texture.Texture;
 import com.pi.core.texture.TextureWrap;
@@ -82,7 +83,7 @@ public class ConwaysLife extends GLWindow {
 		plVerts.vertexDB[2].pos.setV(1, 1);
 		plVerts.vertexDB[3].pos.setV(-1, 1);
 		plane = new Model<>(plVerts, new int[] { 0, 1, 2, 0, 2, 3 },
-				GL11.GL_TRIANGLES);
+				PrimitiveType.TRIANGLES);
 		plane.gpuAlloc();
 		plane.gpuUpload();
 
