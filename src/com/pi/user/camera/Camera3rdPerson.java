@@ -4,11 +4,14 @@ import org.lwjgl.glfw.GLFW;
 
 import com.pi.core.wind.GLWindow;
 import com.pi.math.matrix.Matrix4;
+import com.pi.math.vector.Vector;
+import com.pi.math.vector.VectorND;
 
 public class Camera3rdPerson implements Camera {
 	private final Matrix4 rotMatrix = Matrix4.identity();
 	private final GLWindow window;
 
+	private float x, y, z;
 	private float pitch, yaw, offset;
 	private long lastMoveProc;
 
@@ -16,6 +19,7 @@ public class Camera3rdPerson implements Camera {
 	private float yawRate = 4;
 	private float pitchRate = 4;
 	private float offsetRate = 10f;
+	private float moveRate = 10f;
 
 	public Camera3rdPerson(GLWindow window, float offset) {
 		this(window, 0, 0 * (float) Math.PI / 2, offset);
@@ -76,6 +80,19 @@ public class Camera3rdPerson implements Camera {
 			else if (window.getEvents().isKeyDown(GLFW.GLFW_KEY_E))
 				offset += passed * offsetRate;
 
+			if (window.getEvents().isKeyDown(GLFW.GLFW_KEY_UP))
+				y -= passed * moveRate;
+			else if (window.getEvents().isKeyDown(GLFW.GLFW_KEY_DOWN))
+				y += passed * moveRate;
+
+			if (window.getEvents().isKeyDown(GLFW.GLFW_KEY_LEFT)) {
+				x += Math.cos(yaw) * passed * moveRate;
+				z += Math.sin(yaw) * passed * moveRate;
+			} else if (window.getEvents().isKeyDown(GLFW.GLFW_KEY_RIGHT)) {
+				x -= Math.cos(yaw) * passed * moveRate;
+				z -= Math.sin(yaw) * passed * moveRate;
+			}
+
 			lastMoveProc += passedMS;
 		} else {
 			lastMoveProc = System.currentTimeMillis();
@@ -91,7 +108,17 @@ public class Camera3rdPerson implements Camera {
 
 		matrix.makeIdentity().setAxisAngle(yaw, 0, 1, 0);
 		matrix.multiplyInto(rotMatrix);
+
+		matrix.preMultiplyTransform(x, y, z);
 		return matrix;
+	}
+
+	@Override
+	public Vector position() {
+		float csB = (float) Math.cos(pitch) * -offset;
+		return new VectorND(x + csB * (float) Math.sin(yaw), y
+				+ (float) Math.sin(pitch) * offset, z - csB
+				* (float) Math.cos(yaw));
 	}
 
 	@Override

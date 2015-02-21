@@ -42,4 +42,8 @@ public class ShaderOnTexture implements GPUObject {
 		ShaderProgram.unbind();
 		FrameBuffer.unbind();
 	}
+
+	public FrameBuffer getFBO() {
+		return fbo;
+	}
 }

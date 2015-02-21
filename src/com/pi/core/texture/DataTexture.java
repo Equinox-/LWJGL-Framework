@@ -11,9 +11,10 @@ import com.pi.math.vector.VectorBuff;
 
 public class DataTexture extends Texture {
 	private FloatBuffer backing;
-	public final Vector[][] vectors;
+	public Vector[][] vectors;
 
 	private int stashFormat;
+	private final int dimension;
 
 	private static int floatFormatForDimension(int dimension) {
 		if (dimension > 4 || dimension < 1)
@@ -35,6 +36,7 @@ public class DataTexture extends Texture {
 
 	public DataTexture(int dimension, int width, int height) {
 		super(width, height, floatFormatForDimension(dimension));
+		this.dimension = dimension;
 		super.wrap(TextureWrap.CLAMP_TO_EDGE, TextureWrap.CLAMP_TO_EDGE); // Typical, but can be changed.
 		super.filter(null, TextureFilter.NEAREST, TextureFilter.NEAREST);
 		super.mipmapLevels(0);
@@ -53,15 +55,7 @@ public class DataTexture extends Texture {
 			stashFormat = GL11.GL_RGBA;
 			break;
 		}
-
-		vectors = new Vector[width][height];
-		backing = BufferUtils.createFloatBuffer(width * height * dimension);
-		for (int j = 0; j < height; j++) {
-			for (int i = 0; i < width; i++) {
-				vectors[i][j] = new VectorBuff(backing, ((j * width) + i)
-						* dimension, dimension);
-			}
-		}
+		cpuAlloc();
 	}
 
 	@Override
@@ -81,6 +75,23 @@ public class DataTexture extends Texture {
 		GL11.glGetTexImage(GL11.GL_TEXTURE_2D, 0, stashFormat, GL11.GL_FLOAT,
 				backing);
 		super.unbind();
+	}
+
+	public void cpuFree() {
+		vectors = null;
+		backing = null;
+	}
+
+	public void cpuAlloc() {
+		vectors = new Vector[getWidth()][getHeight()];
+		backing = BufferUtils.createFloatBuffer(getWidth() * getHeight()
+				* dimension);
+		for (int j = 0; j < getHeight(); j++) {
+			for (int i = 0; i < getWidth(); i++) {
+				vectors[i][j] = new VectorBuff(backing, ((j * getWidth()) + i)
+						* dimension, dimension);
+			}
+		}
 	}
 
 	@Override

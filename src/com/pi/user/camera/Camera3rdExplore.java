@@ -104,4 +104,11 @@ public class Camera3rdExplore implements Camera {
 		Matrix4.multiplyInto(tmpMatrix, pose, matrix);
 		return tmpMatrix.copyTo(matrix);
 	}
+
+	@Override
+	public Vector position() {
+		throw new UnsupportedOperationException("Needs work");
+		// return new VectorND(-pose.get(12), -pose.get(13), -pose.get(14)
+		// - offset);
+	}
 }
