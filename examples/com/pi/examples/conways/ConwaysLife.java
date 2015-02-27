@@ -4,33 +4,22 @@ import org.lwjgl.opengl.GL11;
 
 import com.pi.core.framebuffer.FrameBuffer;
 import com.pi.core.glsl.ShaderProgram;
-import com.pi.core.model.Model;
-import com.pi.core.model.PrimitiveType;
+import com.pi.core.model.BasicShapes;
 import com.pi.core.texture.DataTexture;
 import com.pi.core.texture.Texture;
 import com.pi.core.texture.TextureWrap;
 import com.pi.core.util.DoubleBuffered;
-import com.pi.core.vertex.AttrLayout;
-import com.pi.core.vertex.VertexData;
 import com.pi.core.wind.GLWindow;
 import com.pi.math.vector.Vector;
-import com.pi.math.vector.VectorBuff;
 
 public class ConwaysLife extends GLWindow {
 	private static final int W = 256, H = 256;
-
-	public static class SimpleVertex {
-		@AttrLayout(layout = 0, dimension = 2)
-		VectorBuff pos;
-	}
 
 	private DoubleBuffered<FrameBuffer> frameBuffers;
 	private DoubleBuffered<DataTexture> textures;
 
 	private ShaderProgram conway;
 	private ShaderProgram render;
-
-	private Model<SimpleVertex> plane;
 
 	private static ShaderProgram createShader(String name) {
 		ShaderProgram p = new ShaderProgram();
@@ -76,17 +65,6 @@ public class ConwaysLife extends GLWindow {
 		render.uniform("viewport").vector(W, H);
 		ShaderProgram.unbind();
 
-		VertexData<SimpleVertex> plVerts = new VertexData<>(SimpleVertex.class,
-				4);
-		plVerts.vertexDB[0].pos.setV(-1, -1);
-		plVerts.vertexDB[1].pos.setV(1, -1);
-		plVerts.vertexDB[2].pos.setV(1, 1);
-		plVerts.vertexDB[3].pos.setV(-1, 1);
-		plane = new Model<>(plVerts, new int[] { 0, 1, 2, 0, 2, 3 },
-				PrimitiveType.TRIANGLES);
-		plane.gpuAlloc();
-		plane.gpuUpload();
-
 		GL11.glViewport(0, 0, W, H);
 	}
 
@@ -99,7 +77,7 @@ public class ConwaysLife extends GLWindow {
 		conway.uniform("state").texture(textures.getBack());
 		conway.bindSamplers();
 		frameBuffers.getFront().bind();
-		plane.render();
+		BasicShapes.shapes().getNDCScreenQuad().render();
 		FrameBuffer.unbind();
 		Texture.unbind();
 		ShaderProgram.unbind();
@@ -107,7 +85,7 @@ public class ConwaysLife extends GLWindow {
 		render.bind();
 		render.uniform("state").texture(textures.getFront());
 		render.bindSamplers();
-		plane.render();
+		BasicShapes.shapes().getNDCScreenQuad().render();
 		Texture.unbind();
 		ShaderProgram.unbind();
 
@@ -125,7 +103,6 @@ public class ConwaysLife extends GLWindow {
 		frameBuffers.getBack().gpuFree();
 		textures.getFront().gpuFree();
 		textures.getBack().gpuFree();
-		plane.gpuFree();
 		render.gpuFree();
 		conway.gpuFree();
 	}

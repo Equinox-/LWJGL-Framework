@@ -34,8 +34,8 @@ public class BasicShapes {
 			plVerts.vertexDB[1].pos.setV(1, -1);
 			plVerts.vertexDB[2].pos.setV(1, 1);
 			plVerts.vertexDB[3].pos.setV(-1, 1);
-			ndcScreenQuad = new Model<>(plVerts,
-					new int[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.TRIANGLES);
+			ndcScreenQuad = new Model<>(PrimitiveType.TRIANGLES, plVerts,
+					new int[] { 0, 1, 2, 0, 2, 3 });
 			ndcScreenQuad.gpuAlloc();
 			ndcScreenQuad.gpuUpload();
 			plVerts.cpuFree();

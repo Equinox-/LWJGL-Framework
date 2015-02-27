@@ -11,20 +11,22 @@ public class VertexTypes {
 		public VectorBuff pos;
 	}
 
-	public static class ColoredVertex3D {
+	public static class Vertex3D {
 		@AttrLayout(layout = 0, dimension = 3)
 		public VectorBuff pos;
+	}
+
+	public static class LitVertex3D extends Vertex3D {
 		@AttrLayout(layout = 1, dimension = 3)
 		public VectorBuff normal;
+	}
+
+	public static class ColoredVertex3D extends LitVertex3D {
 		@AttrLayout(layout = 2)
 		public BufferColor color;
 	}
 
-	public static class TexturedVertex3D {
-		@AttrLayout(layout = 0, dimension = 3)
-		public VectorBuff pos;
-		@AttrLayout(layout = 1, dimension = 3)
-		public VectorBuff normal;
+	public static class TexturedVertex3D extends LitVertex3D {
 		@AttrLayout(layout = 2, dimension = 2)
 		public VectorBuff texture;
 	}
