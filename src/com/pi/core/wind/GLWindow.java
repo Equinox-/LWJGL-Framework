@@ -17,11 +17,15 @@ public abstract class GLWindow {
 	private GLFWErrorCallback errorCallback;
 
 	public GLWindow() {
+		this(3, 3);
+	}
+
+	public GLWindow(int major, int minor) {
 		if (GLFW.glfwInit() != GL11.GL_TRUE)
 			throw new RuntimeException("Unable to initialize GLFW");
 
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, major);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, minor);
 		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE);
 		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE,
 				GLFW.GLFW_OPENGL_CORE_PROFILE);

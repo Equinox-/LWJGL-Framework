@@ -71,24 +71,22 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 		return shader;
 	}
 
-	public ShaderProgram fragment(InputStream src) {
+	public ShaderProgram attach(int type, InputStream src) {
 		try {
 			attachedObjects.add(compileShader(FileUtil.readStreamFully(src),
-					GL20.GL_FRAGMENT_SHADER));
+					type));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 		return this;
 	}
 
+	public ShaderProgram fragment(InputStream src) {
+		return attach(GL20.GL_FRAGMENT_SHADER, src);
+	}
+
 	public ShaderProgram vertex(InputStream src) {
-		try {
-			attachedObjects.add(compileShader(FileUtil.readStreamFully(src),
-					GL20.GL_VERTEX_SHADER));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		return this;
+		return attach(GL20.GL_VERTEX_SHADER, src);
 	}
 
 	public ShaderProgram joined(InputStream src) {
