@@ -1,6 +1,8 @@
 package com.pi.core.vertex;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
@@ -16,6 +18,13 @@ class VertexLayout {
 	final int[] attrOffset, attrSize, attrType;
 	final boolean[] attrNormalize;
 
+	private static void getFields(List<Field> fields, Class<?> clazz) {
+		for (Field f : clazz.getDeclaredFields())
+			fields.add(f);
+		if (clazz.getSuperclass() != null)
+			getFields(fields, clazz.getSuperclass());
+	}
+
 	public VertexLayout(Class<?> clazz) {
 		int structSize = 0;
 		attrMapping = new Field[MAX_ATTR_COUNT];
@@ -24,7 +33,10 @@ class VertexLayout {
 		attrType = new int[MAX_ATTR_COUNT];
 		attrNormalize = new boolean[MAX_ATTR_COUNT];
 
-		for (Field f : clazz.getDeclaredFields()) {
+		List<Field> fields = new ArrayList<>();
+		getFields(fields, clazz);
+
+		for (Field f : fields) {
 			AttrLayout layout = f.getAnnotation(AttrLayout.class);
 			if (layout != null) {
 				Class<?> type = f.getType();

@@ -35,11 +35,12 @@ public class ShaderUniform {
 	private void utilAllowed() {
 		if (type == -1)
 			throw new IllegalStateException(
-					"Utility methods aren't allowed on something with an undefined type: "
-							+ type);
+					"Utility methods aren't allowed on uniform \"" + name
+							+ "\": It has an undefined type");
 		if (size != 1)
 			throw new IllegalStateException(
-					"Utility methods aren't allowed to deal with array uniforms");
+					"Utility methods aren't allowed on uniform \"" + name
+							+ "\": It is an array");
 	}
 
 	private void typeMismatch(String provided) {

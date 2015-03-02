@@ -6,7 +6,7 @@ public class VertexTypes {
 	private VertexTypes() {
 	}
 
-	public static class NDCVertex2D {
+	public static class Vertex2D {
 		@AttrLayout(layout = 0, dimension = 2)
 		public VectorBuff pos;
 	}
