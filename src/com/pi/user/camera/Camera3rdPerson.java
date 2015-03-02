@@ -47,6 +47,13 @@ public class Camera3rdPerson implements Camera {
 		this.offset = offset;
 		return this;
 	}
+	
+	public Camera3rdPerson center(float x, float y, float z) {
+		this.x = -x;
+		this.y = -y;
+		this.z = -z;
+		return this;
+	}
 
 	public float getYaw() {
 		return yaw;
