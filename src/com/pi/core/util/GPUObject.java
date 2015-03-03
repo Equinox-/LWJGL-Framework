@@ -7,6 +7,17 @@ public interface GPUObject {
 	public void gpuAlloc();
 
 	/**
+	 * Allocates and then uploads this object to the GPU.
+	 * 
+	 * @see #gpuAlloc()
+	 * @see #gpuUpload()
+	 */
+	public default void gpuAllocAndUpload() {
+		gpuAlloc();
+		gpuUpload();
+	}
+
+	/**
 	 * Uploads this object to the GPU. (Not always supported)
 	 */
 	public default void gpuUpload() {
