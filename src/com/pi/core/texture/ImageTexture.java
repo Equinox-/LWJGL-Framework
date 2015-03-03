@@ -52,10 +52,10 @@ public class ImageTexture extends Texture {
 			}
 		}
 		data.flip();
-		GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, hasAlpha ? GL11.GL_RGBA
-				: GL11.GL_RGB, getWidth(), getHeight(), 0,
-				hasAlpha ? GL11.GL_RGBA : GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE,
-				data);
-
+		bind();
+		GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, getWidth(),
+				getHeight(), hasAlpha ? GL11.GL_RGBA : GL11.GL_RGB,
+				GL11.GL_UNSIGNED_BYTE, data);
+		unbind();
 	}
 }

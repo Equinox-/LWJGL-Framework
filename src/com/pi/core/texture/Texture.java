@@ -9,6 +9,7 @@ import org.lwjgl.opengl.GL45;
 
 import com.pi.core.framebuffer.FrameBufferAttachable;
 import com.pi.core.util.Bindable;
+import com.pi.core.util.GLError;
 import com.pi.core.util.GPUObject;
 
 public class Texture implements GPUObject, Bindable, FrameBufferAttachable {
@@ -112,7 +113,7 @@ public class Texture implements GPUObject, Bindable, FrameBufferAttachable {
 				mipmapFilter != null ? MIPMAP_FILTER_TABLE[mipmapFilter
 						.ordinal()][minFilter.ordinal()] : minFilter.glID);
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER,
-				magFilter.ordinal());
+				magFilter.glID);
 	}
 
 	@Override
