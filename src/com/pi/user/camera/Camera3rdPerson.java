@@ -47,7 +47,7 @@ public class Camera3rdPerson implements Camera {
 		this.offset = offset;
 		return this;
 	}
-	
+
 	public Camera3rdPerson center(float x, float y, float z) {
 		this.x = -x;
 		this.y = -y;
@@ -123,9 +123,9 @@ public class Camera3rdPerson implements Camera {
 	@Override
 	public Vector position() {
 		float csB = (float) Math.cos(pitch) * -offset;
-		return new VectorND(x + csB * (float) Math.sin(yaw), y
-				+ (float) Math.sin(pitch) * offset, z - csB
-				* (float) Math.cos(yaw));
+		return new VectorND(csB * (float) Math.sin(yaw) - x,
+				(float) Math.sin(pitch) * offset - y, -csB
+						* (float) Math.cos(yaw) - z);
 	}
 
 	@Override
