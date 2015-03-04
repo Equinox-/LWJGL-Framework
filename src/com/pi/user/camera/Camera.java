@@ -9,4 +9,6 @@ public interface Camera {
 	public void update();
 
 	public Vector position();
+	
+	public void transformRay(Vector origin, Vector direction);
 }

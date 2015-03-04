@@ -12,7 +12,7 @@ public class Camera3rdPerson implements Camera {
 	private final GLWindow window;
 
 	private float x, y, z;
-	private float pitch, yaw, offset;
+	public float pitch, yaw, offset;
 	private long lastMoveProc;
 
 	// rad/s
@@ -22,7 +22,7 @@ public class Camera3rdPerson implements Camera {
 	private float moveRate = 10f;
 
 	public Camera3rdPerson(GLWindow window, float offset) {
-		this(window, 0, 0 * (float) Math.PI / 2, offset);
+		this(window, 0, 0, offset);
 	}
 
 	public Camera3rdPerson(GLWindow window, float yaw, float pitch, float offset) {
@@ -132,5 +132,17 @@ public class Camera3rdPerson implements Camera {
 	public String toString() {
 		return "Camera3rdPerson[yaw=" + Math.toDegrees(yaw) + ",pitch="
 				+ Math.toDegrees(pitch) + ",offset=" + offset + "]";
+	}
+
+	@Override
+	public void transformRay(Vector origin, Vector direction) {
+		origin.add(position());
+		Vector tmp = direction.clone();
+
+		rotMatrix.makeIdentity().setAxisAngle(-pitch, 1, 0, 0);
+		Matrix4.multiply(rotMatrix, direction, tmp).normalize();
+
+		rotMatrix.makeIdentity().setAxisAngle(yaw, 0, 1, 0);
+		Matrix4.multiply(rotMatrix, tmp, direction).normalize();
 	}
 }
