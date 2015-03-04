@@ -17,19 +17,48 @@ public class ShaderUniform {
 	private final String name;
 	private final int size;
 	private final int type;
-	private final int location;
+	private final int[] location;
 
 	private int samplerID;
+	private int activeIndex;
 
 	public ShaderUniform(ShaderProgram prog, String name, int size, int type,
-			int location) {
+			boolean array) {
 		this.prog = prog;
 		this.name = name;
 		this.size = size;
 		this.type = type;
-		this.location = location;
+		this.location = new int[size];
+		if (array)
+			for (int i = 0; i < size; i++) {
+				location[i] = GL20.glGetUniformLocation(prog.getID(), name
+						+ "[" + i + "]");
+			}
+		else
+			location[0] = GL20.glGetUniformLocation(prog.getID(), name);
 
-		this.samplerID = -1;
+		this.activeIndex = 0;
+		this.samplerID = 16;
+	}
+
+	public ShaderUniform(ShaderProgram prog, String name, int location) {
+		this.prog = prog;
+		this.name = name;
+		this.size = 1;
+		this.type = -1;
+		this.location = new int[] { location };
+
+		this.activeIndex = 0;
+		this.samplerID = 16;
+	}
+
+	public ShaderUniform index(int i) {
+		if (i < 0 || i >= size)
+			throw new IllegalStateException("Can't use index " + i + " on \""
+					+ name + "\": It is an array of size " + size);
+		this.activeIndex = i;
+		return this;
+
 	}
 
 	private void utilAllowed() {
@@ -37,10 +66,6 @@ public class ShaderUniform {
 			throw new IllegalStateException(
 					"Utility methods aren't allowed on uniform \"" + name
 							+ "\": It has an undefined type");
-		if (size != 1)
-			throw new IllegalStateException(
-					"Utility methods aren't allowed on uniform \"" + name
-							+ "\": It is an array");
 	}
 
 	private void typeMismatch(String provided) {
@@ -56,10 +81,10 @@ public class ShaderUniform {
 				&& type != GL20.GL_SAMPLER_3D && type != GL20.GL_SAMPLER_CUBE)
 			typeMismatch("sampler");
 
-		if (this.samplerID >= 0)
+		if (this.samplerID < prog.samplers.length)
 			prog.samplers[this.samplerID] = null;
 		if (t == null) {
-			this.samplerID = -1;
+			this.samplerID = 16;
 		} else {
 			for (int i = 0; i < prog.samplers.length; i++) {
 				if (prog.samplers[i] == null) {
@@ -69,13 +94,13 @@ public class ShaderUniform {
 				}
 			}
 		}
-		GL20.glUniform1i(location, samplerID);
+		GL20.glUniform1i(location[activeIndex], samplerID);
 	}
 
 	public void bool(boolean b) {
 		utilAllowed();
 		if (type == GL20.GL_BOOL)
-			GL20.glUniform1i(location, b ? 1 : 0);
+			GL20.glUniform1i(location[activeIndex], b ? 1 : 0);
 		else
 			typeMismatch("boolean");
 	}
@@ -83,9 +108,9 @@ public class ShaderUniform {
 	public void scalar(float x) {
 		utilAllowed();
 		if (type == GL11.GL_FLOAT)
-			GL20.glUniform1f(location, x);
+			GL20.glUniform1f(location[activeIndex], x);
 		else if (type == GL11.GL_INT || type == GL20.GL_BOOL)
-			GL20.glUniform1i(location, (int) x);
+			GL20.glUniform1i(location[activeIndex], (int) x);
 		else
 			typeMismatch("float or int");
 	}
@@ -93,7 +118,7 @@ public class ShaderUniform {
 	public void vector(float x, float y) {
 		utilAllowed();
 		if (type == GL20.GL_FLOAT_VEC2)
-			GL20.glUniform2f(location, x, y);
+			GL20.glUniform2f(location[activeIndex], x, y);
 		else
 			typeMismatch("float vec2");
 	}
@@ -101,7 +126,7 @@ public class ShaderUniform {
 	public void vector(float x, float y, float z) {
 		utilAllowed();
 		if (type == GL20.GL_FLOAT_VEC3)
-			GL20.glUniform3f(location, x, y, z);
+			GL20.glUniform3f(location[activeIndex], x, y, z);
 		else
 			typeMismatch("float vec3");
 	}
@@ -109,7 +134,7 @@ public class ShaderUniform {
 	public void vector(float x, float y, float z, float w) {
 		utilAllowed();
 		if (type == GL20.GL_FLOAT_VEC4)
-			GL20.glUniform4f(location, x, y, z, w);
+			GL20.glUniform4f(location[activeIndex], x, y, z, w);
 		else
 			typeMismatch("float vec4");
 	}
@@ -140,7 +165,7 @@ public class ShaderUniform {
 	public void matrix(Matrix4 m) {
 		utilAllowed();
 		if (type == GL20.GL_FLOAT_MAT4)
-			GL20.glUniformMatrix4(location, false, m.getAccessor());
+			GL20.glUniformMatrix4(location[activeIndex], false, m.getAccessor());
 		else if (type == GL20.GL_FLOAT_MAT3) {
 			if (mat4TmpBuffer == null)
 				mat4TmpBuffer = new float[16];
@@ -153,7 +178,7 @@ public class ShaderUniform {
 			mat3TmpBuffer.put(mat4TmpBuffer, 4, 3);
 			mat3TmpBuffer.put(mat4TmpBuffer, 8, 3);
 			mat3TmpBuffer.position(0);
-			GL20.glUniformMatrix3(location, false, mat3TmpBuffer);
+			GL20.glUniformMatrix3(location[activeIndex], false, mat3TmpBuffer);
 		} else
 			typeMismatch("float matrix4");
 	}
@@ -169,6 +194,6 @@ public class ShaderUniform {
 	}
 
 	public int location() {
-		return location;
+		return location[activeIndex];
 	}
 }

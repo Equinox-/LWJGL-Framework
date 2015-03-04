@@ -183,9 +183,11 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 		for (int i = 0; i < uniformCount; i++) {
 			String name = GL20.glGetActiveUniform(programID, i, uniformLength,
 					sizeBuff, typeBuff);
-			int location = GL20.glGetUniformLocation(programID, name);
+			boolean array = name.endsWith("]");
+			if (array)
+				name = name.substring(0, name.length() - 3);
 			uniforms.put(name, new ShaderUniform(this, name, sizeBuff.get(0),
-					typeBuff.get(0), location));
+					typeBuff.get(0), array));
 		}
 	}
 
@@ -197,7 +199,7 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 				System.err
 						.println("Tried to query shader for invalid uniform: "
 								+ name);
-			uniforms.put(name, v = new ShaderUniform(this, name, -1, -1, l));
+			uniforms.put(name, v = new ShaderUniform(this, name, l));
 		}
 		return v;
 	}
