@@ -105,6 +105,32 @@ public class ShaderUniform {
 			typeMismatch("boolean");
 	}
 
+	public void bvector(boolean x, boolean y) {
+		utilAllowed();
+		if (type == GL20.GL_BOOL_VEC2)
+			GL20.glUniform2i(location[activeIndex], x ? 1 : 0, y ? 1 : 0);
+		else
+			typeMismatch("bool vec2");
+	}
+
+	public void bvector(boolean x, boolean y, boolean z) {
+		utilAllowed();
+		if (type == GL20.GL_BOOL_VEC3)
+			GL20.glUniform3i(location[activeIndex], x ? 1 : 0, y ? 1 : 0, z ? 1
+					: 0);
+		else
+			typeMismatch("bool vec2");
+	}
+
+	public void bvector(boolean x, boolean y, boolean z, boolean w) {
+		utilAllowed();
+		if (type == GL20.GL_BOOL_VEC4)
+			GL20.glUniform4i(location[activeIndex], x ? 1 : 0, y ? 1 : 0, z ? 1
+					: 0, w ? 1 : 0);
+		else
+			typeMismatch("bool vec4");
+	}
+
 	public void scalar(float x) {
 		utilAllowed();
 		if (type == GL11.GL_FLOAT)
