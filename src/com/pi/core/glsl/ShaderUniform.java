@@ -2,6 +2,7 @@ package com.pi.core.glsl;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -18,8 +19,8 @@ public class ShaderUniform {
 	private final int size;
 	private final int type;
 	private final int[] location;
+	private final int[] samplerID;
 
-	private int samplerID;
 	private int activeIndex;
 
 	public ShaderUniform(ShaderProgram prog, String name, int size, int type,
@@ -38,7 +39,8 @@ public class ShaderUniform {
 			location[0] = GL20.glGetUniformLocation(prog.getID(), name);
 
 		this.activeIndex = 0;
-		this.samplerID = 16;
+		this.samplerID = new int[size];
+		Arrays.fill(samplerID, 16);
 	}
 
 	public ShaderUniform(ShaderProgram prog, String name, int location) {
@@ -49,7 +51,8 @@ public class ShaderUniform {
 		this.location = new int[] { location };
 
 		this.activeIndex = 0;
-		this.samplerID = 16;
+		this.samplerID = new int[size];
+		Arrays.fill(samplerID, 16);
 	}
 
 	public ShaderUniform index(int i) {
@@ -81,20 +84,20 @@ public class ShaderUniform {
 				&& type != GL20.GL_SAMPLER_3D && type != GL20.GL_SAMPLER_CUBE)
 			typeMismatch("sampler");
 
-		if (this.samplerID < prog.samplers.length)
-			prog.samplers[this.samplerID] = null;
+		if (this.samplerID[activeIndex] < prog.samplers.length)
+			prog.samplers[this.samplerID[activeIndex]] = null;
 		if (t == null) {
-			this.samplerID = 16;
+			this.samplerID[activeIndex] = 16;
 		} else {
 			for (int i = 0; i < prog.samplers.length; i++) {
 				if (prog.samplers[i] == null) {
-					this.samplerID = i;
+					this.samplerID[activeIndex] = i;
 					prog.samplers[i] = t;
 					break;
 				}
 			}
 		}
-		GL20.glUniform1i(location[activeIndex], samplerID);
+		GL20.glUniform1i(location[activeIndex], samplerID[activeIndex]);
 	}
 
 	public void bool(boolean b) {
