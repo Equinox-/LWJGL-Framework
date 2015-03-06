@@ -12,10 +12,10 @@ import com.pi.math.vector.VectorBuff;
 
 class VertexLayout {
 	private static final int MAX_ATTR_COUNT = 64; // Realistically 16 on most GPUs
-
-	final int byteSize;
+	
+	final int structureSize;
 	final Field[] attrMapping;
-	final int[] attrOffset, attrSize, attrType;
+	final int[] attrOffset, attrSize, attrType, attrIndex;
 	final boolean[] attrNormalize;
 
 	private static void getFields(List<Field> fields, Class<?> clazz) {
@@ -32,6 +32,7 @@ class VertexLayout {
 		attrSize = new int[MAX_ATTR_COUNT];
 		attrType = new int[MAX_ATTR_COUNT];
 		attrNormalize = new boolean[MAX_ATTR_COUNT];
+		attrIndex = new int[MAX_ATTR_COUNT];
 
 		List<Field> fields = new ArrayList<>();
 		getFields(fields, clazz);
@@ -40,54 +41,65 @@ class VertexLayout {
 			AttrLayout layout = f.getAnnotation(AttrLayout.class);
 			if (layout != null) {
 				Class<?> type = f.getType();
-				int attrID = layout.layout();
-				attrOffset[attrID] = structSize;
-				if (type.isAssignableFrom(VectorBuff.class)) { // Vector type
-					if (layout.dimension() < 2 || layout.dimension() > 4)
-						throw new RuntimeException(
-								"A vector style vertex attr may only have 2-4 components.  ("
-										+ f.getName()
-										+ ")  You likely have to define the AttrLayout#dimension() parameter.");
-					structSize += 4 * layout.dimension();
-					attrType[attrID] = GL11.GL_FLOAT;
-					attrSize[attrID] = layout.dimension();
-					attrNormalize[attrID] = false;
-				}/*
-				 * else if (type.isPrimitive()) { // Primitive type structSize += PrimitiveInfo.sizeof(type); attrSize[attrID] = 1;
-				 * attrType[attrID] = }
-				 */else if (type.isAssignableFrom(Matrix4.class)) {
-					if (layout.dimension() >= 0 && layout.dimension() != 4
-							&& layout.dimension() != 3)
-						throw new RuntimeException(
-								"Non 3/4-D matricies aren't supported.");
-					structSize += 16 * 4;
-					attrSize[attrID] = layout.dimension() >= 0 ? layout
-							.dimension() : 4;
-					attrType[attrID] = GL11.GL_FLOAT;
-					attrNormalize[attrID] = false;
-				} else if (type.isAssignableFrom(BufferColor.class)) {
-					structSize += 4;
-					if (layout.dimension() >= 0 && layout.dimension() != 4
-							&& layout.dimension() != 3)
-						throw new RuntimeException(
-								"Non 3/4-D colors aren't supported.");
-					attrSize[attrID] = layout.dimension() >= 0 ? layout
-							.dimension() : 4;
-					attrType[attrID] = GL11.GL_UNSIGNED_BYTE;
-					attrNormalize[attrID] = true;
-				} else {
-					System.err.println("Warning: You tried to mark "
-							+ f.getName() + " of type " + type.getSimpleName()
-							+ " as a vertex attr.  It wasn't recognized.");
-					continue;
+				if (layout.arraySize() < 0)
+					throw new RuntimeException("Array size of " + f.getName()
+							+ " is less than zero.  This will never work.");
+				if (layout.arraySize() != 1 && !type.isArray())
+					throw new RuntimeException("Array size of non-array type "
+							+ f.getName() + " not one.  This will never work");
+
+				if (type.isArray())
+					type = type.getComponentType();
+
+				for (int k = 0; k < layout.arraySize(); k++) {
+					int attrID = layout.layout() + k
+							* (type.isAssignableFrom(Matrix4.class) ? 4 : 1);
+					attrOffset[attrID] = structSize;
+					attrIndex[attrID] = k;
+					if (type.isAssignableFrom(VectorBuff.class)) { // Vector type
+						if (layout.dimension() < 2 || layout.dimension() > 4)
+							throw new RuntimeException(
+									"A vector style vertex attr may only have 2-4 components.  ("
+											+ f.getName()
+											+ ")  You likely have to define the AttrLayout#dimension() parameter.");
+						structSize += 4 * layout.dimension();
+						attrType[attrID] = GL11.GL_FLOAT;
+						attrSize[attrID] = layout.dimension();
+						attrNormalize[attrID] = false;
+					} else if (type.isAssignableFrom(Matrix4.class)) {
+						if (layout.dimension() >= 0 && layout.dimension() != 4)
+							throw new RuntimeException(
+									"Non 4-D matricies aren't supported.");
+						structSize += 16 * 4;
+						attrSize[attrID] = 4;
+						attrType[attrID] = GL11.GL_FLOAT;
+						attrNormalize[attrID] = false;
+					} else if (type.isAssignableFrom(BufferColor.class)) {
+						if (layout.dimension() >= 0 && layout.dimension() != 4
+								&& layout.dimension() != 3)
+							throw new RuntimeException(
+									"Non 3/4-D colors aren't supported.");
+						structSize += 4;
+						attrSize[attrID] = layout.dimension() >= 0 ? layout
+								.dimension() : 4;
+						attrType[attrID] = GL11.GL_UNSIGNED_BYTE;
+						attrNormalize[attrID] = true;
+					} else {
+						System.err.println("Warning: You tried to mark "
+								+ f.getName() + " of type "
+								+ type.getSimpleName()
+								+ " as a vertex attr.  It wasn't recognized.");
+						continue;
+					}
+					if (attrMapping[attrID] != null)
+						throw new RuntimeException("Attribute " + f.getName()
+								+ " collides with "
+								+ attrMapping[attrID].getName());
+					attrMapping[attrID] = f;
 				}
-				if (attrMapping[attrID] != null)
-					throw new RuntimeException("Attribute " + f.getName()
-							+ " collides with " + attrMapping[attrID].getName());
-				attrMapping[attrID] = f;
 			}
 		}
-		this.byteSize = structSize;
+		this.structureSize = structSize;
 	}
 
 	public void validate() {
@@ -99,21 +111,27 @@ class VertexLayout {
 						+ attrMapping[i].getName()
 						+ " is over the maximum attr count of " + maxID);
 
-		for (int i = 0; i < maxID; i++) {
-			if (attrMapping[i] != null
-					&& attrMapping[i].getType().isAssignableFrom(Matrix4.class)) {
-				// If it is a matrix the next 3 have to be empty.
-				if (i + 3 >= maxID)
-					throw new RuntimeException("A matrix attribute ("
-							+ attrMapping[i].getName()
-							+ ") overflowed the attribute register count "
-							+ maxID);
-				for (int j = i; j < i + attrSize[i]; j++)
-					if (attrMapping[j] != null)
+		for (int i = 0; i < MAX_ATTR_COUNT; i++) {
+			if (attrMapping[i] != null) {
+				Class<?> type = attrMapping[i].getType();
+				if (type.isArray())
+					type = type.getComponentType();
+				int registerCount = type.isAssignableFrom(Matrix4.class) ? attrSize[i]
+						: 1;
+
+				for (int r = 0; r < registerCount; r++) {
+					if (i + r > maxID)
+						throw new RuntimeException("An attribute ("
+								+ attrMapping[i].getName() + "[" + attrIndex[i]
+								+ "]) overflowed the attribute registers (x"
+								+ maxID + ")");
+
+					if (attrMapping[i + r] != null && r > 0)
 						throw new RuntimeException("The attribute "
-								+ attrMapping[j].getName()
-								+ " collides with the matrix attribute "
+								+ attrMapping[i + r].getName()
+								+ " collides with the attribute "
 								+ attrMapping[i].getName());
+				}
 			}
 		}
 	}

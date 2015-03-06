@@ -28,8 +28,8 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 		this.count = count;
 		this.layout = new VertexLayout(vertexClass);
 		this.layout.validate();
-		this.bufferObject = new GLGenericBuffer(layout.byteSize * count);
-		
+		this.bufferObject = new GLGenericBuffer(layout.structureSize * count);
+
 		cpuAlloc();
 	}
 
@@ -51,32 +51,74 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 		for (int i = 0; i < vertexDB.length; i++) {
 			try {
 				E itm = vertexClass.newInstance();
-				int head = i * layout.byteSize;
+				int head = i * layout.structureSize;
 				for (int j = 0; j < layout.attrMapping.length; j++) {
 					Field attr = layout.attrMapping[j];
 					if (attr != null) {
 						attr.setAccessible(true);
-						if (attr.getType().isAssignableFrom(VectorBuff.class)) {
-							attr.set(
-									itm,
-									new VectorBuff(this.bufferObject
-											.floatImageAt(head
-													+ layout.attrOffset[j]), 0,
-											layout.attrSize[j]));
-						} else if (attr.getType().isAssignableFrom(
-								Matrix4.class)) {
-							attr.set(
-									itm,
-									new Matrix4(this.bufferObject
-											.floatImageAt(head
-													+ layout.attrOffset[j]), 0));
-						} else if (attr.getType().isAssignableFrom(
-								BufferColor.class)) {
-							attr.set(
-									itm,
-									new BufferColor(this.bufferObject
-											.getBacking(), head
-											+ layout.attrOffset[j]));
+						if (attr.getType().isArray()) {
+							Class<?> type = attr.getType().getComponentType();
+							Object array = attr.get(itm);
+							if (array == null) {
+								array = Array.newInstance(type, attr
+										.getAnnotation(AttrLayout.class)
+										.arraySize());
+								attr.set(itm, array);
+							}
+
+							if (type.isAssignableFrom(VectorBuff.class)) {
+								Array.set(
+										array,
+										layout.attrIndex[j],
+										new VectorBuff(
+												this.bufferObject
+														.floatImageAt(head
+																+ layout.attrOffset[j]),
+												0, layout.attrSize[j]));
+							} else if (type.isAssignableFrom(Matrix4.class)) {
+								Array.set(
+										array,
+										layout.attrIndex[j],
+										new Matrix4(
+												this.bufferObject
+														.floatImageAt(head
+																+ layout.attrOffset[j]),
+												0));
+							} else if (type.isAssignableFrom(BufferColor.class)) {
+								Array.set(
+										array,
+										layout.attrIndex[j],
+										new BufferColor(this.bufferObject
+												.getBacking(), head
+												+ layout.attrOffset[j]));
+							}
+						} else {
+							if (attr.getType().isAssignableFrom(
+									VectorBuff.class)) {
+								attr.set(
+										itm,
+										new VectorBuff(
+												this.bufferObject
+														.floatImageAt(head
+																+ layout.attrOffset[j]),
+												0, layout.attrSize[j]));
+							} else if (attr.getType().isAssignableFrom(
+									Matrix4.class)) {
+								attr.set(
+										itm,
+										new Matrix4(
+												this.bufferObject
+														.floatImageAt(head
+																+ layout.attrOffset[j]),
+												0));
+							} else if (attr.getType().isAssignableFrom(
+									BufferColor.class)) {
+								attr.set(
+										itm,
+										new BufferColor(this.bufferObject
+												.getBacking(), head
+												+ layout.attrOffset[j]));
+							}
 						}
 					}
 				}
@@ -86,7 +128,7 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 			}
 		}
 	}
-	
+
 	public void cpuFree() {
 		this.bufferObject.cpuFree();
 		this.vertexDB = null;
@@ -114,21 +156,17 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 
 		for (int j = 0; j < layout.attrMapping.length; j++) {
 			if (layout.attrMapping[j] != null) {
-				AttrLayout lay = layout.attrMapping[j]
-						.getAnnotation(AttrLayout.class);
 				if (layout.attrMapping[j].getType().isAssignableFrom(
 						Matrix4.class)) {
 					for (int r = 0; r < layout.attrSize[j]; r++)
-						GL20.glVertexAttribPointer(lay.layout() + r,
-								layout.attrSize[j], layout.attrType[j],
-								layout.attrNormalize[j], layout.byteSize,
-								layout.attrOffset[j] + r * layout.attrSize[j]
-										* 4);
+						GL20.glVertexAttribPointer(j + r, layout.attrSize[j],
+								layout.attrType[j], layout.attrNormalize[j],
+								layout.structureSize, layout.attrOffset[j] + r
+										* layout.attrSize[j] * 4);
 				} else {
-					GL20.glVertexAttribPointer(lay.layout(),
-							layout.attrSize[j], layout.attrType[j],
-							layout.attrNormalize[j], layout.byteSize,
-							layout.attrOffset[j]);
+					GL20.glVertexAttribPointer(j, layout.attrSize[j],
+							layout.attrType[j], layout.attrNormalize[j],
+							layout.structureSize, layout.attrOffset[j]);
 				}
 			}
 		}
@@ -147,9 +185,14 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 		GL30.glBindVertexArray(vao);
 		for (int j = 0; j < layout.attrMapping.length; j++) {
 			if (layout.attrMapping[j] != null) {
-				AttrLayout lay = layout.attrMapping[j]
-						.getAnnotation(AttrLayout.class);
-				GL20.glEnableVertexAttribArray(lay.layout());
+				int span = 1;
+				Class<?> type = layout.attrMapping[j].getType();
+				if (type.isArray())
+					type = type.getComponentType();
+				if (type.isAssignableFrom(Matrix4.class))
+					span = 4;
+				for (int r = 0; r < span; r++)
+					GL20.glEnableVertexAttribArray(j + r);
 			}
 		}
 	}
@@ -157,9 +200,14 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 	public void deactive() {
 		for (int j = 0; j < layout.attrMapping.length; j++) {
 			if (layout.attrMapping[j] != null) {
-				AttrLayout lay = layout.attrMapping[j]
-						.getAnnotation(AttrLayout.class);
-				GL20.glDisableVertexAttribArray(lay.layout());
+				int span = 1;
+				Class<?> type = layout.attrMapping[j].getType();
+				if (type.isArray())
+					type = type.getComponentType();
+				if (type.isAssignableFrom(Matrix4.class))
+					span = 4;
+				for (int r = 0; r < span; r++)
+					GL20.glDisableVertexAttribArray(j + r);
 			}
 		}
 		GL30.glBindVertexArray(0);
