@@ -53,6 +53,6 @@ public class Model<E> implements GPUObject {
 	public void render(int indexID) {
 		vertexData.activate();
 		indexes[indexID].render();
-		vertexData.deactive();
+		vertexData.deactivate();
 	}
 }

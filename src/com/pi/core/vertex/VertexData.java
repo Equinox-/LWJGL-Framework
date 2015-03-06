@@ -13,7 +13,9 @@ import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 import com.pi.math.matrix.Matrix4;
+import com.pi.math.vector.Vector;
 import com.pi.math.vector.VectorBuff;
+import com.pi.math.volume.BoundingArea;
 
 public class VertexData<E> implements GPUObject, GLIdentifiable {
 	public E[] vertexDB;
@@ -197,7 +199,7 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 		}
 	}
 
-	public void deactive() {
+	public void deactivate() {
 		for (int j = 0; j < layout.attrMapping.length; j++) {
 			if (layout.attrMapping[j] != null) {
 				int span = 1;
@@ -216,5 +218,14 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 	@Override
 	public int getID() {
 		return vao;
+	}
+
+	public static interface PositionVertex<E> {
+		public Vector position(E vtx);
+	}
+
+	public void include(BoundingArea area, PositionVertex<E> cpy) {
+		for (int i = 0; i < vertexDB.length; i++)
+			area.include(cpy.position(vertexDB[i]));
 	}
 }
