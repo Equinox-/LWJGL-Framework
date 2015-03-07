@@ -9,7 +9,6 @@ import org.lwjgl.opengl.GL45;
 
 import com.pi.core.framebuffer.FrameBufferAttachable;
 import com.pi.core.util.Bindable;
-import com.pi.core.util.GLError;
 import com.pi.core.util.GPUObject;
 
 public class Texture implements GPUObject, Bindable, FrameBufferAttachable {

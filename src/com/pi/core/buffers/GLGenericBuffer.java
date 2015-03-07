@@ -13,6 +13,12 @@ public class GLGenericBuffer extends GLBuffer<ByteBuffer, GLGenericBuffer> {
 		super(BufferUtils.createByteBuffer(size));
 	}
 
+	public GLGenericBuffer(ByteBuffer backing) {
+		super(backing);
+		if (!backing.isDirect())
+			throw new RuntimeException("OpenGL buffers must be direct.");
+	}
+
 	public ShortBuffer shortImageAt(int i) {
 		super.data.position(i);
 		return super.data.asShortBuffer();

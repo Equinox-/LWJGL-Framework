@@ -2,7 +2,9 @@ package com.pi.core.vertex;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 
+import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
@@ -22,15 +24,27 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 	private final Class<E> vertexClass;
 	private final int count;
 	private final VertexLayout layout;
-	private final GLGenericBuffer bufferObject;
+	public final GLGenericBuffer bufferObject;
 	private int vao = -1;
 
 	public VertexData(Class<E> vertexClass, int count) {
 		this.vertexClass = vertexClass;
-		this.count = count;
 		this.layout = new VertexLayout(vertexClass);
+		this.count = count;
+		if (GL.getCurrent() != null)
+			this.layout.validate();
+		this.bufferObject = new GLGenericBuffer(this.count
+				* this.layout.structureSize);
+
+		cpuAlloc();
+	}
+
+	public VertexData(Class<E> vertexClass, GLGenericBuffer data) {
+		this.vertexClass = vertexClass;
+		this.layout = new VertexLayout(vertexClass);
+		this.count = data.size() / this.layout.structureSize;
 		this.layout.validate();
-		this.bufferObject = new GLGenericBuffer(layout.structureSize * count);
+		this.bufferObject = data;
 
 		cpuAlloc();
 	}

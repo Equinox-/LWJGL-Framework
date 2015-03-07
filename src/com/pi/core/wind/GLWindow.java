@@ -8,6 +8,7 @@ import org.lwjgl.opengl.GLContext;
 import org.lwjgl.system.MemoryUtil;
 
 import com.pi.core.model.BasicShapes;
+import com.pi.core.texture.ColorTextures;
 
 public abstract class GLWindow {
 	private final long windowID;
@@ -74,6 +75,8 @@ public abstract class GLWindow {
 
 		// Kill BasicShapes
 		BasicShapes.removeShapes();
+		ColorTextures.removeTextures();
+		
 		GLFW.glfwDestroyWindow(windowID);
 		GLFW.glfwTerminate();
 		System.exit(0);

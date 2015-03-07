@@ -2,6 +2,7 @@ package com.pi.core.vertex;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.lwjgl.opengl.GL11;
@@ -12,11 +13,11 @@ import com.pi.math.vector.VectorBuff;
 
 class VertexLayout {
 	private static final int MAX_ATTR_COUNT = 64; // Realistically 16 on most GPUs
-	
-	final int structureSize;
-	final Field[] attrMapping;
-	final int[] attrOffset, attrSize, attrType, attrIndex;
-	final boolean[] attrNormalize;
+
+	public final int structureSize;
+	public final Field[] attrMapping;
+	public final int[] attrOffset, attrSize, attrType, attrIndex;
+	public final boolean[] attrNormalize;
 
 	private static void getFields(List<Field> fields, Class<?> clazz) {
 		for (Field f : clazz.getDeclaredFields())
@@ -36,6 +37,21 @@ class VertexLayout {
 
 		List<Field> fields = new ArrayList<>();
 		getFields(fields, clazz);
+		// Sorts fields by layout for consistent data layout accross different computers
+		fields.sort(new Comparator<Field>() {
+			@Override
+			public int compare(Field a, Field b) {
+				AttrLayout al = a.getAnnotation(AttrLayout.class);
+				AttrLayout bl = b.getAnnotation(AttrLayout.class);
+				if (al == null && bl == null)
+					return 0;
+				if (al == null)
+					return -1;
+				if (bl == null)
+					return 1;
+				return Integer.compare(al.layout(), bl.layout());
+			}
+		});
 
 		for (Field f : fields) {
 			AttrLayout layout = f.getAnnotation(AttrLayout.class);
@@ -100,6 +116,16 @@ class VertexLayout {
 			}
 		}
 		this.structureSize = structSize;
+	}
+
+	public VertexLayout(int structureSize) {
+		this.structureSize = structureSize;
+		attrMapping = new Field[MAX_ATTR_COUNT];
+		attrOffset = new int[MAX_ATTR_COUNT];
+		attrSize = new int[MAX_ATTR_COUNT];
+		attrType = new int[MAX_ATTR_COUNT];
+		attrNormalize = new boolean[MAX_ATTR_COUNT];
+		attrIndex = new int[MAX_ATTR_COUNT];
 	}
 
 	public void validate() {
