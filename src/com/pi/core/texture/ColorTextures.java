@@ -29,7 +29,7 @@ public class ColorTextures {
 	public Texture getColorTexture(int rgba) {
 		Texture t = colorTextures.get(rgba);
 		if (t == null) {
-			t = new Texture(1, 1, GL11.GL_RGBA);
+			colorTextures.put(rgba, t = new Texture(1, 1, GL11.GL_RGBA));
 			t.gpuAlloc();
 			ByteBuffer data = BufferUtils.createByteBuffer(4);
 			data.putInt(rgba);

@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -58,15 +60,46 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 		this.programID = GL20.glCreateProgram();
 	}
 
+	private static final Pattern LINE_FINDER = Pattern
+			.compile("[0-9]+:([0-9]+):");
+
 	private static int compileShader(String src, int type)
 			throws InstantiationException {
+		src = ShaderPreprocessor.preprocess(src);
+		String[] lines = src.split("\n");
+
 		int shader = GL20.glCreateShader(type);
 		GL20.glShaderSource(shader, src);
 		GL20.glCompileShader(shader);
 		if (GL20.glGetShaderi(shader, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
-			String log = GL20.glGetShaderInfoLog(shader, 1024);
+			String log = GL20.glGetShaderInfoLog(shader, 4096);
 			GL20.glDeleteShader(shader);
-			throw new InstantiationException("Shader compile failure: \n" + log);
+			String[] logLines = log.split("\n");
+			StringBuilder res = new StringBuilder(log.length());
+			int maxLen = 0;
+			for (String s : logLines)
+				maxLen = Math.max(maxLen, s.length());
+
+			for (int i = 0; i < logLines.length; i++) {
+				Matcher m = LINE_FINDER.matcher(logLines[i]);
+				if (m.find()) {
+					res.append(logLines[i]);
+					for (int r = logLines[i].length(); r < maxLen + 4; r++)
+						res.append(' ');
+					int ctx;
+					try {
+						ctx = Integer.parseInt(m.group(1)) - 1;
+					} catch (NumberFormatException e) {
+						ctx = -1;
+					}
+					res.append("Context: ")
+							.append(ctx >= 0 && ctx < lines.length ? lines[ctx]
+									.trim() : "Unknown").append('\n');
+				} else
+					res.append(logLines[i]).append('\n');
+			}
+			System.err.println("Shader compile failure: \n" + res.toString());
+			throw new InstantiationException();
 		}
 		return shader;
 	}

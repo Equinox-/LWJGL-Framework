@@ -63,6 +63,10 @@ public class ShaderUniform {
 		return this;
 
 	}
+	
+	public boolean defined() {
+		return type != -1;
+	}
 
 	private void utilAllowed() {
 		if (type == -1)
