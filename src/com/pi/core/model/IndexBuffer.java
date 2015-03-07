@@ -10,7 +10,7 @@ import org.lwjgl.opengl.GL40;
 import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.util.GPUObject;
 
-public class IndexBuffer implements GPUObject {
+public class IndexBuffer extends GPUObject<IndexBuffer> {
 	public final GLGenericBuffer indexBuffer;
 	public final int indexType, indexSize, indexCount;
 	public final int indexStride;
@@ -119,17 +119,17 @@ public class IndexBuffer implements GPUObject {
 	}
 
 	@Override
-	public void gpuAlloc() {
+	protected void gpuAllocInternal() {
 		indexBuffer.gpuAlloc();
 	}
 
 	@Override
-	public void gpuFree() {
+	protected void gpuFreeInternal() {
 		indexBuffer.gpuFree();
 	}
 
 	@Override
-	public void gpuUpload() {
+	protected void gpuUploadInternal() {
 		indexBuffer.gpuUpload();
 	}
 
@@ -145,5 +145,10 @@ public class IndexBuffer implements GPUObject {
 			GL11.glDrawElements(mode.mode(), indexCount, indexType, 0);
 		}
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+
+	@Override
+	protected IndexBuffer me() {
+		return this;
 	}
 }

@@ -11,7 +11,8 @@ import com.pi.core.framebuffer.FrameBufferAttachable;
 import com.pi.core.util.Bindable;
 import com.pi.core.util.GPUObject;
 
-public class Texture implements GPUObject, Bindable, FrameBufferAttachable {
+public class Texture extends GPUObject<Texture> implements Bindable,
+		FrameBufferAttachable {
 	private static Texture currentTexture;
 
 	private static final int[][] MIPMAP_FILTER_TABLE;
@@ -116,9 +117,9 @@ public class Texture implements GPUObject, Bindable, FrameBufferAttachable {
 	}
 
 	@Override
-	public void gpuAlloc() {
+	public void gpuAllocInternal() {
 		if (texture >= 0)
-			gpuFree();
+			gpuFreeInternal();
 		texture = GL11.glGenTextures();
 		bind();
 		if (GL.getCapabilities().OpenGL45) {
@@ -144,7 +145,7 @@ public class Texture implements GPUObject, Bindable, FrameBufferAttachable {
 	}
 
 	@Override
-	public void gpuFree() {
+	public void gpuFreeInternal() {
 		if (texture < 0)
 			return;
 		GL11.glDeleteTextures(texture);
@@ -177,5 +178,10 @@ public class Texture implements GPUObject, Bindable, FrameBufferAttachable {
 
 	public int getHeight() {
 		return height;
+	}
+
+	@Override
+	public Texture me() {
+		return this;
 	}
 }

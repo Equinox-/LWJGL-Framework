@@ -3,7 +3,7 @@ package com.pi.core.model;
 import com.pi.core.util.GPUObject;
 import com.pi.core.vertex.VertexData;
 
-public class Model<E> implements GPUObject {
+public class Model<E> extends GPUObject<Model<E>> {
 	private final VertexData<E> vertexData;
 	private final IndexBuffer[] indexes;
 
@@ -18,7 +18,7 @@ public class Model<E> implements GPUObject {
 	}
 
 	@Override
-	public void gpuAlloc() {
+	protected void gpuAllocInternal() {
 		indexUploaded = false;
 		vertexData.gpuAlloc();
 		for (IndexBuffer index : indexes)
@@ -26,7 +26,7 @@ public class Model<E> implements GPUObject {
 	}
 
 	@Override
-	public void gpuFree() {
+	protected void gpuFreeInternal() {
 		indexUploaded = false;
 		for (IndexBuffer index : indexes)
 			index.gpuFree();
@@ -36,10 +36,10 @@ public class Model<E> implements GPUObject {
 	private boolean indexUploaded = false;
 
 	@Override
-	public void gpuUpload() {
+	protected void gpuUploadInternal() {
 		if (!indexUploaded) { // The index can't change, therefore only need to upload once per alloc. TODO Watch this
 			for (IndexBuffer index : indexes)
-				index.gpuUpload();
+				index.gpuUploadInternal();
 		}
 		indexUploaded = true;
 
@@ -54,5 +54,10 @@ public class Model<E> implements GPUObject {
 		vertexData.activate();
 		indexes[indexID].render();
 		vertexData.deactivate();
+	}
+
+	@Override
+	protected Model<E> me() {
+		return this;
 	}
 }

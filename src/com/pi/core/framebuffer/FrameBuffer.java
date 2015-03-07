@@ -11,7 +11,7 @@ import com.pi.core.util.Bindable;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 
-public class FrameBuffer implements GPUObject, GLIdentifiable, Bindable {
+public class FrameBuffer extends GPUObject<FrameBuffer> implements GLIdentifiable, Bindable {
 	private static final int DEFAULT_COLOR_ATTACHMENT_LIMIT = 16;
 
 	private static FrameBuffer current;
@@ -111,9 +111,9 @@ public class FrameBuffer implements GPUObject, GLIdentifiable, Bindable {
 	}
 
 	@Override
-	public void gpuAlloc() {
+	protected void gpuAllocInternal() {
 		if (fbo >= 0)
-			gpuFree();
+			gpuFreeInternal();
 		fbo = GL30.glGenFramebuffers();
 		if (colorAttachments.size() > GL11
 				.glGetInteger(GL30.GL_MAX_COLOR_ATTACHMENTS))
@@ -140,7 +140,7 @@ public class FrameBuffer implements GPUObject, GLIdentifiable, Bindable {
 	}
 
 	@Override
-	public void gpuFree() {
+	protected void gpuFreeInternal() {
 		if (fbo >= 0)
 			GL30.glDeleteFramebuffers(fbo);
 		fbo = -1;
@@ -177,5 +177,10 @@ public class FrameBuffer implements GPUObject, GLIdentifiable, Bindable {
 
 	public Set<FrameBufferAttachable> getColorAttachments() {
 		return colorAttachments;
+	}
+
+	@Override
+	protected FrameBuffer me() {
+		return this;
 	}
 }

@@ -7,7 +7,7 @@ import com.pi.core.model.BasicShapes;
 import com.pi.core.texture.Texture;
 import com.pi.core.util.GPUObject;
 
-public class ShaderOnTexture implements GPUObject {
+public class ShaderOnTexture extends GPUObject<ShaderOnTexture> {
 	private FrameBuffer fbo;
 	private Texture result;
 
@@ -18,13 +18,13 @@ public class ShaderOnTexture implements GPUObject {
 	}
 
 	@Override
-	public void gpuAlloc() {
+	protected void gpuAllocInternal() {
 		this.result.gpuAlloc();
 		this.fbo.gpuAlloc();
 	}
 
 	@Override
-	public void gpuFree() {
+	protected void gpuFreeInternal() {
 		this.fbo.gpuFree();
 		this.result.gpuFree();
 	}
@@ -45,5 +45,10 @@ public class ShaderOnTexture implements GPUObject {
 
 	public FrameBuffer getFBO() {
 		return fbo;
+	}
+
+	@Override
+	protected ShaderOnTexture me() {
+		return this;
 	}
 }

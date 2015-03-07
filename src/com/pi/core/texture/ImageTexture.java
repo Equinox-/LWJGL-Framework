@@ -36,7 +36,7 @@ public class ImageTexture extends Texture {
 	}
 
 	@Override
-	public void gpuUpload() {
+	public void gpuUploadInternal() {
 		boolean hasAlpha = img.getColorModel().hasAlpha();
 		ByteBuffer data = BufferUtils.createByteBuffer(img.getWidth()
 				* img.getHeight() * (hasAlpha ? 4 : 3));

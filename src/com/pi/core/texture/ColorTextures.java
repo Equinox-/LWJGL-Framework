@@ -30,7 +30,7 @@ public class ColorTextures {
 		Texture t = colorTextures.get(rgba);
 		if (t == null) {
 			colorTextures.put(rgba, t = new Texture(1, 1, GL11.GL_RGBA));
-			t.gpuAlloc();
+			t.gpuAllocInternal();
 			ByteBuffer data = BufferUtils.createByteBuffer(4);
 			data.putInt(rgba);
 			data.flip();
@@ -43,7 +43,7 @@ public class ColorTextures {
 
 	public void gpuFree() {
 		for (Texture t : colorTextures.values())
-			t.gpuFree();
+			t.gpuFreeInternal();
 		colorTextures.clear();
 	}
 }

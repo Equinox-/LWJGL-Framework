@@ -23,7 +23,8 @@ import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 import com.pi.io.FileUtil;
 
-public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
+public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
+		GLIdentifiable {
 	private static ShaderProgram currentShader;
 
 	private int programID;
@@ -54,9 +55,9 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 	}
 
 	@Override
-	public void gpuAlloc() {
+	protected void gpuAllocInternal() {
 		if (this.programID >= 0)
-			gpuFree();
+			gpuFreeInternal();
 		this.programID = GL20.glCreateProgram();
 	}
 
@@ -156,7 +157,7 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 
 	public ShaderProgram link() {
 		if (programID < 0)
-			gpuAlloc();
+			gpuAllocInternal();
 		for (int obj : attachedObjects)
 			GL20.glAttachShader(programID, obj);
 		GL20.glLinkProgram(programID);
@@ -170,7 +171,7 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 	}
 
 	@Override
-	public void gpuFree() {
+	protected void gpuFreeInternal() {
 		unbind();
 		for (int obj : attachedObjects) {
 			GL20.glDetachShader(programID, obj);
@@ -245,5 +246,10 @@ public class ShaderProgram implements Bindable, GLIdentifiable, GPUObject {
 			else
 				samplers[i].bind();
 		}
+	}
+
+	@Override
+	protected ShaderProgram me() {
+		return this;
 	}
 }

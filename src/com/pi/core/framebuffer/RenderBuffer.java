@@ -4,7 +4,7 @@ import org.lwjgl.opengl.GL30;
 
 import com.pi.core.util.GPUObject;
 
-public class RenderBuffer implements GPUObject, FrameBufferAttachable {
+public class RenderBuffer extends GPUObject<RenderBuffer> implements FrameBufferAttachable {
 	private int glID;
 	private final int width, height;
 	private final int internalFormat;
@@ -36,9 +36,9 @@ public class RenderBuffer implements GPUObject, FrameBufferAttachable {
 	}
 
 	@Override
-	public void gpuAlloc() {
+	protected void gpuAllocInternal() {
 		if (glID >= 0)
-			gpuFree();
+			gpuFreeInternal();
 		glID = GL30.glGenRenderbuffers();
 		if (msaaSamples > 0) {
 			GL30.glRenderbufferStorageMultisample(GL30.GL_RENDERBUFFER,
@@ -50,10 +50,15 @@ public class RenderBuffer implements GPUObject, FrameBufferAttachable {
 	}
 
 	@Override
-	public void gpuFree() {
+	protected void gpuFreeInternal() {
 		if (glID >= 0)
 			GL30.glDeleteRenderbuffers(glID);
 		glID = -1;
+	}
+
+	@Override
+	protected RenderBuffer me() {
+		return this;
 	}
 
 }

@@ -2,7 +2,6 @@ package com.pi.core.vertex;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
 
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL15;
@@ -19,7 +18,8 @@ import com.pi.math.vector.Vector;
 import com.pi.math.vector.VectorBuff;
 import com.pi.math.volume.BoundingArea;
 
-public class VertexData<E> implements GPUObject, GLIdentifiable {
+public class VertexData<E> extends GPUObject<VertexData<E>> implements
+		GLIdentifiable {
 	public E[] vertexDB;
 	private final Class<E> vertexClass;
 	private final int count;
@@ -154,14 +154,14 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 	 * If you changed the vertex data you need to resync the buffer. This does that.
 	 */
 	@Override
-	public void gpuUpload() {
+	protected void gpuUploadInternal() {
 		bufferObject.gpuUpload();
 	}
 
 	@Override
-	public void gpuAlloc() {
+	protected void gpuAllocInternal() {
 		if (vao >= 0)
-			gpuFree();
+			gpuFreeInternal();
 
 		// Dump the buffer
 		vao = GL30.glGenVertexArrays();
@@ -191,7 +191,7 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 	}
 
 	@Override
-	public void gpuFree() {
+	protected void gpuFreeInternal() {
 		if (vao >= 0)
 			GL30.glDeleteVertexArrays(vao);
 		bufferObject.gpuFree();
@@ -241,5 +241,10 @@ public class VertexData<E> implements GPUObject, GLIdentifiable {
 	public void include(BoundingArea area, PositionVertex<E> cpy) {
 		for (int i = 0; i < vertexDB.length; i++)
 			area.include(cpy.position(vertexDB[i]));
+	}
+
+	@Override
+	protected VertexData<E> me() {
+		return this;
 	}
 }

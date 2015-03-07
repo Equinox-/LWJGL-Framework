@@ -38,14 +38,14 @@ public class ConwaysLife extends GLWindow {
 		textures = new DoubleBuffered<>(new DataTexture(1, W, H),
 				new DataTexture(1, W, H));
 		textures.getFront().wrap(TextureWrap.REPEAT, TextureWrap.REPEAT)
-				.gpuAlloc();
+				.gpuAllocInternal();
 		textures.getBack().wrap(TextureWrap.REPEAT, TextureWrap.REPEAT)
-				.gpuAlloc();
+				.gpuAllocInternal();
 
 		for (Vector[] vv : textures.getBack().vectors)
 			for (Vector v : vv)
 				v.setV(Math.random() > 0.75 ? 1 : 0);
-		textures.getBack().gpuUpload();
+		textures.getBack().gpuUploadInternal();
 
 		frameBuffers = new DoubleBuffered<>(new FrameBuffer(),
 				new FrameBuffer());

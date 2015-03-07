@@ -7,8 +7,8 @@ import org.lwjgl.opengl.GL15;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 
-abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
-		GLIdentifiable, GPUObject {
+abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
+		GPUObject<R> implements GLIdentifiable {
 	private static final int[][] HINT_TABLE;
 	static {
 		BufferAccessHint[] ahv = BufferAccessHint.values();
@@ -69,9 +69,9 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 	}
 
 	@Override
-	public void gpuAlloc() {
+	protected void gpuAllocInternal() {
 		if (bufferPtr != -1)
-			gpuFree();
+			gpuFreeInternal();
 		bufferPtr = GL15.glGenBuffers();
 
 		int ahI = accessHint.ordinal();
@@ -82,7 +82,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 	}
 
 	@Override
-	public void gpuFree() {
+	protected void gpuFreeInternal() {
 		if (bufferPtr >= 0)
 			GL15.glDeleteBuffers(bufferPtr);
 		bufferPtr = -1;
@@ -98,7 +98,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 	}
 
 	@Override
-	public void gpuUpload() {
+	protected void gpuUploadInternal() {
 		if (bufferPtr == -1)
 			throw new RuntimeException(
 					"Can't sync to GPU when no buffer object exists.");
@@ -110,7 +110,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 	}
 
 	@Override
-	public void gpuDownload() {
+	protected void gpuDownloadInternal() {
 		if (bufferPtr == -1)
 			throw new RuntimeException(
 					"Can't sync from GPU when no buffer object exists.");
@@ -123,7 +123,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 	}
 
 	public void dispose() {
-		gpuFree();
+		gpuFreeInternal();
 		cpuFree();
 	}
 
@@ -144,5 +144,11 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> implements
 
 	public E getBacking() {
 		return data;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	protected R me() {
+		return (R) this;
 	}
 }

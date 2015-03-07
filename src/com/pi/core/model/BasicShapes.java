@@ -36,8 +36,8 @@ public class BasicShapes {
 			plVerts.vertexDB[3].pos.setV(-1, 1);
 			ndcScreenQuad = new Model<>(PrimitiveType.TRIANGLES, plVerts,
 					new int[] { 0, 1, 2, 0, 2, 3 });
-			ndcScreenQuad.gpuAlloc();
-			ndcScreenQuad.gpuUpload();
+			ndcScreenQuad.gpuAllocInternal();
+			ndcScreenQuad.gpuUploadInternal();
 			plVerts.cpuFree();
 		}
 		return ndcScreenQuad;
@@ -45,6 +45,6 @@ public class BasicShapes {
 
 	public void gpuFree() {
 		if (ndcScreenQuad != null)
-			ndcScreenQuad.gpuFree();
+			ndcScreenQuad.gpuFreeInternal();
 	}
 }
