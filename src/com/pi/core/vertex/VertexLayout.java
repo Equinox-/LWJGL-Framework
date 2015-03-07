@@ -118,16 +118,6 @@ class VertexLayout {
 		this.structureSize = structSize;
 	}
 
-	public VertexLayout(int structureSize) {
-		this.structureSize = structureSize;
-		attrMapping = new Field[MAX_ATTR_COUNT];
-		attrOffset = new int[MAX_ATTR_COUNT];
-		attrSize = new int[MAX_ATTR_COUNT];
-		attrType = new int[MAX_ATTR_COUNT];
-		attrNormalize = new boolean[MAX_ATTR_COUNT];
-		attrIndex = new int[MAX_ATTR_COUNT];
-	}
-
 	public void validate() {
 		int maxID = GL11.glGetInteger(GL20.GL_MAX_VERTEX_ATTRIBS);
 		// The maximum number of vIDs
