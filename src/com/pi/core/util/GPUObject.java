@@ -7,7 +7,7 @@ import java.util.Set;
 
 public abstract class GPUObject<K> {
 	// Used by the Warning Manager system
-	private static final Set<Class<?>> scanned = new HashSet<>();
+	private static final Set<Method> scanned = new HashSet<>();
 
 	private boolean allocated = false;
 	private WeakReference<GPUObject<K>> ref;
@@ -15,14 +15,13 @@ public abstract class GPUObject<K> {
 	public GPUObject() {
 		if (WarningManager.DEBUG_WARNINGS) {
 			Class<?> base = getClass();
-			if (scanned.add(base)) {
-				Method[] mm = base.getMethods();
-				for (Method k : mm) {
-					if (k.getName().endsWith("Internal")
-							|| k.getName().equals("me")) {
+			Method[] mm = base.getMethods();
+			for (Method k : mm) {
+				if (k.getName().endsWith("Internal")
+						|| k.getName().equals("me")) {
+					if (scanned.add(k))
 						System.err.println("Internal GPU method is public:\t"
 								+ k);
-					}
 				}
 			}
 		}

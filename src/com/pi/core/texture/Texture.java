@@ -117,7 +117,7 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 	}
 
 	@Override
-	public void gpuAllocInternal() {
+	protected void gpuAllocInternal() {
 		if (texture >= 0)
 			gpuFreeInternal();
 		texture = GL11.glGenTextures();
@@ -145,7 +145,7 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 	}
 
 	@Override
-	public void gpuFreeInternal() {
+	protected void gpuFreeInternal() {
 		if (texture < 0)
 			return;
 		GL11.glDeleteTextures(texture);
@@ -181,7 +181,7 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 	}
 
 	@Override
-	public Texture me() {
+	protected Texture me() {
 		return this;
 	}
 }

@@ -59,7 +59,7 @@ public class DataTexture extends Texture {
 	}
 
 	@Override
-	public void gpuUploadInternal() {
+	protected void gpuUploadInternal() {
 		super.bind();
 		super.commitParameters();
 		backing.position(0);
@@ -69,7 +69,7 @@ public class DataTexture extends Texture {
 	}
 
 	@Override
-	public void gpuDownloadInternal() {
+	protected void gpuDownloadInternal() {
 		super.bind();
 		backing.position(0);
 		GL11.glGetTexImage(GL11.GL_TEXTURE_2D, 0, stashFormat, GL11.GL_FLOAT,
