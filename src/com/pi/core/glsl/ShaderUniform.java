@@ -38,9 +38,18 @@ public class ShaderUniform {
 		else
 			location[0] = GL20.glGetUniformLocation(prog.getID(), name);
 
+		for (int k = 0; k < location.length; k++)
+			if (location[k] == -1)
+				if (array)
+					System.err.println("Unable to locate " + name + "[" + k
+							+ "]\t@" + location[k]);
+				else
+					System.err.println("Unable to locate " + name + "\t@"
+							+ location[k]);
+
 		this.activeIndex = 0;
 		this.samplerID = new int[size];
-		Arrays.fill(samplerID, 16);
+		Arrays.fill(samplerID, ShaderProgram.MAX_TEXTURE_UNITS);
 	}
 
 	public ShaderUniform(ShaderProgram prog, String name, int location) {
@@ -52,7 +61,7 @@ public class ShaderUniform {
 
 		this.activeIndex = 0;
 		this.samplerID = new int[size];
-		Arrays.fill(samplerID, 16);
+		Arrays.fill(samplerID, ShaderProgram.MAX_TEXTURE_UNITS);
 	}
 
 	public ShaderUniform index(int i) {
@@ -63,7 +72,7 @@ public class ShaderUniform {
 		return this;
 
 	}
-	
+
 	public boolean defined() {
 		return type != -1;
 	}
@@ -88,17 +97,31 @@ public class ShaderUniform {
 				&& type != GL20.GL_SAMPLER_3D && type != GL20.GL_SAMPLER_CUBE)
 			typeMismatch("sampler");
 
-		if (this.samplerID[activeIndex] < prog.samplers.length)
-			prog.samplers[this.samplerID[activeIndex]] = null;
+		if (this.samplerID[activeIndex] < prog.textureUnit.length)
+			if (--prog.textureUnitRefCount[this.samplerID[activeIndex]] <= 0) {
+				prog.textureUnit[this.samplerID[activeIndex]] = null;
+				prog.textureUnitRefCount[this.samplerID[activeIndex]] = 0;
+			}
 		if (t == null) {
-			this.samplerID[activeIndex] = 16;
+			this.samplerID[activeIndex] = ShaderProgram.MAX_TEXTURE_UNITS;
 		} else {
-			for (int i = 0; i < prog.samplers.length; i++) {
-				if (prog.samplers[i] == null) {
+			// Search for an equiv texture object:
+			int fNull = -1;
+			boolean found = false;
+			for (int i = 0; i < prog.textureUnit.length; i++) {
+				if (prog.textureUnit[i] == null && fNull == -1) {
+					fNull = i;
+				} else if (prog.textureUnit[i] == t) {
 					this.samplerID[activeIndex] = i;
-					prog.samplers[i] = t;
+					prog.textureUnitRefCount[i]++;
+					found = true;
 					break;
 				}
+			}
+			if (!found) {
+				this.samplerID[activeIndex] = fNull;
+				prog.textureUnit[fNull] = t;
+				prog.textureUnitRefCount[fNull] = 1;
 			}
 		}
 		GL20.glUniform1i(location[activeIndex], samplerID[activeIndex]);
@@ -223,7 +246,7 @@ public class ShaderUniform {
 					(buff.get(2) & 0xFF) / 255f);
 		else
 			vector((buff.get(0) & 0xFF) / 255f, (buff.get(1) & 0xFF) / 255f,
-					(buff.get(2) & 0xFF) / 255f, (buff.get(3)) / 255f);
+					(buff.get(2) & 0xFF) / 255f, (buff.get(3) & 0xFF) / 255f);
 	}
 
 	public int location() {
