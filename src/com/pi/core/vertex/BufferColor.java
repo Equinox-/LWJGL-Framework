@@ -48,8 +48,8 @@ public final class BufferColor {
 	}
 
 	public BufferColor set(BufferColor c) {
-		return set(c.backer.get(offset), c.backer.get(offset + 1),
-				c.backer.get(offset + 2), c.backer.get(offset + 3));
+		return set(c.backer.get(c.offset), c.backer.get(c.offset + 1),
+				c.backer.get(c.offset + 2), c.backer.get(c.offset + 3));
 	}
 
 	public ByteBuffer getAccessor() {
