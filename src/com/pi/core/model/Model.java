@@ -4,8 +4,8 @@ import com.pi.core.util.GPUObject;
 import com.pi.core.vertex.VertexData;
 
 public class Model<E> extends GPUObject<Model<E>> {
-	private final VertexData<E> vertexData;
-	private final IndexBuffer[] indexes;
+	public final VertexData<E> vertexData;
+	public final IndexBuffer[] indexes;
 
 	public Model(PrimitiveType mode, VertexData<E> vertexData, int[]... index) {
 		if (index.length < 1)
@@ -15,6 +15,14 @@ public class Model<E> extends GPUObject<Model<E>> {
 		this.indexes = new IndexBuffer[index.length];
 		for (int i = 0; i < index.length; i++)
 			this.indexes[i] = new IndexBuffer(mode, index[i]);
+	}
+
+	public Model(VertexData<E> vertexData, IndexBuffer... index) {
+		if (index.length < 1)
+			throw new IllegalArgumentException(
+					"Must include at least one index buffer.");
+		this.vertexData = vertexData;
+		this.indexes = index;
 	}
 
 	@Override

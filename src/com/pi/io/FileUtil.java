@@ -15,11 +15,11 @@ public class FileUtil {
 		return string.toString();
 	}
 
-	public static String hexDump(byte[] data) {
+	public static String hexDump(byte[] data, int off, int len) {
 		StringBuilder res = new StringBuilder();
 		int nl = 0;
 		int space = 0;
-		for (int i = 0; i < data.length; i++) {
+		for (int i = off; i < off + len; i++) {
 			if (space == 0 && nl == 0)
 				res.append(i + "\t");
 			if ((data[i] & 0xF0) == 0)
