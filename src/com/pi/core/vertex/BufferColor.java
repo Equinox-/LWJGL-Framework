@@ -38,8 +38,9 @@ public final class BufferColor {
 		return set(r, g, b, 1);
 	}
 
-	public BufferColor set(int rgb) {
-		return set((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
+	public BufferColor set(int argb) {
+		return set((argb >> 24) & 0xFF, (argb >> 16) & 0xFF,
+				(argb >> 8) & 0xFF, argb & 0xFF);
 	}
 
 	public BufferColor set(Color src) {
@@ -75,5 +76,12 @@ public final class BufferColor {
 				&& (backer.get(offset + 1) & 0xFF) == g
 				&& (backer.get(offset + 2) & 0xFF) == b
 				&& (backer.get(offset + 3) & 0xFF) == a;
+	}
+
+	public boolean isColor(BufferColor o) {
+		return (backer.get(offset) & 0xFF) == (o.backer.get(offset) & 0xFF)
+				&& (backer.get(offset + 1) & 0xFF) == (o.backer.get(offset + 1) & 0xFF)
+				&& (backer.get(offset + 2) & 0xFF) == (o.backer.get(offset + 2) & 0xFF)
+				&& (backer.get(offset + 3) & 0xFF) == (o.backer.get(offset + 3) & 0xFF);
 	}
 }

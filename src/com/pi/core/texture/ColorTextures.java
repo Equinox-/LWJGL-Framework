@@ -26,13 +26,16 @@ public class ColorTextures {
 
 	private Map<Integer, Texture> colorTextures = new HashMap<>();
 
-	public Texture getColorTexture(int rgba) {
-		Texture t = colorTextures.get(rgba);
+	public Texture getColorTexture(int argb) {
+		Texture t = colorTextures.get(argb);
 		if (t == null) {
-			colorTextures.put(rgba, t = new Texture(1, 1, GL11.GL_RGBA));
+			colorTextures.put(argb, t = new Texture(1, 1, GL11.GL_RGBA));
 			t.gpuAllocInternal();
 			ByteBuffer data = BufferUtils.createByteBuffer(4);
-			data.putInt(rgba);
+			data.put((byte) ((argb >> 16) & 0xFF));
+			data.put((byte) ((argb >> 8) & 0xFF));
+			data.put((byte) ((argb >> 0) & 0xFF));
+			data.put((byte) ((argb >> 24) & 0xFF));
 			data.flip();
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, t.getID());
 			GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 1, 1,
