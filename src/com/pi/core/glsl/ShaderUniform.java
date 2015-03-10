@@ -219,9 +219,13 @@ public class ShaderUniform {
 	private float[] mat4TmpBuffer;
 
 	public void matrix(Matrix4 m) {
+		matrix(m, false);
+	}
+	
+	public void matrix(Matrix4 m, boolean transpose) {
 		utilAllowed();
 		if (type == GL20.GL_FLOAT_MAT4)
-			GL20.glUniformMatrix4(location[activeIndex], false, m.getAccessor());
+			GL20.glUniformMatrix4(location[activeIndex], transpose, m.getAccessor());
 		else if (type == GL20.GL_FLOAT_MAT3) {
 			if (mat4TmpBuffer == null)
 				mat4TmpBuffer = new float[16];
@@ -234,7 +238,7 @@ public class ShaderUniform {
 			mat3TmpBuffer.put(mat4TmpBuffer, 4, 3);
 			mat3TmpBuffer.put(mat4TmpBuffer, 8, 3);
 			mat3TmpBuffer.position(0);
-			GL20.glUniformMatrix3(location[activeIndex], false, mat3TmpBuffer);
+			GL20.glUniformMatrix3(location[activeIndex], transpose, mat3TmpBuffer);
 		} else
 			typeMismatch("float matrix4");
 	}
