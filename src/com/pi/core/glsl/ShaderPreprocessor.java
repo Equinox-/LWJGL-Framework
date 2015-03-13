@@ -3,8 +3,10 @@ package com.pi.core.glsl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +43,7 @@ public class ShaderPreprocessor {
 			.compile("#version[^\n\r]*(\r|)\n");
 
 	public static String preprocess(String src) {
-		return doForeach(doIncludes(doDefines(src)));
+		return doForeach(doIncludes(doDefines(src), new HashSet<String>()));
 	}
 
 	private static String doDefines(String src) {
@@ -62,7 +64,7 @@ public class ShaderPreprocessor {
 		return res.toString();
 	}
 
-	private static String doIncludes(String src) {
+	private static String doIncludes(String src, Set<String> hasIncluded) {
 		Matcher mt = INCLUDE.matcher(src);
 		boolean np = mt.find();
 		if (np) {
@@ -70,16 +72,18 @@ public class ShaderPreprocessor {
 			int prevHead = 0;
 			do {
 				res.append(src, prevHead, mt.start());
-				String included = SHADER_INCLUDE_MAP.get(mt.group(1));
-				if (included != null)
-					res.append(included);
-				else
-					System.err.println("Unable to include: " + mt.group(1)
-							+ " (It isn't defined)");
+				if (hasIncluded.add(mt.group(1))) {
+					String included = SHADER_INCLUDE_MAP.get(mt.group(1));
+					if (included != null)
+						res.append(included);
+					else
+						System.err.println("Unable to include: " + mt.group(1)
+								+ " (It isn't defined)");
+				}
 				prevHead = mt.end();
 			} while (mt.find());
 			res.append(src, prevHead, src.length());
-			return doIncludes(res.toString());
+			return doIncludes(res.toString(), hasIncluded);
 		} else
 			return src;
 	}

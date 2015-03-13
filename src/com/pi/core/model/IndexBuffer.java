@@ -118,6 +118,18 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		}
 	}
 
+	public int getIndex(int k) {
+		switch (indexType) {
+		case GL11.GL_UNSIGNED_SHORT:
+			return indexBuffer.shortImageAt(k * 2).get(0);
+		case GL11.GL_UNSIGNED_INT:
+			return indexBuffer.integerImageAt(k * 4).get(0);
+		case GL11.GL_UNSIGNED_BYTE:
+		default:
+			return indexBuffer.get(k) & 0xFF;
+		}
+	}
+
 	@Override
 	protected void gpuAllocInternal() {
 		indexBuffer.gpuAlloc();

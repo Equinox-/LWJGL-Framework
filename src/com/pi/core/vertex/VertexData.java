@@ -238,7 +238,7 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 		public Vector position(E vtx);
 	}
 
-	public void include(BoundingArea area, PositionVertex<E> cpy) {
+	public void include(BoundingArea area, PositionVertex<? super E> cpy) {
 		for (int i = 0; i < vertexDB.length; i++)
 			area.include(cpy.position(vertexDB[i]));
 	}
