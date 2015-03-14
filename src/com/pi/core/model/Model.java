@@ -61,7 +61,7 @@ public class Model<E> extends GPUObject<Model<E>> {
 	public void render(int indexID) {
 		vertexData.activate();
 		indexes[indexID].render();
-		vertexData.deactivate();
+		VertexData.deactivate();
 	}
 
 	@Override

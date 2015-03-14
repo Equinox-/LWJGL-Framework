@@ -13,7 +13,7 @@ public abstract class GPUObject<K> {
 	private WeakReference<GPUObject<K>> ref;
 
 	public GPUObject() {
-		if (WarningManager.DEBUG_WARNINGS) {
+		if (WarningManager.GPUOBJECT_METHOD_ELEVATION) {
 			Class<?> base = getClass();
 			Method[] mm = base.getMethods();
 			for (Method k : mm) {
@@ -25,7 +25,7 @@ public abstract class GPUObject<K> {
 				}
 			}
 		}
-		if (WarningManager.DEBUG_WARNINGS)
+		if (WarningManager.GPUOBJECT_REFERENCE_WATCHING)
 			ref = new WeakReference<>(this, WarningManager.queue);
 	}
 
@@ -86,7 +86,7 @@ public abstract class GPUObject<K> {
 			gpuFree();
 		gpuAllocInternal();
 		allocated = true;
-		if (WarningManager.DEBUG_WARNINGS)
+		if (WarningManager.GPUOBJECT_REFERENCE_WATCHING)
 			WarningManager.watchReference(ref);
 		return me();
 	}
@@ -98,7 +98,7 @@ public abstract class GPUObject<K> {
 		if (allocated)
 			gpuFreeInternal();
 		allocated = false;
-		if (WarningManager.DEBUG_WARNINGS)
+		if (WarningManager.GPUOBJECT_REFERENCE_WATCHING)
 			WarningManager.unwatchReference(ref);
 		return me();
 	}

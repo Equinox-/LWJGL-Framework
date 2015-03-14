@@ -187,18 +187,6 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 			}
 		}
 
-		GL30.glBindVertexArray(0);
-	}
-
-	@Override
-	protected void gpuFreeInternal() {
-		if (vao >= 0)
-			GL30.glDeleteVertexArrays(vao);
-		bufferObject.gpuFree();
-	}
-
-	public void activate() {
-		GL30.glBindVertexArray(vao);
 		for (int j = 0; j < layout.attrMapping.length; j++) {
 			if (layout.attrMapping[j] != null) {
 				int span = 1;
@@ -211,21 +199,22 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 					GL20.glEnableVertexAttribArray(j + r);
 			}
 		}
+
+		GL30.glBindVertexArray(0);
 	}
 
-	public void deactivate() {
-		for (int j = 0; j < layout.attrMapping.length; j++) {
-			if (layout.attrMapping[j] != null) {
-				int span = 1;
-				Class<?> type = layout.attrMapping[j].getType();
-				if (type.isArray())
-					type = type.getComponentType();
-				if (type.isAssignableFrom(Matrix4.class))
-					span = 4;
-				for (int r = 0; r < span; r++)
-					GL20.glDisableVertexAttribArray(j + r);
-			}
-		}
+	@Override
+	protected void gpuFreeInternal() {
+		if (vao >= 0)
+			GL30.glDeleteVertexArrays(vao);
+		bufferObject.gpuFree();
+	}
+
+	public void activate() {
+		GL30.glBindVertexArray(vao);
+	}
+
+	public static void deactivate() {
 		GL30.glBindVertexArray(0);
 	}
 

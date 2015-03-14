@@ -7,10 +7,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class WarningManager {
-	public static final boolean DEBUG_WARNINGS = System.getProperty("DEBUG") != null;
+	public static final boolean GPUOBJECT_REFERENCE_WATCHING = System
+			.getProperty("DEBUG") != null;
+	public static final boolean GPUOBJECT_METHOD_ELEVATION = true;
+	public static final boolean GLSL_UNIFORM_TYPE_WATCHING = true;
 
 	static {
-		if (DEBUG_WARNINGS)
+		if (GPUOBJECT_REFERENCE_WATCHING)
 			System.out.println("Using Debug Warnings!");
 	}
 
@@ -29,7 +32,7 @@ public class WarningManager {
 	static ReferenceQueue queue;
 
 	static {
-		if (DEBUG_WARNINGS) {
+		if (GPUOBJECT_REFERENCE_WATCHING) {
 			watchReferences = new HashMap<>();
 			queue = new ReferenceQueue<>();
 			new Thread() {
@@ -59,14 +62,14 @@ public class WarningManager {
 	}
 
 	static void watchReference(WeakReference<?> ref) {
-		if (!DEBUG_WARNINGS)
+		if (!GPUOBJECT_REFERENCE_WATCHING)
 			return;
 		watchReferences.put(ref, new AllocationParams(ref.get().getClass(),
 				Thread.currentThread().getStackTrace()));
 	}
 
 	static void unwatchReference(WeakReference<?> ref) {
-		if (!DEBUG_WARNINGS)
+		if (!GPUOBJECT_REFERENCE_WATCHING)
 			return;
 		watchReferences.remove(ref);
 	}

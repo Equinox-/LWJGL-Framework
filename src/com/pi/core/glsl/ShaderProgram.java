@@ -23,8 +23,8 @@ import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 import com.pi.io.FileUtil;
 
-public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
-		GLIdentifiable {
+public class ShaderProgram extends GPUObject<ShaderProgram> implements
+		Bindable, GLIdentifiable {
 	static final int MAX_TEXTURE_UNITS = 16;
 	private static ShaderProgram currentShader;
 
@@ -46,8 +46,11 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 		SHADER_TYPE_MAP.put("GL_COMPUTE_SHADER", GL43.GL_COMPUTE_SHADER);
 	}
 
+	// Needs to be accessed by ShaderUniform; therefore not private
 	Texture[] textureUnit;
 	int[] textureUnitRefCount;
+	// Limits rebinding
+	private static final Texture[] ACTIVE_TEXTURE_UNITS = new Texture[MAX_TEXTURE_UNITS];
 
 	public ShaderProgram() {
 		this.uniforms = new HashMap<>();
@@ -243,11 +246,13 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 
 	public void bindSamplers() {
 		for (int i = 0; i < textureUnit.length; i++) {
-			GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
-			if (textureUnit[i] == null)
-				Texture.unbind();
-			else
-				textureUnit[i].bind();
+			if (textureUnit[i] != null) {
+				if (ACTIVE_TEXTURE_UNITS[i] != textureUnit[i]) {
+					GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
+					textureUnit[i].bind();
+					ACTIVE_TEXTURE_UNITS[i] = textureUnit[i];
+				}
+			}
 		}
 	}
 

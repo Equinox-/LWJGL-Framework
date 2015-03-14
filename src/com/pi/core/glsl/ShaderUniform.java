@@ -9,18 +9,19 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
 import com.pi.core.texture.Texture;
+import com.pi.core.util.WarningManager;
 import com.pi.core.vertex.BufferColor;
 import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.Vector;
 
-public class ShaderUniform {
+@SuppressWarnings("unused")
+public final class ShaderUniform {
 	private final ShaderProgram prog;
 	private final String name;
 	private final int size;
 	private final int type;
 	private final int[] location;
 	private final int[] samplerID;
-
 	private int activeIndex;
 
 	public ShaderUniform(ShaderProgram prog, String name, int size, int type,
@@ -29,7 +30,7 @@ public class ShaderUniform {
 		this.name = name;
 		this.size = size;
 		this.type = type;
-		this.location = new int[size];
+		this.location = new int[array ? size : 1];
 		if (array)
 			for (int i = 0; i < size; i++) {
 				location[i] = GL20.glGetUniformLocation(prog.getID(), name
@@ -48,8 +49,8 @@ public class ShaderUniform {
 							+ location[k]);
 
 		this.activeIndex = 0;
-		this.samplerID = new int[size];
-		Arrays.fill(samplerID, ShaderProgram.MAX_TEXTURE_UNITS);
+		this.samplerID = new int[this.location.length];
+		Arrays.fill(this.samplerID, ShaderProgram.MAX_TEXTURE_UNITS);
 	}
 
 	public ShaderUniform(ShaderProgram prog, String name, int location) {
@@ -77,36 +78,44 @@ public class ShaderUniform {
 		return type != -1;
 	}
 
-	private void utilAllowed() {
-		if (type == -1)
+	private final void utilAllowed() {
+		if (WarningManager.GLSL_UNIFORM_TYPE_WATCHING && type == -1)
 			throw new IllegalStateException(
 					"Utility methods aren't allowed on uniform \"" + name
 							+ "\": It has an undefined type");
 	}
 
-	private void typeMismatch(String provided) {
+	private final void typeMismatch(String provided) {
 		throw new IllegalStateException("Uniform " + name + " isn't of type "
 				+ provided + ".");
 	}
 
 	public void texture(Texture t) {
 		utilAllowed();
-		if (type != GL20.GL_SAMPLER_1D && type != GL20.GL_SAMPLER_1D_SHADOW
+		if (WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+				&& type != GL20.GL_SAMPLER_1D
+				&& type != GL20.GL_SAMPLER_1D_SHADOW
 				&& type != GL20.GL_SAMPLER_2D
 				&& type != GL20.GL_SAMPLER_2D_SHADOW
 				&& type != GL20.GL_SAMPLER_3D && type != GL20.GL_SAMPLER_CUBE)
 			typeMismatch("sampler");
 
-		if (this.samplerID[activeIndex] < prog.textureUnit.length)
-			if (--prog.textureUnitRefCount[this.samplerID[activeIndex]] <= 0) {
-				prog.textureUnit[this.samplerID[activeIndex]] = null;
-				prog.textureUnitRefCount[this.samplerID[activeIndex]] = 0;
+		final int prevSampler = this.samplerID[activeIndex];
+
+		int fNull = -1;
+		if (prevSampler < prog.textureUnit.length) {
+			if (prog.textureUnit[prevSampler] == t)
+				return; 
+			if (--prog.textureUnitRefCount[prevSampler] <= 0) {
+				prog.textureUnit[prevSampler] = null;
+				fNull = prevSampler;
+				prog.textureUnitRefCount[prevSampler] = 0;
 			}
+		}
 		if (t == null) {
 			this.samplerID[activeIndex] = ShaderProgram.MAX_TEXTURE_UNITS;
 		} else {
 			// Search for an equiv texture object:
-			int fNull = -1;
 			boolean found = false;
 			for (int i = 0; i < prog.textureUnit.length; i++) {
 				if (prog.textureUnit[i] == null && fNull == -1) {
@@ -124,12 +133,14 @@ public class ShaderUniform {
 				prog.textureUnitRefCount[fNull] = 1;
 			}
 		}
-		GL20.glUniform1i(location[activeIndex], samplerID[activeIndex]);
+		if (this.samplerID[activeIndex] != prevSampler)
+			GL20.glUniform1i(this.location[activeIndex],
+					this.samplerID[activeIndex]);
 	}
 
 	public void bool(boolean b) {
 		utilAllowed();
-		if (type == GL20.GL_BOOL)
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL)
 			GL20.glUniform1i(location[activeIndex], b ? 1 : 0);
 		else
 			typeMismatch("boolean");
@@ -137,7 +148,8 @@ public class ShaderUniform {
 
 	public void bvector(boolean x, boolean y) {
 		utilAllowed();
-		if (type == GL20.GL_BOOL_VEC2)
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+				|| type == GL20.GL_BOOL_VEC2)
 			GL20.glUniform2i(location[activeIndex], x ? 1 : 0, y ? 1 : 0);
 		else
 			typeMismatch("bool vec2");
@@ -145,7 +157,8 @@ public class ShaderUniform {
 
 	public void bvector(boolean x, boolean y, boolean z) {
 		utilAllowed();
-		if (type == GL20.GL_BOOL_VEC3)
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+				|| type == GL20.GL_BOOL_VEC3)
 			GL20.glUniform3i(location[activeIndex], x ? 1 : 0, y ? 1 : 0, z ? 1
 					: 0);
 		else
@@ -154,26 +167,34 @@ public class ShaderUniform {
 
 	public void bvector(boolean x, boolean y, boolean z, boolean w) {
 		utilAllowed();
-		if (type == GL20.GL_BOOL_VEC4)
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+				|| type == GL20.GL_BOOL_VEC4)
 			GL20.glUniform4i(location[activeIndex], x ? 1 : 0, y ? 1 : 0, z ? 1
 					: 0, w ? 1 : 0);
 		else
 			typeMismatch("bool vec4");
 	}
 
-	public void scalar(float x) {
+	public void integer(int x) {
 		utilAllowed();
-		if (type == GL11.GL_FLOAT)
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL11.GL_INT)
+			GL20.glUniform1i(location[activeIndex], x);
+		else
+			typeMismatch("int");
+	}
+
+	public void floating(float x) {
+		utilAllowed();
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL11.GL_FLOAT)
 			GL20.glUniform1f(location[activeIndex], x);
-		else if (type == GL11.GL_INT || type == GL20.GL_BOOL)
-			GL20.glUniform1i(location[activeIndex], (int) x);
 		else
 			typeMismatch("float or int");
 	}
 
 	public void vector(float x, float y) {
 		utilAllowed();
-		if (type == GL20.GL_FLOAT_VEC2)
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+				|| type == GL20.GL_FLOAT_VEC2)
 			GL20.glUniform2f(location[activeIndex], x, y);
 		else
 			typeMismatch("float vec2");
@@ -181,7 +202,8 @@ public class ShaderUniform {
 
 	public void vector(float x, float y, float z) {
 		utilAllowed();
-		if (type == GL20.GL_FLOAT_VEC3)
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+				|| type == GL20.GL_FLOAT_VEC3)
 			GL20.glUniform3f(location[activeIndex], x, y, z);
 		else
 			typeMismatch("float vec3");
@@ -189,7 +211,8 @@ public class ShaderUniform {
 
 	public void vector(float x, float y, float z, float w) {
 		utilAllowed();
-		if (type == GL20.GL_FLOAT_VEC4)
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+				|| type == GL20.GL_FLOAT_VEC4)
 			GL20.glUniform4f(location[activeIndex], x, y, z, w);
 		else
 			typeMismatch("float vec4");
@@ -207,7 +230,7 @@ public class ShaderUniform {
 			vector(v.get(0), v.get(1));
 			break;
 		case 1:
-			scalar(v.get(0));
+			floating(v.get(0));
 			break;
 		default:
 			throw new IllegalArgumentException("Vectors of dimension "
@@ -215,42 +238,25 @@ public class ShaderUniform {
 		}
 	}
 
-	private FloatBuffer mat3TmpBuffer;
-	private float[] mat4TmpBuffer;
-
 	public void matrix(Matrix4 m) {
 		matrix(m, false);
 	}
-	
+
 	public void matrix(Matrix4 m, boolean transpose) {
 		utilAllowed();
-		if (type == GL20.GL_FLOAT_MAT4)
-			GL20.glUniformMatrix4(location[activeIndex], transpose, m.getAccessor());
-		else if (type == GL20.GL_FLOAT_MAT3) {
-			if (mat4TmpBuffer == null)
-				mat4TmpBuffer = new float[16];
-			if (mat3TmpBuffer == null)
-				mat3TmpBuffer = BufferUtils.createFloatBuffer(9);
-			FloatBuffer access = m.getAccessor();
-			access.get(mat4TmpBuffer);
-			mat3TmpBuffer.position(0);
-			mat3TmpBuffer.put(mat4TmpBuffer, 0, 3);
-			mat3TmpBuffer.put(mat4TmpBuffer, 4, 3);
-			mat3TmpBuffer.put(mat4TmpBuffer, 8, 3);
-			mat3TmpBuffer.position(0);
-			GL20.glUniformMatrix3(location[activeIndex], transpose, mat3TmpBuffer);
-		} else
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+				|| type == GL20.GL_FLOAT_MAT4)
+			GL20.glUniformMatrix4(location[activeIndex], transpose,
+					m.getAccessor());
+		else
 			typeMismatch("float matrix4");
 	}
 
 	public void color(BufferColor c) {
 		ByteBuffer buff = c.getAccessor();
-		if (type == GL20.GL_FLOAT_VEC3)
-			vector((buff.get(0) & 0xFF) / 255f, (buff.get(1) & 0xFF) / 255f,
-					(buff.get(2) & 0xFF) / 255f);
-		else
-			vector((buff.get(0) & 0xFF) / 255f, (buff.get(1) & 0xFF) / 255f,
-					(buff.get(2) & 0xFF) / 255f, (buff.get(3) & 0xFF) / 255f);
+		vector((buff.get(0) & 0xFF) / 255f, (buff.get(1) & 0xFF) / 255f,
+				(buff.get(2) & 0xFF) / 255f, (buff.get(3) & 0xFF) / 255f);
+
 	}
 
 	public int location() {
