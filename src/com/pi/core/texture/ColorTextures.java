@@ -3,25 +3,27 @@ package com.pi.core.texture;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 
 public class ColorTextures {
-	private static Map<Long, ColorTextures> basic = new HashMap<>();
+	private static ThreadLocal<ColorTextures> basic = ThreadLocal
+			.withInitial(new Supplier<ColorTextures>() {
+				@Override
+				public ColorTextures get() {
+					return new ColorTextures();
+				}
+			});
 
 	public static ColorTextures textures() {
-		long ctx = GL.getCurrent().getPointer();
-		ColorTextures res = basic.get(ctx);
-		if (res == null)
-			basic.put(ctx, res = new ColorTextures());
-		return res;
+		return basic.get();
 	}
 
 	public static void removeTextures() {
 		textures().gpuFree();
-		basic.remove(GL.getCurrent().getPointer());
+		basic.remove();
 	}
 
 	private Map<Integer, Texture> colorTextures = new HashMap<>();
