@@ -82,10 +82,9 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 	}
 
 	public IndexBuffer(PrimitiveType mode, int[] indices, int offset, int count) {
-		this(mode, chooseIndexSize(indices, offset, offset + count), count
-				- offset);
+		this(mode, chooseIndexSize(indices, offset, offset + count), count);
 
-		final int rightOffset = count + offset;
+		final int rightOffset = offset + count;
 		switch (indexSize) {
 		case 1:
 			for (int i = offset; i < rightOffset; i++)
