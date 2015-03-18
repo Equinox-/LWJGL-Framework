@@ -47,8 +47,8 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 	}
 
 	// Needs to be accessed by ShaderUniform; therefore not private
-	Texture[] textureUnit;
-	int[] textureUnitRefCount;
+	public Texture[] textureUnit;
+	public int[] textureUnitRefCount;
 	// Limits rebinding
 	private static final Texture[] ACTIVE_TEXTURE_UNITS = new Texture[MAX_TEXTURE_UNITS];
 
@@ -200,6 +200,8 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 	public void bind() {
 		if (programID == -1)
 			throw new RuntimeException("Attempted to bind a disposed shader.");
+		if (currentShader == this)
+			return;
 		GL20.glUseProgram(programID);
 		currentShader = this;
 	}
@@ -246,12 +248,13 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 
 	public void bindSamplers() {
 		for (int i = 0; i < textureUnit.length; i++) {
-			if (textureUnit[i] != null) {
-				if (ACTIVE_TEXTURE_UNITS[i] != textureUnit[i]) {
-					GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
+			if (ACTIVE_TEXTURE_UNITS[i] != textureUnit[i]) {
+				GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
+				if (textureUnit[i] != null)
 					textureUnit[i].bind();
-					ACTIVE_TEXTURE_UNITS[i] = textureUnit[i];
-				}
+				else
+					Texture.unbind();
+				ACTIVE_TEXTURE_UNITS[i] = textureUnit[i];
 			}
 		}
 	}

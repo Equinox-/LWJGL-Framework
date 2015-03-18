@@ -102,13 +102,11 @@ public final class ShaderUniform {
 
 		final int prevSampler = this.samplerID[activeIndex];
 
-		int fNull = -1;
 		if (prevSampler < prog.textureUnit.length) {
-			if (prog.textureUnit[prevSampler] == t)
-				return; 
+//			if (prog.textureUnit[prevSampler] == t)
+//				return;
 			if (--prog.textureUnitRefCount[prevSampler] <= 0) {
 				prog.textureUnit[prevSampler] = null;
-				fNull = prevSampler;
 				prog.textureUnitRefCount[prevSampler] = 0;
 			}
 		}
@@ -117,6 +115,7 @@ public final class ShaderUniform {
 		} else {
 			// Search for an equiv texture object:
 			boolean found = false;
+			int fNull = -1;
 			for (int i = 0; i < prog.textureUnit.length; i++) {
 				if (prog.textureUnit[i] == null && fNull == -1) {
 					fNull = i;
@@ -133,7 +132,7 @@ public final class ShaderUniform {
 				prog.textureUnitRefCount[fNull] = 1;
 			}
 		}
-		if (this.samplerID[activeIndex] != prevSampler)
+//		if (this.samplerID[activeIndex] != prevSampler)
 			GL20.glUniform1i(this.location[activeIndex],
 					this.samplerID[activeIndex]);
 	}
@@ -188,7 +187,7 @@ public final class ShaderUniform {
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL11.GL_FLOAT)
 			GL20.glUniform1f(location[activeIndex], x);
 		else
-			typeMismatch("float or int");
+			typeMismatch("float");
 	}
 
 	public void vector(float x, float y) {

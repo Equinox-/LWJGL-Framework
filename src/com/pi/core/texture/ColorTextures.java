@@ -26,7 +26,7 @@ public class ColorTextures {
 		basic.remove();
 	}
 
-	private Map<Integer, Texture> colorTextures = new HashMap<>();
+	private final Map<Integer, Texture> colorTextures = new HashMap<>();
 
 	public Texture getColorTexture(int argb) {
 		Texture t = colorTextures.get(argb);
