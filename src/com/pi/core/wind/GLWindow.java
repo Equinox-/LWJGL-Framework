@@ -27,9 +27,14 @@ public abstract class GLWindow {
 
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, major);
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, minor);
-		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE);
-		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE,
-				GLFW.GLFW_OPENGL_CORE_PROFILE);
+		if (major >= 3)
+			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE);
+		if (major > 4 || (major == 3 && minor >= 3))
+			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE,
+					GLFW.GLFW_OPENGL_CORE_PROFILE);
+		else
+			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE,
+					GLFW.GLFW_OPENGL_ANY_PROFILE);
 
 		windowID = GLFW.glfwCreateWindow(640, 480, "Window", MemoryUtil.NULL,
 				MemoryUtil.NULL);
@@ -76,7 +81,7 @@ public abstract class GLWindow {
 		// Kill BasicShapes
 		BasicShapes.removeShapes();
 		ColorTextures.removeTextures();
-		
+
 		GLFW.glfwDestroyWindow(windowID);
 		GLFW.glfwTerminate();
 		System.exit(0);
