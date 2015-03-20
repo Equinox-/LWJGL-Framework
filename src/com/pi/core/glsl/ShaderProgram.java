@@ -67,8 +67,10 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 		this.programID = GL20.glCreateProgram();
 	}
 
-	private static final Pattern LINE_FINDER = Pattern
+	private static final Pattern LINE_FINDER_AMD = Pattern
 			.compile("[0-9]+:([0-9]+):");
+	private static final Pattern LINE_FINDER_NVIDIA = Pattern
+			.compile("line ([0-9]+), column [0-9]+");
 
 	private static int compileShader(String src, int type)
 			throws InstantiationException {
@@ -88,21 +90,31 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 				maxLen = Math.max(maxLen, s.length());
 
 			for (int i = 0; i < logLines.length; i++) {
-				Matcher m = LINE_FINDER.matcher(logLines[i]);
-				if (m.find()) {
-					res.append(logLines[i]);
-					for (int r = logLines[i].length(); r < maxLen + 4; r++)
-						res.append(' ');
-					int ctx;
-					try {
-						ctx = Integer.parseInt(m.group(1)) - 1;
-					} catch (NumberFormatException e) {
-						ctx = -1;
+				boolean foundLine = false;
+				for (Pattern pt : new Pattern[] { LINE_FINDER_AMD,
+						LINE_FINDER_NVIDIA }) {
+					Matcher m = pt.matcher(logLines[i]);
+					if (m.find()) {
+						res.append(logLines[i]);
+						for (int r = logLines[i].length(); r < maxLen + 4; r++)
+							res.append(' ');
+						int ctx;
+						try {
+							ctx = Integer.parseInt(m.group(1)) - 1;
+						} catch (NumberFormatException e) {
+							ctx = -1;
+						}
+						if (ctx >= 0) {
+							res.append("Context: ")
+									.append(ctx >= 0 && ctx < lines.length ? lines[ctx]
+											.trim() : "Unknown").append('\n');
+							foundLine = true;
+							break;
+						}
 					}
-					res.append("Context: ")
-							.append(ctx >= 0 && ctx < lines.length ? lines[ctx]
-									.trim() : "Unknown").append('\n');
-				} else
+					break;
+				}
+				if (!foundLine)
 					res.append(logLines[i]).append('\n');
 			}
 			System.err.println("Shader compile failure: \n" + res.toString());
