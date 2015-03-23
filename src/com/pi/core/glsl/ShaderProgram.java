@@ -68,7 +68,7 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 	}
 
 	private static final Pattern LINE_FINDER_AMD = Pattern
-			.compile("[0-9]+:([0-9]+):");
+			.compile("[0-9]+:([0-9]+)");
 	private static final Pattern LINE_FINDER_NVIDIA = Pattern
 			.compile("line ([0-9]+), column [0-9]+");
 

@@ -14,7 +14,6 @@ import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 import com.pi.math.matrix.Matrix4;
-import com.pi.math.vector.Vector;
 import com.pi.math.vector.VectorBuff;
 import com.pi.math.volume.BoundingArea;
 
@@ -82,11 +81,11 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 								attr.set(itm, array);
 							}
 
-							if (type.isAssignableFrom(VectorBuff.class)) {
+							if (VectorBuff.class.isAssignableFrom(type)) {
 								Array.set(
 										array,
 										layout.attrIndex[j],
-										new VectorBuff(
+										VectorBuff.make(
 												this.bufferObject
 														.floatImageAt(head
 																+ layout.attrOffset[j]),
@@ -109,15 +108,12 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 												+ layout.attrOffset[j]));
 							}
 						} else {
-							if (attr.getType().isAssignableFrom(
-									VectorBuff.class)) {
-								attr.set(
-										itm,
-										new VectorBuff(
-												this.bufferObject
-														.floatImageAt(head
-																+ layout.attrOffset[j]),
-												0, layout.attrSize[j]));
+							if (VectorBuff.class.isAssignableFrom(attr
+									.getType())) {
+								attr.set(itm, VectorBuff.make(
+										this.bufferObject.floatImageAt(head
+												+ layout.attrOffset[j]), 0,
+										layout.attrSize[j]));
 							} else if (attr.getType().isAssignableFrom(
 									Matrix4.class)) {
 								attr.set(
@@ -224,7 +220,7 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 	}
 
 	public static interface PositionVertex<E> {
-		public Vector position(E vtx);
+		public VectorBuff position(E vtx);
 	}
 
 	public void include(BoundingArea area, PositionVertex<? super E> cpy) {

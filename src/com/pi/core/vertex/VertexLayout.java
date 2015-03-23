@@ -72,7 +72,7 @@ class VertexLayout {
 							* (type.isAssignableFrom(Matrix4.class) ? 4 : 1);
 					attrOffset[attrID] = structSize;
 					attrIndex[attrID] = k;
-					if (type.isAssignableFrom(VectorBuff.class)) { // Vector type
+					if (VectorBuff.class.isAssignableFrom(type)) { // Vector type
 						if (layout.dimension() < 2 || layout.dimension() > 4)
 							throw new RuntimeException(
 									"A vector style vertex attr may only have 2-4 components.  ("

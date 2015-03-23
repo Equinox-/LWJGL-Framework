@@ -6,12 +6,11 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
-import com.pi.math.vector.Vector;
 import com.pi.math.vector.VectorBuff;
 
-public class DataTexture extends Texture {
+public class DataTexture<T extends VectorBuff> extends Texture {
 	private FloatBuffer backing;
-	public Vector[][] vectors;
+	public T[][] vectors;
 
 	private int stashFormat;
 	private final int dimension;
@@ -36,6 +35,14 @@ public class DataTexture extends Texture {
 
 	public DataTexture(int dimension, int width, int height) {
 		super(width, height, floatFormatForDimension(dimension));
+		try {
+			@SuppressWarnings({ "unchecked", "unused" })
+			T t = (T) VectorBuff.make(dimension);
+		} catch (ClassCastException e) {
+			throw new IllegalArgumentException(
+					"Can't use this vtype with the given dimension.");
+		}
+
 		this.dimension = dimension;
 		super.wrap(TextureWrap.CLAMP_TO_EDGE, TextureWrap.CLAMP_TO_EDGE); // Typical, but can be changed.
 		super.filter(null, TextureFilter.NEAREST, TextureFilter.NEAREST);
@@ -82,13 +89,14 @@ public class DataTexture extends Texture {
 		backing = null;
 	}
 
+	@SuppressWarnings("unchecked")
 	public void cpuAlloc() {
-		vectors = new Vector[getWidth()][getHeight()];
+		vectors = (T[][]) new VectorBuff[getWidth()][getHeight()];
 		backing = BufferUtils.createFloatBuffer(getWidth() * getHeight()
 				* dimension);
 		for (int j = 0; j < getHeight(); j++) {
 			for (int i = 0; i < getWidth(); i++) {
-				vectors[i][j] = new VectorBuff(backing, ((j * getWidth()) + i)
+				vectors[i][j] = (T) VectorBuff.make(backing, ((j * getWidth()) + i)
 						* dimension, dimension);
 			}
 		}

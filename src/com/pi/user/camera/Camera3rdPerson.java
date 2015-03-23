@@ -3,9 +3,9 @@ package com.pi.user.camera;
 import org.lwjgl.glfw.GLFW;
 
 import com.pi.core.wind.GLWindow;
+import com.pi.math.MathUtil;
 import com.pi.math.matrix.Matrix4;
-import com.pi.math.vector.Vector;
-import com.pi.math.vector.VectorND;
+import com.pi.math.vector.VectorBuff3;
 
 public class Camera3rdPerson implements Camera {
 	private final Matrix4 rotMatrix = Matrix4.identity();
@@ -121,11 +121,11 @@ public class Camera3rdPerson implements Camera {
 	}
 
 	@Override
-	public Vector position() {
+	public VectorBuff3 position(VectorBuff3 tmp) {
 		float csB = (float) Math.cos(pitch) * -offset;
-		return new VectorND(csB * (float) Math.sin(yaw) - x,
-				(float) Math.sin(pitch) * offset - y, -csB
-						* (float) Math.cos(yaw) - z);
+		tmp.setV(csB * (float) Math.sin(yaw) - x, (float) Math.sin(pitch)
+				* offset - y, -csB * (float) Math.cos(yaw) - z);
+		return tmp;
 	}
 
 	@Override
@@ -135,14 +135,14 @@ public class Camera3rdPerson implements Camera {
 	}
 
 	@Override
-	public void transformRay(Vector origin, Vector direction) {
-		origin.add(position());
-		Vector tmp = direction.clone();
-
+	public void transformRay(VectorBuff3 origin, VectorBuff3 direction) {
+		VectorBuff3 tmp = MathUtil.checkout(3);
+		origin.add(position(tmp));
 		rotMatrix.makeIdentity().setAxisAngle(-pitch, 1, 0, 0);
-		Matrix4.multiply(rotMatrix, direction, tmp).normalize();
+		rotMatrix.transform3(tmp, direction);
 
 		rotMatrix.makeIdentity().setAxisAngle(yaw, 0, 1, 0);
-		Matrix4.multiply(rotMatrix, tmp, direction).normalize();
+		rotMatrix.transform3(direction, tmp).normalize();
+		MathUtil.checkin(tmp);
 	}
 }

@@ -1,14 +1,14 @@
 package com.pi.user.camera;
 
 import com.pi.math.matrix.Matrix4;
-import com.pi.math.vector.Vector;
+import com.pi.math.vector.VectorBuff3;
 
 public interface Camera {
 	public Matrix4 apply(Matrix4 matrix);
 
 	public void update();
 
-	public Vector position();
+	public VectorBuff3 position(VectorBuff3 dest);
 	
-	public void transformRay(Vector origin, Vector direction);
+	public void transformRay(VectorBuff3 origin, VectorBuff3 direction);
 }

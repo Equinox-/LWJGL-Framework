@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 public class ImageTexture extends Texture {
 	private BufferedImage img;
@@ -33,6 +34,10 @@ public class ImageTexture extends Texture {
 	public ImageTexture(BufferedImage img, int internalFormat) {
 		super(img.getWidth(), img.getHeight(), internalFormat);
 		this.img = img;
+		super.mipmapLevels(Math.min(
+				(int) Math.ceil(Math.log(Math.min(img.getWidth(),
+						img.getHeight()))
+						/ Math.log(2)), 10));
 	}
 
 	@Override
@@ -59,6 +64,7 @@ public class ImageTexture extends Texture {
 		GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, getWidth(),
 				getHeight(), hasAlpha ? GL11.GL_RGBA : GL11.GL_RGB,
 				GL11.GL_UNSIGNED_BYTE, data);
+		GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
 		unbind();
 	}
 }
