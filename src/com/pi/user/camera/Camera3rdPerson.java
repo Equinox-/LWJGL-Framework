@@ -35,9 +35,15 @@ public class Camera3rdPerson implements Camera {
 
 	public Camera3rdPerson rates(float yawRate, float pitchRate,
 			float offsetRate) {
+		return rates(yawRate, pitchRate, offsetRate, moveRate);
+	}
+
+	public Camera3rdPerson rates(float yawRate, float pitchRate,
+			float offsetRate, float moveRate) {
 		this.yawRate = yawRate;
 		this.pitchRate = pitchRate;
 		this.offsetRate = offsetRate;
+		this.moveRate = moveRate;
 		return this;
 	}
 

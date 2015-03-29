@@ -16,6 +16,10 @@ public class ShaderPreprocessor {
 	private final static Map<String, String> SHADER_INCLUDE_MAP = new HashMap<>();
 	private final static Map<String, String> PREDEFINES_MAP = new HashMap<>();
 
+	public static void deregisterInclude(String name) {
+		SHADER_INCLUDE_MAP.remove(name);
+	}
+
 	public static void registerInclude(String name, String src) {
 		SHADER_INCLUDE_MAP.put(name, src);
 	}
