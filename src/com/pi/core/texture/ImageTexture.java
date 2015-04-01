@@ -40,30 +40,34 @@ public class ImageTexture extends Texture {
 						/ Math.log(2)), 10));
 	}
 
+	public BufferedImage getBacking() {
+		return img;
+	}
+
+	public void cpuFree() {
+		img = null;
+	}
+
 	@Override
 	protected void gpuUploadInternal() {
-		boolean hasAlpha = true || img.getColorModel().hasAlpha();
 		ByteBuffer data = BufferUtils.createByteBuffer(img.getWidth()
-				* img.getHeight() * (hasAlpha ? 4 : 3));
+				* img.getHeight() * 4);
 		for (int y = 0; y < getHeight(); ++y) {
 			for (int x = 0; x < getWidth(); ++x) {
 				int argb = img.getRGB(x, y);
 				data.put((byte) ((argb >> 16) & 0xff));
 				data.put((byte) ((argb >> 8) & 0xff));
 				data.put((byte) (argb & 0xff));
-				if (hasAlpha) {
-					if ((argb & 0xFFFFFF) == 0)
-						data.put((byte) 0);
-					else
-						data.put((byte) ((argb >> 24) & 0xff));
-				}
+				if ((argb & 0xFFFFFF) == 0)
+					data.put((byte) 0);
+				else
+					data.put((byte) ((argb >> 24) & 0xff));
 			}
 		}
 		data.flip();
 		bind();
 		GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, getWidth(),
-				getHeight(), hasAlpha ? GL11.GL_RGBA : GL11.GL_RGB,
-				GL11.GL_UNSIGNED_BYTE, data);
+				getHeight(), GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, data);
 		GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
 		unbind();
 	}

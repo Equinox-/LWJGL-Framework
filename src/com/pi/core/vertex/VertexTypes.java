@@ -12,6 +12,11 @@ public class VertexTypes {
 		public VectorBuff2 pos;
 	}
 
+	public static class TexturedVertex2D extends Vertex2D {
+		@AttrLayout(layout = 1, dimension = 2)
+		public VectorBuff2 texture;
+	}
+
 	public static class Vertex3D {
 		@AttrLayout(layout = 0, dimension = 3)
 		public VectorBuff3 pos;

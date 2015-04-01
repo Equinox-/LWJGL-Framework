@@ -11,12 +11,13 @@ import com.pi.core.texture.TextureWrap;
 import com.pi.core.util.DoubleBuffered;
 import com.pi.core.wind.GLWindow;
 import com.pi.math.vector.Vector;
+import com.pi.math.vector.VectorBuff;
 
 public class ConwaysLife extends GLWindow {
 	private static final int W = 256, H = 256;
 
 	private DoubleBuffered<FrameBuffer> frameBuffers;
-	private DoubleBuffered<DataTexture> textures;
+	private DoubleBuffered<DataTexture<VectorBuff>> textures;
 
 	private ShaderProgram conway;
 	private ShaderProgram render;
@@ -35,8 +36,8 @@ public class ConwaysLife extends GLWindow {
 		GL11.glEnable(GL11.GL_TEXTURE_2D);
 		super.setSize(W, H);
 
-		textures = new DoubleBuffered<>(new DataTexture(1, W, H),
-				new DataTexture(1, W, H));
+		textures = new DoubleBuffered<>(new DataTexture<>(1, W, H),
+				new DataTexture<>(1, W, H));
 		textures.getFront().wrap(TextureWrap.REPEAT, TextureWrap.REPEAT)
 				.gpuAlloc();
 		textures.getBack().wrap(TextureWrap.REPEAT, TextureWrap.REPEAT)
