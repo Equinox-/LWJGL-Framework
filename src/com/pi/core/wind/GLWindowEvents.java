@@ -1,20 +1,29 @@
 package com.pi.core.wind;
 
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWCharCallback;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
+import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;
 
 public class GLWindowEvents {
 	private final GLWindow attached;
+	private final List<EventListener> listeners = Collections
+			.synchronizedList(new ArrayList<>());
 	private GLFWKeyCallback keyCallback;
 	private GLFWScrollCallback scrollCallback;
 	private GLFWWindowSizeCallback sizeCallback;
 	private GLFWCursorPosCallback cursorCallback;
+	private GLFWCharCallback charCallback;
+	private GLFWMouseButtonCallback mouseButtonCallback;
 
 	public GLWindowEvents(GLWindow window) {
 		this.attached = window;
@@ -25,10 +34,16 @@ public class GLWindowEvents {
 		scrollCallback = GLFW.GLFWScrollCallback(this::onScrollEvent);
 		sizeCallback = GLFW.GLFWWindowSizeCallback(this::onSizeEvent);
 		cursorCallback = GLFW.GLFWCursorPosCallback(this::onCursorPosEvent);
+		charCallback = GLFW.GLFWCharCallback(this::onCharEvent);
+		mouseButtonCallback = GLFW
+				.GLFWMouseButtonCallback(this::onMouseButtonEvent);
 		GLFW.glfwSetKeyCallback(attached.getWindowID(), keyCallback);
 		GLFW.glfwSetScrollCallback(attached.getWindowID(), scrollCallback);
 		GLFW.glfwSetWindowSizeCallback(attached.getWindowID(), sizeCallback);
 		GLFW.glfwSetCursorPosCallback(attached.getWindowID(), cursorCallback);
+		GLFW.glfwSetCharCallback(attached.getWindowID(), charCallback);
+		GLFW.glfwSetMouseButtonCallback(attached.getWindowID(),
+				mouseButtonCallback);
 
 		// Init values
 		scrollPosX = scrollPosY = 0;
@@ -49,14 +64,59 @@ public class GLWindowEvents {
 		scrollCallback = null;
 		cursorCallback.release();
 		cursorCallback = null;
+		charCallback.release();
+		charCallback = null;
+		mouseButtonCallback.release();
+		mouseButtonCallback = null;
+	}
+
+	public void register(EventListener e) {
+		listeners.add(e);
+	}
+
+	public boolean deregister(EventListener e) {
+		return listeners.remove(e);
+	}
+
+	private void onMouseButtonEvent(long window, int button, int action,
+			int mods) {
+		if (window != attached.getWindowID())
+			return;
+		for (EventListener l : listeners)
+			if (action == GLFW.GLFW_PRESS) {
+				if (l.mousePressed(button, (float) mouseX, (float) mouseY, mods))
+					return;
+			} else if (action == GLFW.GLFW_RELEASE) {
+				if (l.mouseReleased(button, (float) mouseX, (float) mouseY,
+						mods))
+					return;
+			}
+	}
+
+	private void onCharEvent(long window, int codepoint) {
+		if (window != attached.getWindowID())
+			return;
+		for (EventListener l : listeners)
+			if (l.charTyped(codepoint))
+				return;
 	}
 
 	private void onKeyEvent(long window, int key, int scancode, int action,
 			int mods) {
 		if (window != attached.getWindowID())
 			return;
-		if (key == GLFW.GLFW_KEY_ESCAPE && action != GLFW.GLFW_RELEASE)
+		if (key == GLFW.GLFW_KEY_ESCAPE && action != GLFW.GLFW_RELEASE) {
 			attached.shutdown();
+			return;
+		}
+		for (EventListener l : listeners)
+			if (action == GLFW.GLFW_PRESS) {
+				if (l.keyPressed(key, mods))
+					return;
+			} else if (action == GLFW.GLFW_RELEASE) {
+				if (l.keyReleased(key, mods))
+					return;
+			}
 	}
 
 	private double scrollPosX, scrollPosY;
@@ -67,6 +127,9 @@ public class GLWindowEvents {
 		// TODO Precision loss if there is a lot of scrolling in one direction
 		scrollPosX += dx;
 		scrollPosY += dy;
+		for (EventListener l : listeners)
+			if (l.scrollChanged((float) dx, (float) dy))
+				return;
 	}
 
 	public double getScrollX() {
@@ -101,6 +164,22 @@ public class GLWindowEvents {
 			return;
 		this.mouseX = x;
 		this.mouseY = y;
+		int mods = 0;
+		if (isKeyDown(GLFW.GLFW_KEY_LEFT_SHIFT)
+				|| isKeyDown(GLFW.GLFW_KEY_RIGHT_SHIFT))
+			mods |= GLFW.GLFW_MOD_SHIFT;
+		if (isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)
+				|| isKeyDown(GLFW.GLFW_KEY_RIGHT_ALT))
+			mods |= GLFW.GLFW_MOD_ALT;
+		if (isKeyDown(GLFW.GLFW_KEY_LEFT_SUPER)
+				|| isKeyDown(GLFW.GLFW_KEY_RIGHT_SUPER))
+			mods |= GLFW.GLFW_MOD_SUPER;
+		if (isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)
+				|| isKeyDown(GLFW.GLFW_KEY_RIGHT_CONTROL))
+			mods |= GLFW.GLFW_MOD_CONTROL;
+		for (EventListener l : listeners)
+			if (l.mouseMoved((float) x, (float) y, mods))
+				return;
 	}
 
 	public double getMouseX() {

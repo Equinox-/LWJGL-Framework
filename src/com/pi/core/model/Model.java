@@ -24,6 +24,10 @@ public class Model<E> extends GPUObject<Model<E>> {
 		this.vertexData = vertexData;
 		this.indexes = index;
 	}
+	
+	public final E vtx(int id) {
+		return vertexData.vertexDB[id];
+	}
 
 	@Override
 	protected void gpuAllocInternal() {
@@ -58,9 +62,10 @@ public class Model<E> extends GPUObject<Model<E>> {
 		render(0);
 	}
 
-	public void render(int indexID) {
+	public void render(int... indexBuffers) {
 		vertexData.activate();
-		indexes[indexID].render();
+		for (int indexID : indexBuffers)
+			indexes[indexID].render();
 		VertexData.deactivate();
 	}
 

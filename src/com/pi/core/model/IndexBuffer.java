@@ -72,7 +72,7 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 				* indexCount));
 	}
 
-	public IndexBuffer(PrimitiveType mode, int[] indices) {
+	public IndexBuffer(PrimitiveType mode, int... indices) {
 		this(mode, indices, 0, indices.length);
 	}
 
