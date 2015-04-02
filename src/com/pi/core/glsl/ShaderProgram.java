@@ -249,10 +249,10 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 		ShaderUniform v = uniforms.get(name);
 		if (v == null) {
 			int l = GL20.glGetUniformLocation(programID, name);
-			if (l == -1)
-				System.err
-						.println("Tried to query shader for invalid uniform: "
-								+ name);
+//			if (l == -1)
+//				System.err
+//						.println("Tried to query shader for invalid uniform: "
+//								+ name);
 			uniforms.put(name, v = new ShaderUniform(this, name, l));
 		}
 		return v;

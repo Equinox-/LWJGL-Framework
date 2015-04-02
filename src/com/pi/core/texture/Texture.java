@@ -1,10 +1,13 @@
 package com.pi.core.texture;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL14;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL45;
 
 import com.pi.core.framebuffer.FrameBufferAttachable;
@@ -116,6 +119,14 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 				magFilter.glID);
 	}
 
+	private static final int[] DEPTH_FORMATS = { GL11.GL_DEPTH_COMPONENT,
+			GL14.GL_DEPTH_COMPONENT16, GL14.GL_DEPTH_COMPONENT24,
+			GL14.GL_DEPTH_COMPONENT32, GL30.GL_DEPTH24_STENCIL8,
+			GL30.GL_DEPTH32F_STENCIL8, GL30.GL_DEPTH_COMPONENT32F };
+	static {
+		Arrays.sort(DEPTH_FORMATS);
+	}
+
 	@Override
 	protected void gpuAllocInternal() {
 		if (texture >= 0)
@@ -126,6 +137,10 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 			GL45.glTextureStorage2D(GL11.GL_TEXTURE_2D, mipmapLevels,
 					internalFormat, width, height);
 		} else {
+			int allocFmt = GL11.GL_RED;
+			if (Arrays.binarySearch(DEPTH_FORMATS, internalFormat) >= 0)
+				allocFmt = GL11.GL_DEPTH_COMPONENT;
+
 			GL11.glTexParameteri(GL11.GL_TEXTURE_2D,
 					GL12.GL_TEXTURE_BASE_LEVEL, 0);
 			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL,
@@ -134,7 +149,7 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 			int tmpH = height;
 			for (int level = 0; level <= mipmapLevels; level++) {
 				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, level, internalFormat,
-						tmpW, tmpH, 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE,
+						tmpW, tmpH, 0, allocFmt, GL11.GL_UNSIGNED_BYTE,
 						(ByteBuffer) null);
 				tmpW >>= 1;
 				tmpH >>= 1;

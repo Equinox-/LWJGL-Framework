@@ -5,13 +5,15 @@ import java.util.Set;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL32;
 
 import com.pi.core.texture.Texture;
 import com.pi.core.util.Bindable;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 
-public class FrameBuffer extends GPUObject<FrameBuffer> implements GLIdentifiable, Bindable {
+public class FrameBuffer extends GPUObject<FrameBuffer> implements
+		GLIdentifiable, Bindable {
 	private static final int DEFAULT_COLOR_ATTACHMENT_LIMIT = 16;
 
 	private static FrameBuffer current;
@@ -135,6 +137,30 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements GLIdentifiabl
 				attachObject(GL30.GL_DEPTH_ATTACHMENT, depthAttachment);
 			if (stencilAttachment != null)
 				attachObject(GL30.GL_STENCIL_ATTACHMENT, stencilAttachment);
+		}
+		int state = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
+		switch (state) {
+		case GL30.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+			System.err.println("Framebuffer: Incomplete attachment");
+			break;
+		case GL30.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+			System.err
+					.println("Framebuffer: Incomplete for missing attachment");
+			break;
+		case GL30.GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+			System.err.println("Framebuffer; Incomplete draw buffer");
+			break;
+		case GL30.GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+			System.err.println("Framebuffer: Incomplete multisample");
+			break;
+		case GL32.GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+			System.err.println("Framebuffer: Incomplete layer targets");
+			break;
+		case GL30.GL_FRAMEBUFFER_COMPLETE:
+			// All good
+			break;
+		default:
+			System.err.println("Framebuffer: Unknown error");
 		}
 		unbind();
 	}
