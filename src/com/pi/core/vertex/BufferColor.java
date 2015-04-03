@@ -3,9 +3,15 @@ package com.pi.core.vertex;
 import java.awt.Color;
 import java.nio.ByteBuffer;
 
+import org.lwjgl.BufferUtils;
+
 public final class BufferColor {
 	private final ByteBuffer backer;
 	private final int offset;
+
+	public BufferColor() {
+		this(BufferUtils.createByteBuffer(4), 0);
+	}
 
 	public BufferColor(ByteBuffer backer, int offset) {
 		this.backer = backer;
