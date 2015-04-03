@@ -17,7 +17,7 @@ import org.lwjgl.glfw.GLFWWindowSizeCallback;
 public class GLWindowEvents {
 	private final GLWindow attached;
 	private final List<EventListener> listeners = Collections
-			.synchronizedList(new ArrayList<>());
+			.synchronizedList(new ArrayList<EventListener>());
 	private GLFWKeyCallback keyCallback;
 	private GLFWScrollCallback scrollCallback;
 	private GLFWWindowSizeCallback sizeCallback;
@@ -29,14 +29,50 @@ public class GLWindowEvents {
 		this.attached = window;
 	}
 
+	@SuppressWarnings("synthetic-access")
 	public void bind() {
-		keyCallback = GLFW.GLFWKeyCallback(this::onKeyEvent);
-		scrollCallback = GLFW.GLFWScrollCallback(this::onScrollEvent);
-		sizeCallback = GLFW.GLFWWindowSizeCallback(this::onSizeEvent);
-		cursorCallback = GLFW.GLFWCursorPosCallback(this::onCursorPosEvent);
-		charCallback = GLFW.GLFWCharCallback(this::onCharEvent);
+		keyCallback = GLFW.GLFWKeyCallback(new GLFWKeyCallback.SAM() {
+			@Override
+			public void invoke(long window, int key, int scancode, int action,
+					int mods) {
+				onKeyEvent(window, key, scancode, action, mods);
+			}
+		});
+		scrollCallback = GLFW.GLFWScrollCallback(new GLFWScrollCallback.SAM() {
+			@Override
+			public void invoke(long window, double xoffset, double yoffset) {
+				onScrollEvent(window, xoffset, yoffset);
+			}
+		});
+		sizeCallback = GLFW
+				.GLFWWindowSizeCallback(new GLFWWindowSizeCallback.SAM() {
+					@Override
+					public void invoke(long window, int width, int height) {
+						onSizeEvent(window, width, height);
+
+					}
+				});
+		cursorCallback = GLFW
+				.GLFWCursorPosCallback(new GLFWCursorPosCallback.SAM() {
+					@Override
+					public void invoke(long window, double xpos, double ypos) {
+						onCursorPosEvent(window, xpos, ypos);
+					}
+				});
+		charCallback = GLFW.GLFWCharCallback(new GLFWCharCallback.SAM() {
+			@Override
+			public void invoke(long window, int codepoint) {
+				onCharEvent(window, codepoint);
+			}
+		});
 		mouseButtonCallback = GLFW
-				.GLFWMouseButtonCallback(this::onMouseButtonEvent);
+				.GLFWMouseButtonCallback(new GLFWMouseButtonCallback.SAM() {
+					@Override
+					public void invoke(long window, int button, int action,
+							int mods) {
+						onMouseButtonEvent(window, button, action, mods);
+					}
+				});
 		GLFW.glfwSetKeyCallback(attached.getWindowID(), keyCallback);
 		GLFW.glfwSetScrollCallback(attached.getWindowID(), scrollCallback);
 		GLFW.glfwSetWindowSizeCallback(attached.getWindowID(), sizeCallback);
