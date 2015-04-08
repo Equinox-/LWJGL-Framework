@@ -11,13 +11,14 @@ import com.pi.core.util.GPUObject;
 
 public class IndexBuffer extends GPUObject<IndexBuffer> {
 	public final GLGenericBuffer indexBuffer;
-	public final int indexType, indexSize, indexCount;
+	public final int indexType, indexSize;
+	public int indexCount;
 	public final PrimitiveType mode;
 
 	private final IntBuffer intBuff;
 	private final ShortBuffer shortBuff;
 
-	private static int chooseIndexSize(int[] index, int offset, int rightOffset) {
+	public static int chooseIndexSize(int[] index, int offset, int rightOffset) {
 		int maxVertexID = 0;
 		for (int i = offset; i < rightOffset; i++)
 			maxVertexID = Math.max(index[i], maxVertexID);
@@ -33,25 +34,24 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 
 	private IndexBuffer(PrimitiveType mode, int indexSize, int indexCount,
 			GLGenericBuffer indexBuffer) {
-		this.indexCount = indexCount;
 		this.mode = mode;
 
-		if ((mode == PrimitiveType.TRIANGLES
-				|| mode == PrimitiveType.TRIANGLE_FAN
-				|| mode == PrimitiveType.TRIANGLE_STRIP || mode == PrimitiveType.TRIANGLE_PATCHES)
-				&& indexCount < 3)
-			throw new IllegalArgumentException(
-					"Can't make a triangle type index buffer with less than three indices");
-		if ((mode == PrimitiveType.LINES || mode == PrimitiveType.LINE_STRIP || mode == PrimitiveType.LINE_LOOP)
-				&& indexCount < 2)
-			throw new IllegalArgumentException(
-					"Can't make a line type index buffer with less than two indices");
-		
+//		if ((mode == PrimitiveType.TRIANGLES
+//				|| mode == PrimitiveType.TRIANGLE_FAN
+//				|| mode == PrimitiveType.TRIANGLE_STRIP || mode == PrimitiveType.TRIANGLE_PATCHES)
+//				&& indexCount < 3)
+//			throw new IllegalArgumentException(
+//					"Can't make a triangle type index buffer with less than three indices");
+//		if ((mode == PrimitiveType.LINES || mode == PrimitiveType.LINE_STRIP || mode == PrimitiveType.LINE_LOOP)
+//				&& indexCount < 2)
+//			throw new IllegalArgumentException(
+//					"Can't make a line type index buffer with less than two indices");
+
 		this.indexSize = indexSize;
 		this.indexBuffer = indexBuffer;
 		this.intBuff = this.indexBuffer.integerImageAt(0);
 		this.shortBuff = this.indexBuffer.shortImageAt(0);
-		
+
 		switch (indexSize) {
 		case 1:
 			indexType = GL11.GL_UNSIGNED_BYTE;
@@ -67,12 +67,12 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		}
 	}
 
-	private IndexBuffer(PrimitiveType mode, int indexSize, int indexCount) {
+	public IndexBuffer(PrimitiveType mode, int indexSize, int indexCount) {
 		this(mode, indexSize, indexCount, new GLGenericBuffer(indexSize
 				* indexCount));
 	}
 
-	public IndexBuffer(PrimitiveType mode, int... indices) {
+	public IndexBuffer(PrimitiveType mode, int[] indices) {
 		this(mode, indices, 0, indices.length);
 	}
 
@@ -83,7 +83,11 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 
 	public IndexBuffer(PrimitiveType mode, int[] indices, int offset, int count) {
 		this(mode, chooseIndexSize(indices, offset, offset + count), count);
+		write(indices, offset, count);
+	}
 
+	public void write(int[] indices, int offset, int count) {
+		this.indexCount = count;
 		final int rightOffset = offset + count;
 		switch (indexSize) {
 		case 1:

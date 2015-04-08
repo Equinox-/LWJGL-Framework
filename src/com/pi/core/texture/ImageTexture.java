@@ -40,7 +40,7 @@ public class ImageTexture extends Texture {
 						/ Math.log(2)), 10));
 	}
 
-	public BufferedImage getBacking() {
+	public final BufferedImage getBacking() {
 		return img;
 	}
 
