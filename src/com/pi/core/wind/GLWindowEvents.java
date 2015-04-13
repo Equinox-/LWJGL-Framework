@@ -183,6 +183,9 @@ public class GLWindowEvents {
 			return;
 		this.width = width;
 		this.height = height;
+		for (EventListener l : listeners)
+			if (l.sizeChanged(width, height))
+				break;
 	}
 
 	public int getWidth() {

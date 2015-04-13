@@ -30,4 +30,8 @@ public abstract class EventListener {
 	public boolean scrollChanged(float dx, float dy) {
 		return false;
 	}
+	
+	public boolean sizeChanged(float width, float height) {
+		return false;
+	}
 }
