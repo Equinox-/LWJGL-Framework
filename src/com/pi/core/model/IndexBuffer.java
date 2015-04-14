@@ -32,20 +32,20 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		}
 	}
 
-	private IndexBuffer(PrimitiveType mode, int indexSize, int indexCount,
+	private IndexBuffer(PrimitiveType mode, int indexSize,
 			GLGenericBuffer indexBuffer) {
 		this.mode = mode;
 
-//		if ((mode == PrimitiveType.TRIANGLES
-//				|| mode == PrimitiveType.TRIANGLE_FAN
-//				|| mode == PrimitiveType.TRIANGLE_STRIP || mode == PrimitiveType.TRIANGLE_PATCHES)
-//				&& indexCount < 3)
-//			throw new IllegalArgumentException(
-//					"Can't make a triangle type index buffer with less than three indices");
-//		if ((mode == PrimitiveType.LINES || mode == PrimitiveType.LINE_STRIP || mode == PrimitiveType.LINE_LOOP)
-//				&& indexCount < 2)
-//			throw new IllegalArgumentException(
-//					"Can't make a line type index buffer with less than two indices");
+		// if ((mode == PrimitiveType.TRIANGLES
+		// || mode == PrimitiveType.TRIANGLE_FAN
+		// || mode == PrimitiveType.TRIANGLE_STRIP || mode == PrimitiveType.TRIANGLE_PATCHES)
+		// && indexCount < 3)
+		// throw new IllegalArgumentException(
+		// "Can't make a triangle type index buffer with less than three indices");
+		// if ((mode == PrimitiveType.LINES || mode == PrimitiveType.LINE_STRIP || mode == PrimitiveType.LINE_LOOP)
+		// && indexCount < 2)
+		// throw new IllegalArgumentException(
+		// "Can't make a line type index buffer with less than two indices");
 
 		this.indexSize = indexSize;
 		this.indexBuffer = indexBuffer;
@@ -68,8 +68,8 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 	}
 
 	public IndexBuffer(PrimitiveType mode, int indexSize, int indexCount) {
-		this(mode, indexSize, indexCount, new GLGenericBuffer(indexSize
-				* indexCount));
+		this(mode, indexSize, new GLGenericBuffer(indexSize * indexCount));
+		this.indexCount = indexCount;
 	}
 
 	public IndexBuffer(PrimitiveType mode, int[] indices) {
@@ -78,7 +78,8 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 
 	public IndexBuffer(PrimitiveType mode, GLGenericBuffer indices,
 			int indexSize) {
-		this(mode, indexSize, indices.size() / indexSize, indices);
+		this(mode, indexSize, indices);
+		this.indexCount = indices.size() / indexSize;
 	}
 
 	public IndexBuffer(PrimitiveType mode, int[] indices, int offset, int count) {
