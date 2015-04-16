@@ -24,7 +24,7 @@ public class Model<E> extends GPUObject<Model<E>> {
 		this.vertexData = vertexData;
 		this.indexes = index;
 	}
-	
+
 	public final E vtx(int id) {
 		return vertexData.vertexDB[id];
 	}
@@ -59,14 +59,15 @@ public class Model<E> extends GPUObject<Model<E>> {
 	}
 
 	public void render() {
-		render(0);
+		vertexData.activate();
+		indexes[0].render();
 	}
 
 	public void render(int... indexBuffers) {
 		vertexData.activate();
 		for (int indexID : indexBuffers)
 			indexes[indexID].render();
-		VertexData.deactivate();
+		// VertexData.deactivate(); Don't need this in theory.
 	}
 
 	@Override
