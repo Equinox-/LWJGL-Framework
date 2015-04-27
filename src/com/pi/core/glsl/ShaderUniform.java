@@ -1,17 +1,15 @@
 package com.pi.core.glsl;
 
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.util.Arrays;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
 import com.pi.core.texture.Texture;
 import com.pi.core.util.WarningManager;
-import com.pi.core.vertex.BufferColor;
 import com.pi.math.matrix.Matrix4;
+import com.pi.math.vector.ByteVector4;
 import com.pi.math.vector.Vector;
 
 @SuppressWarnings("unused")
@@ -251,11 +249,8 @@ public final class ShaderUniform {
 			typeMismatch("float matrix4");
 	}
 
-	public void color(BufferColor c) {
-		ByteBuffer buff = c.getAccessor();
-		vector((buff.get(0) & 0xFF) / 255f, (buff.get(1) & 0xFF) / 255f,
-				(buff.get(2) & 0xFF) / 255f, (buff.get(3) & 0xFF) / 255f);
-
+	public void color(ByteVector4 c) {
+		vector(c);
 	}
 
 	public int location() {

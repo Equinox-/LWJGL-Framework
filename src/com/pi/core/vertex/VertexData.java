@@ -14,6 +14,7 @@ import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 import com.pi.math.matrix.Matrix4;
+import com.pi.math.vector.ByteVector;
 import com.pi.math.vector.VectorBuff;
 import com.pi.math.volume.BoundingArea;
 
@@ -99,13 +100,12 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 														.floatImageAt(head
 																+ layout.attrOffset[j]),
 												0));
-							} else if (type.isAssignableFrom(BufferColor.class)) {
-								Array.set(
-										array,
-										layout.attrIndex[j],
-										new BufferColor(this.bufferObject
-												.getBacking(), head
-												+ layout.attrOffset[j]));
+							} else if (ByteVector.class.isAssignableFrom(type)) {
+								Array.set(array, layout.attrIndex[j],
+										ByteVector.make(
+												this.bufferObject.getBacking(),
+												head + layout.attrOffset[j],
+												layout.attrSize[j]));
 							}
 						} else {
 							if (VectorBuff.class.isAssignableFrom(attr
@@ -123,13 +123,12 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 														.floatImageAt(head
 																+ layout.attrOffset[j]),
 												0));
-							} else if (attr.getType().isAssignableFrom(
-									BufferColor.class)) {
-								attr.set(
-										itm,
-										new BufferColor(this.bufferObject
-												.getBacking(), head
-												+ layout.attrOffset[j]));
+							} else if (ByteVector.class.isAssignableFrom(attr
+									.getType())) {
+								attr.set(itm, ByteVector.make(
+										this.bufferObject.getBacking(), head
+												+ layout.attrOffset[j],
+										layout.attrSize[j]));
 							}
 						}
 					}

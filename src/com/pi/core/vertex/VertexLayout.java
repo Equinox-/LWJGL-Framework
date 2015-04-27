@@ -9,7 +9,12 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
 import com.pi.math.matrix.Matrix4;
+import com.pi.math.vector.ByteVector;
+import com.pi.math.vector.ByteVector4;
 import com.pi.math.vector.VectorBuff;
+import com.pi.math.vector.VectorBuff2;
+import com.pi.math.vector.VectorBuff3;
+import com.pi.math.vector.VectorBuff4;
 
 class VertexLayout {
 	private static final int MAX_ATTR_COUNT = 64; // Realistically 16 on most GPUs
@@ -73,14 +78,23 @@ class VertexLayout {
 					attrOffset[attrID] = structSize;
 					attrIndex[attrID] = k;
 					if (VectorBuff.class.isAssignableFrom(type)) { // Vector type
-						if (layout.dimension() < 2 || layout.dimension() > 4)
+						int dimension = -1;
+						if (VectorBuff2.class.isAssignableFrom(type))
+							dimension = 2;
+						else if (VectorBuff3.class.isAssignableFrom(type))
+							dimension = 3;
+						else if (VectorBuff4.class.isAssignableFrom(type))
+							dimension = 4;
+						if (layout.dimension() >= 0)
+							dimension = layout.dimension();
+						if (dimension < 2 || dimension > 4)
 							throw new RuntimeException(
 									"A vector style vertex attr may only have 2-4 components.  ("
 											+ f.getName()
 											+ ")  You likely have to define the AttrLayout#dimension() parameter.");
-						structSize += 4 * layout.dimension();
+						structSize += 4 * dimension;
 						attrType[attrID] = GL11.GL_FLOAT;
-						attrSize[attrID] = layout.dimension();
+						attrSize[attrID] = dimension;
 						attrNormalize[attrID] = false;
 					} else if (type.isAssignableFrom(Matrix4.class)) {
 						if (layout.dimension() >= 0 && layout.dimension() != 4)
@@ -90,14 +104,17 @@ class VertexLayout {
 						attrSize[attrID] = 4;
 						attrType[attrID] = GL11.GL_FLOAT;
 						attrNormalize[attrID] = false;
-					} else if (type.isAssignableFrom(BufferColor.class)) {
-						if (layout.dimension() >= 0 && layout.dimension() != 4
-								&& layout.dimension() != 3)
+					} else if (ByteVector.class.isAssignableFrom(type)) {
+						int dimension = -1;
+						if (ByteVector4.class.isAssignableFrom(type))
+							dimension = 4;
+						if (layout.dimension() >= 0)
+							dimension = layout.dimension();
+						if (dimension != 4 && dimension != 3)
 							throw new RuntimeException(
 									"Non 3/4-D colors aren't supported.");
 						structSize += 4;
-						attrSize[attrID] = layout.dimension() >= 0 ? layout
-								.dimension() : 4;
+						attrSize[attrID] = dimension;
 						attrType[attrID] = GL11.GL_UNSIGNED_BYTE;
 						attrNormalize[attrID] = true;
 					} else {

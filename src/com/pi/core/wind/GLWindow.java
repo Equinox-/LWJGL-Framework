@@ -1,5 +1,9 @@
 package com.pi.core.wind;
 
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+
+import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -9,6 +13,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import com.pi.core.model.BasicShapes;
 import com.pi.core.texture.ColorTextures;
+import com.pi.math.BufferProvider;
 
 public abstract class GLWindow {
 	private final long windowID;
@@ -28,6 +33,17 @@ public abstract class GLWindow {
 	public GLWindow(int major, int minor, int samples) {
 		if (GLFW.glfwInit() != GL11.GL_TRUE)
 			throw new RuntimeException("Unable to initialize GLFW");
+		BufferProvider.provider(new BufferProvider() {
+			@Override
+			protected FloatBuffer nFloatBuffer(int n) {
+				return BufferUtils.createFloatBuffer(n);
+			}
+
+			@Override
+			protected ByteBuffer nByteBuffer(int n) {
+				return BufferUtils.createByteBuffer(n);
+			}
+		});
 
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, major);
 		GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, samples);
