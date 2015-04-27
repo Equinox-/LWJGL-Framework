@@ -1,3 +1,0 @@
-[submodule "lib/math"]
-	path = lib/math
-	url = git@github.com:Equinox-/Java-Math.git

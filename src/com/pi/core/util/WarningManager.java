@@ -10,7 +10,7 @@ public class WarningManager {
 	public static final boolean GPUOBJECT_REFERENCE_WATCHING = System
 			.getProperty("DEBUG") != null;
 	public static final boolean GPUOBJECT_METHOD_ELEVATION = true;
-	public static final boolean GLSL_UNIFORM_TYPE_WATCHING = true;
+	public static final boolean GLSL_UNIFORM_TYPE_WATCHING = false;
 
 	static {
 		if (GPUOBJECT_REFERENCE_WATCHING)
