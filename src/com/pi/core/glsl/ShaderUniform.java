@@ -101,8 +101,8 @@ public final class ShaderUniform {
 		final int prevSampler = this.samplerID[activeIndex];
 
 		if (prevSampler < prog.textureUnit.length) {
-//			if (prog.textureUnit[prevSampler] == t)
-//				return;
+			// if (prog.textureUnit[prevSampler] == t)
+			// return;
 			if (--prog.textureUnitRefCount[prevSampler] <= 0) {
 				prog.textureUnit[prevSampler] = null;
 				prog.textureUnitRefCount[prevSampler] = 0;
@@ -113,9 +113,10 @@ public final class ShaderUniform {
 		} else {
 			// Search for an equiv texture object:
 			boolean found = false;
-			int fNull = -1;
+			int fNull = ShaderProgram.MAX_TEXTURE_UNITS;
 			for (int i = 0; i < prog.textureUnit.length; i++) {
-				if (prog.textureUnit[i] == null && fNull == -1) {
+				if (prog.textureUnit[i] == null
+						&& fNull == ShaderProgram.MAX_TEXTURE_UNITS) {
 					fNull = i;
 				} else if (prog.textureUnit[i] == t) {
 					this.samplerID[activeIndex] = i;
@@ -126,13 +127,17 @@ public final class ShaderUniform {
 			}
 			if (!found) {
 				this.samplerID[activeIndex] = fNull;
-				prog.textureUnit[fNull] = t;
-				prog.textureUnitRefCount[fNull] = 1;
+				if (fNull == ShaderProgram.MAX_TEXTURE_UNITS) {
+					System.err.println("Exceeded MAX TEXTURE UNITS");
+				} else {
+					prog.textureUnit[fNull] = t;
+					prog.textureUnitRefCount[fNull] = 1;
+				}
 			}
 		}
-//		if (this.samplerID[activeIndex] != prevSampler)
-			GL20.glUniform1i(this.location[activeIndex],
-					this.samplerID[activeIndex]);
+		// if (this.samplerID[activeIndex] != prevSampler)
+		GL20.glUniform1i(this.location[activeIndex],
+				this.samplerID[activeIndex]);
 	}
 
 	public void bool(boolean b) {
