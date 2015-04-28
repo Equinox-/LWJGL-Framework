@@ -8,7 +8,7 @@ import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.VectorBuff3;
 
 public class Camera3rdPerson implements Camera {
-	private final Matrix4 rotMatrix = Matrix4.identity();
+	private final Matrix4 rotMatrix = new Matrix4().makeIdentity();
 	private final GLWindow window;
 
 	private float x, y, z;

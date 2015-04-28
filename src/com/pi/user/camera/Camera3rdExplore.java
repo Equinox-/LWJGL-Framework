@@ -11,7 +11,7 @@ import com.pi.math.vector.Vector;
 import com.pi.math.vector.VectorND;
 
 public class Camera3rdExplore implements Camera {
-	private final Matrix4 tmpMatrix = Matrix4.identity();
+	private final Matrix4 tmpMatrix = new Matrix4().makeIdentity();
 	private final DoubleBuffer xPos, yPos;
 	private final GLWindow window;
 
@@ -28,7 +28,7 @@ public class Camera3rdExplore implements Camera {
 	public Camera3rdExplore(GLWindow window, float initialDepth) {
 		this.window = window;
 		this.offset = -initialDepth;
-		this.pose = Matrix4.identity();
+		this.pose = new Matrix4().makeIdentity();
 		this.xPos = BufferUtils.createDoubleBuffer(1);
 		this.yPos = BufferUtils.createDoubleBuffer(1);
 	}
