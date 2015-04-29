@@ -21,7 +21,7 @@ import com.pi.math.volume.BoundingArea;
 public class VertexData<E> extends GPUObject<VertexData<E>> implements
 		GLIdentifiable {
 	public E[] vertexDB;
-	private final Class<E> vertexClass;
+	public final Class<E> vertexClass;
 	private final int count;
 	private final VertexLayout layout;
 	public final GLGenericBuffer bufferObject;
