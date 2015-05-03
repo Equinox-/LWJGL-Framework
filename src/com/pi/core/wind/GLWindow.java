@@ -83,12 +83,13 @@ public abstract class GLWindow {
 	public void start() {
 		errorCallback = Callbacks.errorCallbackPrint(System.err);
 		GLFW.glfwSetErrorCallback(errorCallback);
+		running = true;
+
 		windowEvents.bind();
 
 		init();
 
-		running = true;
-		while (running && GLFW.glfwWindowShouldClose(windowID) != GL11.GL_TRUE) {
+		while (valid()) {
 			render();
 			GLFW.glfwPollEvents();
 			update();
@@ -106,6 +107,10 @@ public abstract class GLWindow {
 		GLFW.glfwDestroyWindow(windowID);
 		GLFW.glfwTerminate();
 		System.exit(0);
+	}
+
+	public boolean valid() {
+		return running && GLFW.glfwWindowShouldClose(windowID) != GL11.GL_TRUE;
 	}
 
 	public GLWindowEvents getEvents() {

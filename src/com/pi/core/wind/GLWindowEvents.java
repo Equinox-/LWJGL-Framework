@@ -1,9 +1,14 @@
 package com.pi.core.wind;
 
+import java.lang.reflect.Method;
 import java.nio.IntBuffer;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
@@ -25,44 +30,83 @@ public class GLWindowEvents {
 	private GLFWCharCallback charCallback;
 	private GLFWMouseButtonCallback mouseButtonCallback;
 
-	public GLWindowEvents(GLWindow window) {
+	private BlockingQueue<Entry<Method, Object[]>> eventQueue = new LinkedBlockingQueue<>();
+
+	private static Method onKeyEvent, onScrollEvent, onSizeEvent,
+			onCursorPosEvent, onCharEvent, onMouseButtonEvent;
+	static {
+		try {
+			onKeyEvent = GLWindowEvents.class.getDeclaredMethod("onKeyEvent",
+					int.class, int.class, int.class, int.class);
+			onScrollEvent = GLWindowEvents.class.getDeclaredMethod(
+					"onScrollEvent", double.class, double.class);
+			onSizeEvent = GLWindowEvents.class.getDeclaredMethod("onSizeEvent",
+					int.class, int.class);
+			onCursorPosEvent = GLWindowEvents.class.getDeclaredMethod(
+					"onCursorPosEvent", double.class, double.class);
+			onCharEvent = GLWindowEvents.class.getDeclaredMethod("onCharEvent",
+					int.class);
+			onMouseButtonEvent = GLWindowEvents.class.getDeclaredMethod(
+					"onMouseButtonEvent", int.class, int.class, int.class);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private Thread eventProcessor;
+
+	public GLWindowEvents(final GLWindow window) {
 		this.attached = window;
 	}
 
-	@SuppressWarnings("synthetic-access")
+	@SuppressWarnings({ "synthetic-access", "deprecation" })
 	public void bind() {
 		keyCallback = GLFW.GLFWKeyCallback(new GLFWKeyCallback.SAM() {
 			@Override
 			public void invoke(long window, int key, int scancode, int action,
 					int mods) {
-				onKeyEvent(window, key, scancode, action, mods);
+				if (window != attached.getWindowID())
+					return;
+				eventQueue.add(new AbstractMap.SimpleEntry<>(onKeyEvent,
+						new Object[] { key, scancode, action, mods }));
 			}
 		});
 		scrollCallback = GLFW.GLFWScrollCallback(new GLFWScrollCallback.SAM() {
 			@Override
 			public void invoke(long window, double xoffset, double yoffset) {
-				onScrollEvent(window, xoffset, yoffset);
+				if (window != attached.getWindowID())
+					return;
+				eventQueue.add(new AbstractMap.SimpleEntry<>(onScrollEvent,
+						new Object[] { xoffset, yoffset }));
 			}
 		});
 		sizeCallback = GLFW
 				.GLFWWindowSizeCallback(new GLFWWindowSizeCallback.SAM() {
 					@Override
 					public void invoke(long window, int width, int height) {
-						onSizeEvent(window, width, height);
-
+						if (window != attached.getWindowID())
+							return;
+						eventQueue.add(new AbstractMap.SimpleEntry<>(
+								onSizeEvent, new Object[] { width, height }));
 					}
 				});
 		cursorCallback = GLFW
 				.GLFWCursorPosCallback(new GLFWCursorPosCallback.SAM() {
 					@Override
 					public void invoke(long window, double xpos, double ypos) {
-						onCursorPosEvent(window, xpos, ypos);
+						if (window != attached.getWindowID())
+							return;
+						eventQueue.add(new AbstractMap.SimpleEntry<>(
+								onCursorPosEvent, new Object[] { xpos, ypos }));
 					}
 				});
 		charCallback = GLFW.GLFWCharCallback(new GLFWCharCallback.SAM() {
 			@Override
 			public void invoke(long window, int codepoint) {
-				onCharEvent(window, codepoint);
+				if (window != attached.getWindowID())
+					return;
+				eventQueue.add(new AbstractMap.SimpleEntry<>(onCharEvent,
+						new Object[] { codepoint }));
 			}
 		});
 		mouseButtonCallback = GLFW
@@ -70,7 +114,11 @@ public class GLWindowEvents {
 					@Override
 					public void invoke(long window, int button, int action,
 							int mods) {
-						onMouseButtonEvent(window, button, action, mods);
+						if (window != attached.getWindowID())
+							return;
+						eventQueue.add(new AbstractMap.SimpleEntry<>(
+								onMouseButtonEvent, new Object[] { button,
+										action, mods }));
 					}
 				});
 		GLFW.glfwSetKeyCallback(attached.getWindowID(), keyCallback);
@@ -91,6 +139,28 @@ public class GLWindowEvents {
 
 		mouseX = width / 2;
 		mouseY = height / 2;
+
+		eventQueue.clear();
+		if (eventProcessor != null && eventProcessor.isAlive()) {
+			eventProcessor.stop();
+		}
+
+		this.eventProcessor = new Thread() {
+			public void run() {
+				System.out.println("Event processor beginning...");
+				while (attached.valid()) {
+					try {
+						Entry<Method, Object[]> event = eventQueue.take();
+						event.getKey().invoke(GLWindowEvents.this,
+								event.getValue());
+					} catch (Exception e) {
+						System.err.println("Event processing failed.");
+					}
+				}
+				System.out.println("Event processor ending...");
+			}
+		};
+		this.eventProcessor.start();
 	}
 
 	public void release() {
@@ -114,10 +184,7 @@ public class GLWindowEvents {
 		return listeners.remove(e);
 	}
 
-	private void onMouseButtonEvent(long window, int button, int action,
-			int mods) {
-		if (window != attached.getWindowID())
-			return;
+	protected void onMouseButtonEvent(int button, int action, int mods) {
 		for (EventListener l : listeners)
 			if (action == GLFW.GLFW_PRESS) {
 				if (l.mousePressed(button, (float) mouseX, (float) mouseY, mods))
@@ -129,18 +196,13 @@ public class GLWindowEvents {
 			}
 	}
 
-	private void onCharEvent(long window, int codepoint) {
-		if (window != attached.getWindowID())
-			return;
+	protected void onCharEvent(int codepoint) {
 		for (EventListener l : listeners)
 			if (l.charTyped(codepoint))
 				return;
 	}
 
-	private void onKeyEvent(long window, int key, int scancode, int action,
-			int mods) {
-		if (window != attached.getWindowID())
-			return;
+	protected void onKeyEvent(int key, int scancode, int action, int mods) {
 		if (key == GLFW.GLFW_KEY_ESCAPE && action != GLFW.GLFW_RELEASE) {
 			attached.shutdown();
 			return;
@@ -157,9 +219,7 @@ public class GLWindowEvents {
 
 	private double scrollPosX, scrollPosY;
 
-	private void onScrollEvent(long window, double dx, double dy) {
-		if (window != attached.getWindowID())
-			return;
+	protected void onScrollEvent(double dx, double dy) {
 		// TODO Precision loss if there is a lot of scrolling in one direction
 		scrollPosX += dx;
 		scrollPosY += dy;
@@ -178,9 +238,7 @@ public class GLWindowEvents {
 
 	private int width, height;
 
-	private void onSizeEvent(long window, int width, int height) {
-		if (window != attached.getWindowID())
-			return;
+	protected void onSizeEvent(int width, int height) {
 		this.width = width;
 		this.height = height;
 		for (EventListener l : listeners)
@@ -198,9 +256,7 @@ public class GLWindowEvents {
 
 	private double mouseX, mouseY;
 
-	private void onCursorPosEvent(long window, double x, double y) {
-		if (window != attached.getWindowID())
-			return;
+	protected void onCursorPosEvent(double x, double y) {
 		this.mouseX = x;
 		this.mouseY = y;
 		int mods = 0;

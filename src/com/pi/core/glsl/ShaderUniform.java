@@ -1,6 +1,5 @@
 package com.pi.core.glsl;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.lwjgl.opengl.GL11;
@@ -11,6 +10,7 @@ import com.pi.core.util.WarningManager;
 import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.ByteVector4;
 import com.pi.math.vector.Vector;
+import com.pi.math.vector.VectorBuff;
 
 @SuppressWarnings("unused")
 public final class ShaderUniform {
@@ -97,6 +97,11 @@ public final class ShaderUniform {
 				&& type != GL20.GL_SAMPLER_2D_SHADOW
 				&& type != GL20.GL_SAMPLER_3D && type != GL20.GL_SAMPLER_CUBE)
 			typeMismatch("sampler");
+
+		if (this.samplerID[activeIndex] < ShaderProgram.MAX_TEXTURE_UNITS
+				&& this.samplerID[activeIndex] >= 0
+				&& prog.textureUnit[this.samplerID[activeIndex]] == t)
+			return;
 
 		final int prevSampler = this.samplerID[activeIndex];
 
@@ -230,6 +235,39 @@ public final class ShaderUniform {
 			break;
 		case 2:
 			vector(v.get(0), v.get(1));
+			break;
+		case 1:
+			floating(v.get(0));
+			break;
+		default:
+			throw new IllegalArgumentException("Vectors of dimension "
+					+ v.dimension() + " can't be assigned to shader uniforms.");
+		}
+	}
+
+	public void vector(VectorBuff v) {
+		utilAllowed();
+		switch (v.dimension()) {
+		case 4:
+			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+					|| type == GL20.GL_FLOAT_VEC4)
+				GL20.glUniform4(location[activeIndex], v.getAccessor());
+			else
+				typeMismatch("float vec4");
+			break;
+		case 3:
+			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+					|| type == GL20.GL_FLOAT_VEC3)
+				GL20.glUniform3(location[activeIndex], v.getAccessor());
+			else
+				typeMismatch("float vec3");
+			break;
+		case 2:
+			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
+					|| type == GL20.GL_FLOAT_VEC2)
+				GL20.glUniform2(location[activeIndex], v.getAccessor());
+			else
+				typeMismatch("float vec2");
 			break;
 		case 1:
 			floating(v.get(0));
