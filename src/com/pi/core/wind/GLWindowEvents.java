@@ -146,6 +146,7 @@ public class GLWindowEvents {
 		}
 
 		this.eventProcessor = new Thread() {
+			@Override
 			public void run() {
 				System.out.println("Event processor beginning...");
 				while (attached.valid()) {
@@ -220,7 +221,6 @@ public class GLWindowEvents {
 	private double scrollPosX, scrollPosY;
 
 	protected void onScrollEvent(double dx, double dy) {
-		// TODO Precision loss if there is a lot of scrolling in one direction
 		scrollPosX += dx;
 		scrollPosY += dy;
 		for (EventListener l : listeners)
