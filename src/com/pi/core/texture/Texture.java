@@ -6,6 +6,7 @@ import java.util.Arrays;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL45;
@@ -16,7 +17,9 @@ import com.pi.core.util.GPUObject;
 
 public class Texture extends GPUObject<Texture> implements Bindable,
 		FrameBufferAttachable {
-	private static Texture currentTexture;
+	private static final int MAX_TEXTURE_UNITS = 64;
+	private static int activeTextureUnit = 0;
+	private static final Texture[] currentTexture = new Texture[MAX_TEXTURE_UNITS];
 
 	private static final int[][] MIPMAP_FILTER_TABLE;
 	static {
@@ -171,20 +174,25 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 	public int getID() {
 		return texture;
 	}
+	
+	public static void glActiveTexture(int n) {
+		GL13.glActiveTexture(GL13.GL_TEXTURE0 + n);
+		activeTextureUnit = n;
+	}
 
 	@Override
 	public void bind() {
 		if (texture < 0)
 			throw new RuntimeException("Can't bind an unallocated texture.");
-		if (currentTexture == this)
+		if (currentTexture[activeTextureUnit] == this)
 			return;
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
-		currentTexture = this;
+		currentTexture[activeTextureUnit] = this;
 	}
 
 	public static void unbind() {
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-		currentTexture = null;
+		currentTexture[activeTextureUnit] = null;
 	}
 
 	public int getWidth() {

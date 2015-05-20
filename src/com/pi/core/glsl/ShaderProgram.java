@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL40;
@@ -249,10 +248,10 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 		ShaderUniform v = uniforms.get(name);
 		if (v == null) {
 			int l = GL20.glGetUniformLocation(programID, name);
-//			if (l == -1)
-//				System.err
-//						.println("Tried to query shader for invalid uniform: "
-//								+ name);
+			// if (l == -1)
+			// System.err
+			// .println("Tried to query shader for invalid uniform: "
+			// + name);
 			uniforms.put(name, v = new ShaderUniform(this, name, l));
 		}
 		return v;
@@ -261,7 +260,7 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 	public void bindSamplers() {
 		for (int i = 0; i < textureUnit.length; i++) {
 			if (ACTIVE_TEXTURE_UNITS[i] != textureUnit[i]) {
-				GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
+				Texture.glActiveTexture(i);
 				if (textureUnit[i] != null)
 					textureUnit[i].bind();
 				else

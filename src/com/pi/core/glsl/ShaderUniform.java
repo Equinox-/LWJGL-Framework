@@ -12,7 +12,6 @@ import com.pi.math.vector.ByteVector4;
 import com.pi.math.vector.Vector;
 import com.pi.math.vector.VectorBuff;
 
-@SuppressWarnings("unused")
 public final class ShaderUniform {
 	private final ShaderProgram prog;
 	private final String name;
