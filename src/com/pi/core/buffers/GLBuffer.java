@@ -32,13 +32,19 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 	private BufferModifyHint modifyHint;
 
 	private final int size;
+	private BufferType type;
 	protected E data;
 	private int bufferPtr;
 
 	public GLBuffer(E data) {
+		this(data, BufferType.ARRAY);
+	}
+
+	public GLBuffer(E data, BufferType type) {
 		this.size = data.capacity();
 		this.data = data;
 		this.bufferPtr = -1;
+		this.type = type;
 
 		this.accessHint = BufferAccessHint.DRAW;
 		this.modifyHint = BufferModifyHint.STATIC;
@@ -76,9 +82,9 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 
 		int ahI = accessHint.ordinal();
 		int mhI = modifyHint.ordinal();
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferPtr);
-		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, size, HINT_TABLE[ahI][mhI]);
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+		GL15.glBindBuffer(type.code(), bufferPtr);
+		GL15.glBufferData(type.code(), size, HINT_TABLE[ahI][mhI]);
+		GL15.glBindBuffer(type.code(), 0);
 	}
 
 	@Override
@@ -104,9 +110,9 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 					"Can't sync to GPU when no buffer object exists.");
 		data.position(0);
 		data.limit(data.capacity());
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferPtr);
-		glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, data);
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+		GL15.glBindBuffer(type.code(), bufferPtr);
+		glBufferSubData(type.code(), 0, data);
+		GL15.glBindBuffer(type.code(), 0);
 	}
 
 	@Override
@@ -117,9 +123,9 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 		if (data == null)
 			data = genBuffer(size);
 		data.position(0);
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferPtr);
-		glGetBufferSubData(GL15.GL_ARRAY_BUFFER, 0, data);
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+		GL15.glBindBuffer(type.code(), bufferPtr);
+		glGetBufferSubData(type.code(), 0, data);
+		GL15.glBindBuffer(type.code(), 0);
 	}
 
 	public void dispose() {
@@ -142,10 +148,21 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 		return size;
 	}
 
+	public void type(BufferType t) {
+		if (bufferPtr != -1)
+			throw new IllegalStateException(
+					"Can't change buffer type when allocated.");
+		this.type = t;
+	}
+
+	public BufferType type() {
+		return type;
+	}
+
 	public E getBacking() {
 		return data;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	protected R me() {
