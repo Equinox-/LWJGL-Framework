@@ -9,6 +9,8 @@ import com.pi.core.buffers.BufferType;
 import com.pi.core.buffers.GLGenericBuffer;
 
 public class ShaderUniformBlock {
+	static final boolean PERSISTENT_BUFFER_STATE = true;
+
 	private final int blockIndex;
 	private final String blockName;
 	private final ShaderProgram parent;
@@ -33,6 +35,10 @@ public class ShaderUniformBlock {
 		return blockName;
 	}
 
+	public int length() {
+		return length;
+	}
+
 	public void bound(GLGenericBuffer b) {
 		if (b.type() != BufferType.UNIFORM)
 			throw new IllegalArgumentException("Invalid buffer type.");
@@ -52,10 +58,24 @@ public class ShaderUniformBlock {
 		return bound;
 	}
 
-	public boolean dirty;
+	public int dirtyMin, dirtyMax;
+
+	public void markDirty(int min, int max) {
+		this.dirtyMin = Math.min(dirtyMin, min);
+		this.dirtyMax = Math.max(dirtyMax, max);
+	}
+
+	public void uploadIfNeeded() {
+		if (dirtyMin >= dirtyMax)
+			return;
+		bound().gpuUploadPartial(dirtyMin, dirtyMax);
+		dirtyMin = Integer.MAX_VALUE;
+		dirtyMax = Integer.MIN_VALUE;
+	}
 
 	public void upload() {
-		dirty = false;
 		bound().gpuUpload();
+		dirtyMin = Integer.MAX_VALUE;
+		dirtyMax = Integer.MIN_VALUE;
 	}
 }

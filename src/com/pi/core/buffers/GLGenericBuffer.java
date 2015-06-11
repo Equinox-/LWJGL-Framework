@@ -20,21 +20,25 @@ public class GLGenericBuffer extends GLBuffer<ByteBuffer, GLGenericBuffer> {
 	}
 
 	public ShortBuffer shortImageAt(int i) {
+		super.data.limit(super.data.capacity());
 		super.data.position(i);
 		return super.data.asShortBuffer();
 	}
 
 	public IntBuffer integerImageAt(int i) {
+		super.data.limit(super.data.capacity());
 		super.data.position(i);
 		return super.data.asIntBuffer();
 	}
 
 	public FloatBuffer floatImageAt(int i) {
+		super.data.limit(super.data.capacity());
 		super.data.position(i);
 		return super.data.asFloatBuffer();
 	}
 
 	public void get(int buffOffset, byte[] data, int offset, int length) {
+		super.data.limit(super.data.capacity());
 		super.data.position(buffOffset);
 		super.data.get(data, offset, length);
 	}
@@ -44,11 +48,13 @@ public class GLGenericBuffer extends GLBuffer<ByteBuffer, GLGenericBuffer> {
 	}
 
 	public void put(int buffOffset, byte[] data, int offset, int length) {
+		super.data.limit(super.data.capacity());
 		super.data.position(buffOffset);
 		super.data.put(data, offset, length);
 	}
 
 	public void put(int index, byte f) {
+		super.data.limit(super.data.capacity());
 		super.data.put(index, f);
 	}
 

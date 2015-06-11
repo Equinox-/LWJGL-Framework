@@ -115,6 +115,17 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 		GL15.glBindBuffer(type.code(), 0);
 	}
 
+	public void gpuUploadPartial(int min, int max) {
+		if (bufferPtr == -1)
+			throw new RuntimeException(
+					"Can't sync to GPU when no buffer object exists.");
+		data.position(min);
+		data.limit(max);
+		GL15.glBindBuffer(type.code(), bufferPtr);
+		glBufferSubData(type.code(), min, data);
+		GL15.glBindBuffer(type.code(), 0);
+	}
+
 	@Override
 	protected void gpuDownloadInternal() {
 		if (bufferPtr == -1)

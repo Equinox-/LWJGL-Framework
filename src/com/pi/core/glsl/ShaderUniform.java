@@ -53,7 +53,6 @@ public final class ShaderUniform {
 				for (int i = 1; i < location.length; i++)
 					location[i] = location[i - 1] + stride;
 			}
-			System.out.println("UBO Offsets for " + name + ": " + Arrays.toString(location));
 		} else {
 			if (array)
 				for (int i = 0; i < size; i++) {
@@ -112,10 +111,17 @@ public final class ShaderUniform {
 
 	private void commitInts(int... vals) {
 		if (uniformBlockIndex >= 0) {
-			prog.uniformBlock(uniformBlockIndex).dirty = true;
-			IntBuffer place = prog.uniformBlock(uniformBlockIndex).bound()
-					.integerImageAt(location[activeIndex]);
-			place.put(vals);
+			ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
+			IntBuffer place = block.bound().integerImageAt(
+					location[activeIndex]);
+			for (int i = 0; i < vals.length; i++) {
+				if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE
+						|| vals[i] != place.get(i)) {
+					place.put(i, vals[i]);
+					block.markDirty(location[activeIndex] + i * 4,
+							location[activeIndex] + i * 4 + 4);
+				}
+			}
 		} else {
 			intBuff.position(0);
 			intBuff.put(vals).flip();
@@ -141,10 +147,17 @@ public final class ShaderUniform {
 
 	private void commitFloats(float... vals) {
 		if (uniformBlockIndex >= 0) {
-			prog.uniformBlock(uniformBlockIndex).dirty = true;
-			FloatBuffer place = prog.uniformBlock(uniformBlockIndex).bound()
-					.floatImageAt(location[activeIndex]);
-			place.put(vals);
+			ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
+			FloatBuffer place = block.bound().floatImageAt(
+					location[activeIndex]);
+			for (int i = 0; i < vals.length; i++) {
+				if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE
+						|| vals[i] != place.get(i)) {
+					place.put(i, vals[i]);
+					block.markDirty(location[activeIndex] + i * 4,
+							location[activeIndex] + i * 4 + 4);
+				}
+			}
 		} else {
 			floatBuff.position(0);
 			floatBuff.put(vals).flip();
@@ -170,10 +183,19 @@ public final class ShaderUniform {
 
 	private void commitFloats(FloatBuffer f) {
 		if (uniformBlockIndex >= 0) {
-			prog.uniformBlock(uniformBlockIndex).dirty = true;
-			FloatBuffer place = prog.uniformBlock(uniformBlockIndex).bound()
-					.floatImageAt(location[activeIndex]);
-			place.put(f);
+			ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
+			FloatBuffer place = block.bound().floatImageAt(
+					location[activeIndex]);
+			final int n = f.remaining();
+			for (int i = 0; i < n; i++) {
+				float val = f.get();
+				if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE
+						|| val != place.get(i)) {
+					place.put(i, val);
+					block.markDirty(location[activeIndex] + i * 4,
+							location[activeIndex] + i * 4 + 4);
+				}
+			}
 		} else {
 			switch (f.limit()) {
 			case 4:
@@ -329,6 +351,10 @@ public final class ShaderUniform {
 	}
 
 	public void vector(Vector v) {
+		if (v instanceof VectorBuff) {
+			vector((VectorBuff) v);
+			return;
+		}
 		switch (v.dimension()) {
 		case 4:
 			vector(v.get(0), v.get(1), v.get(2), v.get(3));

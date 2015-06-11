@@ -1,7 +1,6 @@
 package com.pi.core.glsl;
 
 import java.io.InputStream;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,7 +8,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL31;
@@ -288,8 +286,7 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 			}
 		}
 		for (ShaderUniformBlock block : uniformBlocksByID) {
-			if (block.dirty)
-				block.upload();
+			block.uploadIfNeeded();
 		}
 	}
 
