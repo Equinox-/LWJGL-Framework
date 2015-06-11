@@ -19,18 +19,39 @@ public class WindowFrameBuffer extends GPUObject<WindowFrameBuffer> implements
 		this.gl = gl;
 	}
 
+	private int shiftSize = 0;
+
+	/**
+	 * The shift size is the bitwise shift applied to dimensions. Size multiplier is 2^shift.
+	 * 
+	 * @param shift
+	 *            bitwise shift.
+	 * @return this
+	 */
+	public WindowFrameBuffer shiftSize(int shift) {
+		if (shift < 0)
+			throw new IllegalArgumentException("Shift must be >= 0");
+		this.shiftSize = shift;
+		return this;
+	}
+
+	public int shiftSize() {
+		return shiftSize;
+	}
+
 	private void verify() {
-		if (target == null || color.getWidth() != gl.getEvents().getWidth()
-				|| color.getHeight() != gl.getEvents().getHeight()) {
+		int desW = gl.getEvents().getWidth() << shiftSize;
+		int desH = gl.getEvents().getHeight() << shiftSize;
+		if (target == null || color.getWidth() != desW
+				|| color.getHeight() != desH) {
 			if (target != null) {
 				target.gpuFree();
 				color.gpuFree();
 				depth.gpuFree();
 			}
-			color = new Texture(gl.getEvents().getWidth(), gl.getEvents()
-					.getHeight(), GL11.GL_RGB).gpuAlloc();
-			depth = new Texture(gl.getEvents().getWidth(), gl.getEvents()
-					.getHeight(), GL30.GL_DEPTH_COMPONENT32F).gpuAlloc();
+			color = new Texture(desW, desH, GL11.GL_RGB).gpuAlloc();
+			depth = new Texture(desW, desH, GL30.GL_DEPTH_COMPONENT32F)
+					.gpuAlloc();
 			target = new FrameBuffer();
 			target.attachColor(color);
 			target.attachDepth(depth);
