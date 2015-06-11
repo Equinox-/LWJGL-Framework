@@ -204,10 +204,6 @@ public class GLWindowEvents {
 	}
 
 	protected void onKeyEvent(int key, int scancode, int action, int mods) {
-		if (key == GLFW.GLFW_KEY_ESCAPE && action != GLFW.GLFW_RELEASE) {
-			attached.shutdown();
-			return;
-		}
 		for (EventListener l : listeners)
 			if (action == GLFW.GLFW_PRESS) {
 				if (l.keyPressed(key, mods))
