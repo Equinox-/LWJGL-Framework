@@ -148,11 +148,12 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 		return size;
 	}
 
-	public void type(BufferType t) {
+	public R type(BufferType t) {
 		if (bufferPtr != -1)
 			throw new IllegalStateException(
 					"Can't change buffer type when allocated.");
 		this.type = t;
+		return me();
 	}
 
 	public BufferType type() {

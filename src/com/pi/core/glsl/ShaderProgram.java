@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL31;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL40;
 import org.lwjgl.opengl.GL43;
@@ -30,7 +31,10 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 	private int programID;
 	private final List<Integer> attachedObjects;
 
-	private Map<String, ShaderUniform> uniforms;
+	private final Map<String, ShaderUniform> uniformsByName;
+	private ShaderUniform[] uniformsByID;
+	private final Map<String, ShaderUniformBlock> uniformBlocksByName;
+	private ShaderUniformBlock[] uniformBlocksByID;
 
 	private final static Map<String, Integer> SHADER_TYPE_MAP;
 	static {
@@ -52,7 +56,8 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 	private static final Texture[] ACTIVE_TEXTURE_UNITS = new Texture[MAX_TEXTURE_UNITS];
 
 	public ShaderProgram() {
-		this.uniforms = new HashMap<>();
+		this.uniformsByName = new HashMap<>();
+		this.uniformBlocksByName = new HashMap<>();
 		this.attachedObjects = new ArrayList<>(2);
 		this.programID = -1;
 		this.textureUnit = new Texture[MAX_TEXTURE_UNITS];
@@ -227,37 +232,51 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 	}
 
 	private void loadUniforms() {
+		int uniformBlockCount = GL20.glGetProgrami(programID,
+				GL31.GL_ACTIVE_UNIFORM_BLOCKS);
+		uniformBlocksByID = new ShaderUniformBlock[uniformBlockCount];
+		uniformBlocksByName.clear();
+		for (int i = 0; i < uniformBlockCount; i++) {
+			String name = GL31.glGetActiveUniformBlockName(programID, i);
+			uniformBlocksByName
+					.put(name, uniformBlocksByID[i] = new ShaderUniformBlock(
+							this, i, name));
+		}
+
 		int uniformCount = GL20.glGetProgrami(programID,
 				GL20.GL_ACTIVE_UNIFORMS);
-		int uniformLength = GL20.glGetProgrami(programID,
+		int uniformMaxNameLength = GL20.glGetProgrami(programID,
 				GL20.GL_ACTIVE_UNIFORM_MAX_LENGTH);
-		IntBuffer sizeBuff = BufferUtils.createIntBuffer(1);
-		IntBuffer typeBuff = BufferUtils.createIntBuffer(1);
+		uniformsByID = new ShaderUniform[uniformCount];
+		uniformsByName.clear();
+
 		for (int i = 0; i < uniformCount; i++) {
-			String name = GL20.glGetActiveUniform(programID, i, uniformLength,
-					sizeBuff, typeBuff);
-			boolean array = name.endsWith("]");
-			if (array)
-				name = name.substring(0, name.length() - 3);
-			uniforms.put(name, new ShaderUniform(this, name, sizeBuff.get(0),
-					typeBuff.get(0), array));
+			uniformsByID[i] = new ShaderUniform(this, i, uniformMaxNameLength);
+			uniformsByName.put(uniformsByID[i].name(), uniformsByID[i]);
 		}
+	}
+
+	public ShaderUniformBlock uniformBlock(int id) {
+		return uniformBlocksByID[id];
+	}
+
+	public ShaderUniformBlock uniformBlock(String name) {
+		return uniformBlocksByName.get(name);
+	}
+
+	public ShaderUniform uniform(int id) {
+		return uniformsByID[id];
 	}
 
 	public ShaderUniform uniform(String name) {
-		ShaderUniform v = uniforms.get(name);
-		if (v == null) {
-			int l = GL20.glGetUniformLocation(programID, name);
-			// if (l == -1)
-			// System.err
-			// .println("Tried to query shader for invalid uniform: "
-			// + name);
-			uniforms.put(name, v = new ShaderUniform(this, name, l));
-		}
+		ShaderUniform v = uniformsByName.get(name);
+		if (v == null)
+			System.err.println("Tried to query shader for invalid uniform: "
+					+ name);
 		return v;
 	}
 
-	public void bindSamplers() {
+	public void commitData() {
 		for (int i = 0; i < textureUnit.length; i++) {
 			if (ACTIVE_TEXTURE_UNITS[i] != textureUnit[i]) {
 				Texture.glActiveTexture(i);
@@ -267,6 +286,10 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 					Texture.unbind();
 				ACTIVE_TEXTURE_UNITS[i] = textureUnit[i];
 			}
+		}
+		for (ShaderUniformBlock block : uniformBlocksByID) {
+			if (block.dirty)
+				block.upload();
 		}
 	}
 

@@ -1,9 +1,13 @@
 package com.pi.core.glsl;
 
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL31;
 
 import com.pi.core.texture.Texture;
 import com.pi.core.util.WarningManager;
@@ -19,22 +23,46 @@ public final class ShaderUniform {
 	private final int type;
 	private final int[] location;
 	private final int[] samplerID;
+	private final int uniformBlockIndex;
 	private int activeIndex;
 
-	public ShaderUniform(ShaderProgram prog, String name, int size, int type,
-			boolean array) {
+	public ShaderUniform(ShaderProgram prog, int id, int maxNameLength) {
+		IntBuffer sizeBuff = BufferUtils.createIntBuffer(1);
+		IntBuffer typeBuff = BufferUtils.createIntBuffer(1);
+
+		String name = GL20.glGetActiveUniform(prog.getID(), id, maxNameLength,
+				sizeBuff, typeBuff);
+		boolean array = name.endsWith("]");
+		if (array)
+			name = name.substring(0, name.length() - 3);
+
 		this.prog = prog;
 		this.name = name;
-		this.size = size;
-		this.type = type;
+		this.size = sizeBuff.get(0);
+		this.type = typeBuff.get(0);
 		this.location = new int[array ? size : 1];
-		if (array)
-			for (int i = 0; i < size; i++) {
-				location[i] = GL20.glGetUniformLocation(prog.getID(), name
-						+ "[" + i + "]");
+
+		this.uniformBlockIndex = GL31.glGetActiveUniformsi(prog.getID(), id,
+				GL31.GL_UNIFORM_BLOCK_INDEX);
+		if (uniformBlockIndex >= 0) {
+			location[0] = GL31.glGetActiveUniformsi(prog.getID(), id,
+					GL31.GL_UNIFORM_OFFSET);
+			if (array) {
+				int stride = GL31.glGetActiveUniformsi(prog.getID(), id,
+						GL31.GL_UNIFORM_ARRAY_STRIDE);
+				for (int i = 1; i < location.length; i++)
+					location[i] = location[i - 1] + stride;
 			}
-		else
-			location[0] = GL20.glGetUniformLocation(prog.getID(), name);
+			System.out.println("UBO Offsets for " + name + ": " + Arrays.toString(location));
+		} else {
+			if (array)
+				for (int i = 0; i < size; i++) {
+					location[i] = GL20.glGetUniformLocation(prog.getID(), name
+							+ "[" + i + "]");
+				}
+			else
+				location[0] = GL20.glGetUniformLocation(prog.getID(), name);
+		}
 
 		for (int k = 0; k < location.length; k++)
 			if (location[k] == -1)
@@ -50,16 +78,8 @@ public final class ShaderUniform {
 		Arrays.fill(this.samplerID, ShaderProgram.MAX_TEXTURE_UNITS);
 	}
 
-	public ShaderUniform(ShaderProgram prog, String name, int location) {
-		this.prog = prog;
-		this.name = name;
-		this.size = 1;
-		this.type = -1;
-		this.location = new int[] { location };
-
-		this.activeIndex = 0;
-		this.samplerID = new int[size];
-		Arrays.fill(samplerID, ShaderProgram.MAX_TEXTURE_UNITS);
+	public String name() {
+		return name;
 	}
 
 	public ShaderUniform index(int i) {
@@ -85,6 +105,94 @@ public final class ShaderUniform {
 	private final void typeMismatch(String provided) {
 		throw new IllegalStateException("Uniform " + name + " isn't of type "
 				+ provided + ".");
+	}
+
+	private final IntBuffer intBuff = BufferUtils.createIntBuffer(4);
+	private final FloatBuffer floatBuff = BufferUtils.createFloatBuffer(4);
+
+	private void commitInts(int... vals) {
+		if (uniformBlockIndex >= 0) {
+			prog.uniformBlock(uniformBlockIndex).dirty = true;
+			IntBuffer place = prog.uniformBlock(uniformBlockIndex).bound()
+					.integerImageAt(location[activeIndex]);
+			place.put(vals);
+		} else {
+			intBuff.position(0);
+			intBuff.put(vals).flip();
+			switch (vals.length) {
+			case 4:
+				GL20.glUniform4(location[activeIndex], intBuff);
+				break;
+			case 3:
+				GL20.glUniform3(location[activeIndex], intBuff);
+				break;
+			case 2:
+				GL20.glUniform2(location[activeIndex], intBuff);
+				break;
+			case 1:
+				GL20.glUniform1(location[activeIndex], intBuff);
+				break;
+			default:
+				throw new IllegalArgumentException("Can't commit "
+						+ vals.length + " ints to a uniform");
+			}
+		}
+	}
+
+	private void commitFloats(float... vals) {
+		if (uniformBlockIndex >= 0) {
+			prog.uniformBlock(uniformBlockIndex).dirty = true;
+			FloatBuffer place = prog.uniformBlock(uniformBlockIndex).bound()
+					.floatImageAt(location[activeIndex]);
+			place.put(vals);
+		} else {
+			floatBuff.position(0);
+			floatBuff.put(vals).flip();
+			switch (vals.length) {
+			case 4:
+				GL20.glUniform4(location[activeIndex], floatBuff);
+				break;
+			case 3:
+				GL20.glUniform3(location[activeIndex], floatBuff);
+				break;
+			case 2:
+				GL20.glUniform2(location[activeIndex], floatBuff);
+				break;
+			case 1:
+				GL20.glUniform1(location[activeIndex], floatBuff);
+				break;
+			default:
+				throw new IllegalArgumentException("Can't commit "
+						+ vals.length + " floats to a uniform");
+			}
+		}
+	}
+
+	private void commitFloats(FloatBuffer f) {
+		if (uniformBlockIndex >= 0) {
+			prog.uniformBlock(uniformBlockIndex).dirty = true;
+			FloatBuffer place = prog.uniformBlock(uniformBlockIndex).bound()
+					.floatImageAt(location[activeIndex]);
+			place.put(f);
+		} else {
+			switch (f.limit()) {
+			case 4:
+				GL20.glUniform4(location[activeIndex], f);
+				break;
+			case 3:
+				GL20.glUniform3(location[activeIndex], f);
+				break;
+			case 2:
+				GL20.glUniform2(location[activeIndex], f);
+				break;
+			case 1:
+				GL20.glUniform1(location[activeIndex], f);
+				break;
+			default:
+				throw new IllegalArgumentException("Can't commit " + f.limit()
+						+ " floats to a uniform");
+			}
+		}
 	}
 
 	public void texture(Texture t) {
@@ -139,15 +247,13 @@ public final class ShaderUniform {
 				}
 			}
 		}
-		// if (this.samplerID[activeIndex] != prevSampler)
-		GL20.glUniform1i(this.location[activeIndex],
-				this.samplerID[activeIndex]);
+		commitInts(this.samplerID[activeIndex]);
 	}
 
 	public void bool(boolean b) {
 		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL)
-			GL20.glUniform1i(location[activeIndex], b ? 1 : 0);
+			commitInts(b ? 1 : 0);
 		else
 			typeMismatch("boolean");
 	}
@@ -156,7 +262,7 @@ public final class ShaderUniform {
 		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
 				|| type == GL20.GL_BOOL_VEC2)
-			GL20.glUniform2i(location[activeIndex], x ? 1 : 0, y ? 1 : 0);
+			commitInts(x ? 1 : 0, y ? 1 : 0);
 		else
 			typeMismatch("bool vec2");
 	}
@@ -165,8 +271,7 @@ public final class ShaderUniform {
 		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
 				|| type == GL20.GL_BOOL_VEC3)
-			GL20.glUniform3i(location[activeIndex], x ? 1 : 0, y ? 1 : 0, z ? 1
-					: 0);
+			commitInts(x ? 1 : 0, y ? 1 : 0, z ? 1 : 0);
 		else
 			typeMismatch("bool vec2");
 	}
@@ -175,8 +280,7 @@ public final class ShaderUniform {
 		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
 				|| type == GL20.GL_BOOL_VEC4)
-			GL20.glUniform4i(location[activeIndex], x ? 1 : 0, y ? 1 : 0, z ? 1
-					: 0, w ? 1 : 0);
+			commitInts(x ? 1 : 0, y ? 1 : 0, z ? 1 : 0, w ? 1 : 0);
 		else
 			typeMismatch("bool vec4");
 	}
@@ -184,7 +288,7 @@ public final class ShaderUniform {
 	public void integer(int x) {
 		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL11.GL_INT)
-			GL20.glUniform1i(location[activeIndex], x);
+			commitInts(x);
 		else
 			typeMismatch("int");
 	}
@@ -192,7 +296,7 @@ public final class ShaderUniform {
 	public void floating(float x) {
 		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL11.GL_FLOAT)
-			GL20.glUniform1f(location[activeIndex], x);
+			commitFloats(x);
 		else
 			typeMismatch("float");
 	}
@@ -201,7 +305,7 @@ public final class ShaderUniform {
 		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
 				|| type == GL20.GL_FLOAT_VEC2)
-			GL20.glUniform2f(location[activeIndex], x, y);
+			commitFloats(x, y);
 		else
 			typeMismatch("float vec2");
 	}
@@ -210,7 +314,7 @@ public final class ShaderUniform {
 		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
 				|| type == GL20.GL_FLOAT_VEC3)
-			GL20.glUniform3f(location[activeIndex], x, y, z);
+			commitFloats(x, y, z);
 		else
 			typeMismatch("float vec3");
 	}
@@ -219,7 +323,7 @@ public final class ShaderUniform {
 		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
 				|| type == GL20.GL_FLOAT_VEC4)
-			GL20.glUniform4f(location[activeIndex], x, y, z, w);
+			commitFloats(x, y, z, w);
 		else
 			typeMismatch("float vec4");
 	}
@@ -250,21 +354,21 @@ public final class ShaderUniform {
 		case 4:
 			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
 					|| type == GL20.GL_FLOAT_VEC4)
-				GL20.glUniform4(location[activeIndex], v.getAccessor());
+				commitFloats(v.getAccessor());
 			else
 				typeMismatch("float vec4");
 			break;
 		case 3:
 			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
 					|| type == GL20.GL_FLOAT_VEC3)
-				GL20.glUniform3(location[activeIndex], v.getAccessor());
+				commitFloats(v.getAccessor());
 			else
 				typeMismatch("float vec3");
 			break;
 		case 2:
 			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
 					|| type == GL20.GL_FLOAT_VEC2)
-				GL20.glUniform2(location[activeIndex], v.getAccessor());
+				commitFloats(v.getAccessor());
 			else
 				typeMismatch("float vec2");
 			break;
@@ -283,6 +387,7 @@ public final class ShaderUniform {
 
 	public void matrix(Matrix4 m, boolean transpose) {
 		utilAllowed();
+		// TODO making this work with UBOs
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING
 				|| type == GL20.GL_FLOAT_MAT4)
 			GL20.glUniformMatrix4(location[activeIndex], transpose,

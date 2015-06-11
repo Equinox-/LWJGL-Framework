@@ -76,7 +76,7 @@ public class ConwaysLife extends GLWindow {
 
 		conway.bind();
 		conway.uniform("state").texture(textures.getBack());
-		conway.bindSamplers();
+		conway.commitData();
 		frameBuffers.getFront().bind();
 		BasicShapes.shapes().getNDCScreenQuad().render();
 		FrameBuffer.unbind();
@@ -85,7 +85,7 @@ public class ConwaysLife extends GLWindow {
 
 		render.bind();
 		render.uniform("state").texture(textures.getFront());
-		render.bindSamplers();
+		render.commitData();
 		BasicShapes.shapes().getNDCScreenQuad().render();
 		Texture.unbind();
 		ShaderProgram.unbind();
