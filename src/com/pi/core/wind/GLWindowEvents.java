@@ -185,13 +185,20 @@ public class GLWindowEvents {
 		return listeners.remove(e);
 	}
 
+	private int mouseButtonStates;
+	private float dragStartX, dragStartY;
+
 	protected void onMouseButtonEvent(int button, int action, int mods) {
 		for (EventListener l : listeners)
 			if (action == GLFW.GLFW_PRESS) {
-				if (l.mousePressed(button, (float) mouseX, (float) mouseY, mods))
+				mouseButtonStates |= (1 << button);
+				dragStartX = mouseX;
+				dragStartY = mouseY;
+				if (l.mousePressed(button, mouseX, mouseY, mods))
 					return;
 			} else if (action == GLFW.GLFW_RELEASE) {
-				if (l.mouseReleased(button, (float) mouseX, (float) mouseY,
+				mouseButtonStates &= ~(1 << button);
+				if (l.mouseReleased(button, mouseX, mouseY,
 						mods))
 					return;
 			}
@@ -214,7 +221,7 @@ public class GLWindowEvents {
 			}
 	}
 
-	private double scrollPosX, scrollPosY;
+	private float scrollPosX, scrollPosY;
 
 	protected void onScrollEvent(double dx, double dy) {
 		scrollPosX += dx;
@@ -224,11 +231,11 @@ public class GLWindowEvents {
 				return;
 	}
 
-	public double getScrollX() {
+	public float getScrollX() {
 		return scrollPosX;
 	}
 
-	public double getScrollY() {
+	public float getScrollY() {
 		return scrollPosY;
 	}
 
@@ -250,11 +257,11 @@ public class GLWindowEvents {
 		return height;
 	}
 
-	private double mouseX, mouseY;
+	private float mouseX, mouseY;
 
 	protected void onCursorPosEvent(double x, double y) {
-		this.mouseX = x;
-		this.mouseY = y;
+		this.mouseX = (float) x;
+		this.mouseY = (float) y;
 		int mods = 0;
 		if (isKeyDown(GLFW.GLFW_KEY_LEFT_SHIFT)
 				|| isKeyDown(GLFW.GLFW_KEY_RIGHT_SHIFT))
@@ -273,12 +280,20 @@ public class GLWindowEvents {
 				return;
 	}
 
-	public double getMouseX() {
+	public float getMouseX() {
 		return mouseX;
 	}
 
-	public double getMouseY() {
+	public float getMouseY() {
 		return mouseY;
+	}
+
+	public float getDragStartX() {
+		return mouseButtonStates == 0 ? mouseX : dragStartX;
+	}
+
+	public float getDragStartY() {
+		return mouseButtonStates == 0 ? mouseY : dragStartY;
 	}
 
 	public boolean isKeyDown(int key) {

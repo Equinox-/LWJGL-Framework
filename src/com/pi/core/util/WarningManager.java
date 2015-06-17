@@ -28,7 +28,7 @@ public class WarningManager {
 
 	static Map<WeakReference<?>, AllocationParams> watchReferences;
 	@SuppressWarnings("rawtypes")
-	static ReferenceQueue queue;
+	static ReferenceQueue<GPUObject> queue;
 
 	static {
 		if (GPUOBJECT_REFERENCE_WATCHING) {
