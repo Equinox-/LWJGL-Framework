@@ -1,5 +1,7 @@
 package com.pi.core.model;
 
+import java.util.Arrays;
+
 import com.pi.core.util.GPUObject;
 import com.pi.core.vertex.VertexData;
 
@@ -34,14 +36,16 @@ public class Model<E> extends GPUObject<Model<E>> {
 		indexUploaded = false;
 		vertexData.gpuAlloc();
 		for (IndexBuffer index : indexes)
-			index.gpuAlloc();
+			if (index != null)
+				index.gpuAlloc();
 	}
 
 	@Override
 	protected void gpuFreeInternal() {
 		indexUploaded = false;
 		for (IndexBuffer index : indexes)
-			index.gpuFree();
+			if (index != null)
+				index.gpuFree();
 		vertexData.gpuFree();
 	}
 
@@ -74,5 +78,10 @@ public class Model<E> extends GPUObject<Model<E>> {
 	@Override
 	protected Model<E> me() {
 		return this;
+	}
+
+	@Override
+	public String toString() {
+		return "Model[" + vertexData + ", " + Arrays.toString(indexes) + "]";
 	}
 }

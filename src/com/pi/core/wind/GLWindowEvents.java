@@ -145,7 +145,7 @@ public class GLWindowEvents {
 			eventProcessor.stop();
 		}
 
-		this.eventProcessor = new Thread() {
+		this.eventProcessor = new Thread("Event Processor") {
 			@Override
 			public void run() {
 				System.out.println("Event processor beginning...");

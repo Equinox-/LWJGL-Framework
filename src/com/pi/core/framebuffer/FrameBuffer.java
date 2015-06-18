@@ -195,7 +195,7 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 	}
 
 	public static FrameBuffer current() {
-		return current.get();
+		return current == null ? null : current.get();
 	}
 
 	public FrameBufferAttachable getDepthAttachment() {

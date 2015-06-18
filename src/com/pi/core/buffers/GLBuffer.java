@@ -31,7 +31,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 	private BufferAccessHint accessHint;
 	private BufferModifyHint modifyHint;
 
-	private final int size;
+	private int size;
 	private BufferType type;
 	protected E data;
 	private int bufferPtr;
@@ -74,17 +74,20 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 		return (R) this;
 	}
 
-	@Override
-	protected void gpuAllocInternal() {
-		if (bufferPtr != -1)
-			gpuFreeInternal();
-		bufferPtr = GL15.glGenBuffers();
-
+	private void allocBufferStorage() {
 		int ahI = accessHint.ordinal();
 		int mhI = modifyHint.ordinal();
 		GL15.glBindBuffer(type.code(), bufferPtr);
 		GL15.glBufferData(type.code(), size, HINT_TABLE[ahI][mhI]);
 		GL15.glBindBuffer(type.code(), 0);
+	}
+
+	@Override
+	protected void gpuAllocInternal() {
+		if (bufferPtr != -1)
+			gpuFreeInternal();
+		bufferPtr = GL15.glGenBuffers();
+		allocBufferStorage();
 	}
 
 	@Override
@@ -132,7 +135,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 			throw new RuntimeException(
 					"Can't sync from GPU when no buffer object exists.");
 		if (data == null)
-			data = genBuffer(size);
+			cpuAlloc();
 		data.position(0);
 		GL15.glBindBuffer(type.code(), bufferPtr);
 		glGetBufferSubData(type.code(), 0, data);
@@ -153,6 +156,25 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 	@Override
 	public int getID() {
 		return bufferPtr;
+	}
+
+	/**
+	 * Resizes the buffer. Warning: This DOES NOT preserve buffer contents. Can
+	 * be run even if buffer is allocated.
+	 * 
+	 * @param ns
+	 *            the new size
+	 * @return this buffer
+	 */
+	public R resize(int ns) {
+		if (size != ns) {
+			this.size = ns;
+			if (data != null)
+				data = genBuffer(ns);
+			if (allocated())
+				allocBufferStorage();
+		}
+		return me();
 	}
 
 	public int size() {

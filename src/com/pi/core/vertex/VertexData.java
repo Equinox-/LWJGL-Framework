@@ -4,13 +4,10 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 
-import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
-import com.pi.core.buffers.BufferAccessHint;
-import com.pi.core.buffers.BufferModifyHint;
 import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
@@ -23,7 +20,7 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 		GLIdentifiable {
 	public E[] vertexDB;
 	public final Class<E> vertexClass;
-	private final int count;
+	private int count;
 	private final VertexLayout layout;
 	public final GLGenericBuffer bufferObject;
 	private int vao = -1;
@@ -32,8 +29,7 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 		this.vertexClass = vertexClass;
 		this.layout = new VertexLayout(vertexClass);
 		this.count = count;
-		if (GL.getCurrent() != null)
-			this.layout.validate();
+		this.layout.validate();
 		this.bufferObject = new GLGenericBuffer(this.count
 				* this.layout.structureSize);
 
@@ -50,14 +46,25 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 		cpuAlloc();
 	}
 
-	public VertexData<E> access(BufferAccessHint a) {
-		this.bufferObject.access(a);
+	@SuppressWarnings("unchecked")
+	public VertexData<E> resize(int n) {
+		int oc = this.count;
+		this.count = n;
+		if (oc < n || oc > n + 8) {
+			this.bufferObject.resize(n * this.layout.structureSize);
+			cpuAlloc();
+		} else if (oc < n) {
+			cpuAlloc();
+		} else if (n < oc) {
+			E[] tmp = vertexDB;
+			this.vertexDB = (E[]) Array.newInstance(vertexClass, count);
+			System.arraycopy(tmp, 0, this.vertexDB, 0, n);
+		}
 		return this;
 	}
 
-	public VertexData<E> modify(BufferModifyHint a) {
-		this.bufferObject.modify(a);
-		return this;
+	public int vertexSize() {
+		return layout.structureSize;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -238,5 +245,10 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 	@Override
 	protected VertexData<E> me() {
 		return this;
+	}
+
+	@Override
+	public String toString() {
+		return vertexClass.getSimpleName() + " x" + count;
 	}
 }

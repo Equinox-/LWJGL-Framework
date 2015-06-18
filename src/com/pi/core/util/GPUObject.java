@@ -95,8 +95,6 @@ public abstract class GPUObject<K> {
 	 * Frees this object on the GPU.
 	 */
 	public final K gpuFree() {
-		System.out.println("Free " + getClass().getName() + ": (hash="
-				+ Integer.toString(hashCode(), 16) + ")");
 		if (allocThread != null)
 			gpuFreeInternal();
 		allocThread = null;

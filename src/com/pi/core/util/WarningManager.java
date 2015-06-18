@@ -35,22 +35,24 @@ public class WarningManager {
 		if (GPUOBJECT_REF_WATCHING) {
 			watchReferences = new HashMap<>();
 			queue = new ReferenceQueue<>();
-			(referenceWatchThread = new Thread() {
+			(referenceWatchThread = new Thread("Ref Watcher") {
 				@Override
 				@SuppressWarnings("rawtypes")
 				public void run() {
 					while (true) {
 						try {
-							Reference ref = queue.remove(100L);
+							Reference ref = queue.remove(1000L);
 							AllocationParams e = watchReferences.remove(ref);
 							if (e != null) {
 								System.err.println("Reference to "
 										+ e.allocated.getName()
 										+ " lost without freeing: (hash="
 										+ Integer.toString(e.hash, 16) + ")");
-//								for (int i = 3; i < e.stackTraceOnAlloc.length; i++)
-//									System.err.println("\tat "
-//											+ e.stackTraceOnAlloc[i]);
+								for (int i = 3; i < e.stackTraceOnAlloc.length; i++)
+									if (!e.stackTraceOnAlloc[i].getClassName()
+											.endsWith("GPUObject"))
+										System.err.println("\tat "
+												+ e.stackTraceOnAlloc[i]);
 							}
 						} catch (InterruptedException e1) {
 							if (!referenceWatchState.get())
@@ -59,6 +61,7 @@ public class WarningManager {
 						}
 						System.gc(); // Collect, then check again
 					}
+					System.out.println("Thread finish");
 				}
 			}).start();
 		}
@@ -66,6 +69,7 @@ public class WarningManager {
 
 	public static void termReferenceWatch() {
 		referenceWatchState.set(false);
+		referenceWatchThread.interrupt();
 		try {
 			referenceWatchThread.join();
 		} catch (InterruptedException e) {
