@@ -61,6 +61,18 @@ public class Camera3rdPerson implements Camera {
 		return this;
 	}
 
+	public float centerX() {
+		return -x;
+	}
+
+	public float centerY() {
+		return -y;
+	}
+
+	public float centerZ() {
+		return -z;
+	}
+
 	public float getYaw() {
 		return yaw;
 	}

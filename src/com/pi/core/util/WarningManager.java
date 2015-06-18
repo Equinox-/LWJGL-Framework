@@ -39,6 +39,7 @@ public class WarningManager {
 				@Override
 				@SuppressWarnings("rawtypes")
 				public void run() {
+					System.out.println("Reference watcher begins");
 					while (true) {
 						try {
 							Reference ref = queue.remove(1000L);
@@ -61,7 +62,7 @@ public class WarningManager {
 						}
 						System.gc(); // Collect, then check again
 					}
-					System.out.println("Thread finish");
+					System.out.println("Reference watcher finishes");
 				}
 			}).start();
 		}
