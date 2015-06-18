@@ -1,5 +1,6 @@
 package com.pi.core.framebuffer;
 
+import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,7 +17,7 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 		GLIdentifiable, Bindable {
 	private static final int DEFAULT_COLOR_ATTACHMENT_LIMIT = 16;
 
-	private static FrameBuffer current;
+	private static WeakReference<FrameBuffer> current;
 
 	private int fbo;
 	private Set<FrameBufferAttachable> colorAttachments;
@@ -182,10 +183,10 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 		if (fbo < 0)
 			throw new IllegalStateException(
 					"Can't bind an unallocated framebuffer");
-		if (current == this)
+		if (current != null && current.get() == this)
 			return;
 		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo);
-		current = this;
+		current = new WeakReference<>(this);
 	}
 
 	public static void unbind() {
@@ -194,7 +195,7 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 	}
 
 	public static FrameBuffer current() {
-		return current;
+		return current.get();
 	}
 
 	public FrameBufferAttachable getDepthAttachment() {

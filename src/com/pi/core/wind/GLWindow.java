@@ -13,6 +13,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import com.pi.core.model.BasicShapes;
 import com.pi.core.texture.ColorTextures;
+import com.pi.core.util.WarningManager;
 import com.pi.math.BufferProvider;
 
 public abstract class GLWindow {
@@ -106,6 +107,7 @@ public abstract class GLWindow {
 
 		GLFW.glfwDestroyWindow(windowID);
 		GLFW.glfwTerminate();
+		WarningManager.termReferenceWatch();
 		System.exit(0);
 	}
 

@@ -49,7 +49,8 @@ public class Model<E> extends GPUObject<Model<E>> {
 
 	@Override
 	protected void gpuUploadInternal() {
-		if (!indexUploaded) { // The index can't change, therefore only need to upload once per alloc. TODO Watch this
+		if (!indexUploaded) { // The index can't change, therefore only need to
+								// upload once per alloc. TODO Watch this
 			for (IndexBuffer index : indexes)
 				index.gpuUploadInternal();
 		}

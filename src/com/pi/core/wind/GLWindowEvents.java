@@ -155,6 +155,7 @@ public class GLWindowEvents {
 						event.getKey().invoke(GLWindowEvents.this,
 								event.getValue());
 					} catch (Exception e) {
+						e.printStackTrace();
 						System.err.println("Event processing failed.");
 					}
 				}

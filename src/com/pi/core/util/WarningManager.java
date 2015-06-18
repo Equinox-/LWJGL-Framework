@@ -5,23 +5,21 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WarningManager {
-	public static final boolean GPUOBJECT_REFERENCE_WATCHING = true;
+	public static final boolean GPUOBJECT_REF_WATCHING = true;
 	public static final boolean GPUOBJECT_METHOD_ELEVATION = true;
 	public static final boolean GLSL_UNIFORM_TYPE_WATCHING = true;
 
-	static {
-		if (GPUOBJECT_REFERENCE_WATCHING)
-			System.out.println("Using Debug Warnings!");
-	}
-
 	private static class AllocationParams {
+		int hash;
 		StackTraceElement[] stackTraceOnAlloc;
 		Class<?> allocated;
 
-		AllocationParams(Class<?> allocated, StackTraceElement[] stack) {
-			this.allocated = allocated;
+		AllocationParams(Object allocated, StackTraceElement[] stack) {
+			this.allocated = allocated.getClass();
+			this.hash = allocated.hashCode();
 			this.stackTraceOnAlloc = stack;
 		}
 	}
@@ -30,46 +28,56 @@ public class WarningManager {
 	@SuppressWarnings("rawtypes")
 	static ReferenceQueue<GPUObject> queue;
 
+	private static AtomicBoolean referenceWatchState = new AtomicBoolean(true);
+	private static Thread referenceWatchThread;
+
 	static {
-		if (GPUOBJECT_REFERENCE_WATCHING) {
+		if (GPUOBJECT_REF_WATCHING) {
 			watchReferences = new HashMap<>();
 			queue = new ReferenceQueue<>();
-			new Thread() {
+			(referenceWatchThread = new Thread() {
 				@Override
 				@SuppressWarnings("rawtypes")
 				public void run() {
 					while (true) {
 						try {
-							Reference ref = queue.remove(2000L);
+							Reference ref = queue.remove(100L);
 							AllocationParams e = watchReferences.remove(ref);
 							if (e != null) {
 								System.err.println("Reference to "
 										+ e.allocated.getName()
-										+ " lost without freeing: ");
-								for (int i = 3; i < e.stackTraceOnAlloc.length; i++)
-									System.err.println("\t"
-											+ e.stackTraceOnAlloc[i]);
+										+ " lost without freeing: (hash="
+										+ Integer.toString(e.hash, 16) + ")");
+//								for (int i = 3; i < e.stackTraceOnAlloc.length; i++)
+//									System.err.println("\tat "
+//											+ e.stackTraceOnAlloc[i]);
 							}
 						} catch (InterruptedException e1) {
+							if (!referenceWatchState.get())
+								break;
 							// Skip
 						}
 						System.gc(); // Collect, then check again
 					}
 				}
-			}.start();
+			}).start();
+		}
+	}
+
+	public static void termReferenceWatch() {
+		referenceWatchState.set(false);
+		try {
+			referenceWatchThread.join();
+		} catch (InterruptedException e) {
 		}
 	}
 
 	static void watchReference(WeakReference<?> ref) {
-		if (!GPUOBJECT_REFERENCE_WATCHING)
-			return;
-		watchReferences.put(ref, new AllocationParams(ref.get().getClass(),
-				Thread.currentThread().getStackTrace()));
+		watchReferences.put(ref, new AllocationParams(ref.get(), Thread
+				.currentThread().getStackTrace()));
 	}
 
 	static void unwatchReference(WeakReference<?> ref) {
-		if (!GPUOBJECT_REFERENCE_WATCHING)
-			return;
 		watchReferences.remove(ref);
 	}
 }

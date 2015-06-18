@@ -9,7 +9,7 @@ public abstract class GPUObject<K> {
 	// Used by the Warning Manager system
 	private static final Set<Method> scanned = new HashSet<>();
 
-	private boolean allocated = false;
+	private Thread allocThread = null;
 	private WeakReference<GPUObject<K>> ref;
 
 	public GPUObject() {
@@ -25,7 +25,7 @@ public abstract class GPUObject<K> {
 				}
 			}
 		}
-		if (WarningManager.GPUOBJECT_REFERENCE_WATCHING)
+		if (WarningManager.GPUOBJECT_REF_WATCHING)
 			ref = new WeakReference<>(this, WarningManager.queue);
 	}
 
@@ -61,7 +61,7 @@ public abstract class GPUObject<K> {
 	 * Uploads this object to the GPU. (Not always supported)
 	 */
 	public final K gpuUpload() {
-		if (!allocated)
+		if (!allocated())
 			throw new IllegalStateException("Can't upload when not allocated.");
 		gpuUploadInternal();
 		return me();
@@ -71,7 +71,7 @@ public abstract class GPUObject<K> {
 	 * Downloads this object from the GPU. (Not always supported)
 	 */
 	public final K gpuDownload() {
-		if (!allocated)
+		if (!allocated())
 			throw new IllegalStateException(
 					"Can't download when not allocated.");
 		gpuDownloadInternal();
@@ -82,11 +82,11 @@ public abstract class GPUObject<K> {
 	 * Allocates this object on the GPU.
 	 */
 	public final K gpuAlloc() {
-		if (allocated)
+		if (allocThread != null)
 			gpuFree();
 		gpuAllocInternal();
-		allocated = true;
-		if (WarningManager.GPUOBJECT_REFERENCE_WATCHING)
+		allocThread = Thread.currentThread();
+		if (ref != null)
 			WarningManager.watchReference(ref);
 		return me();
 	}
@@ -95,11 +95,21 @@ public abstract class GPUObject<K> {
 	 * Frees this object on the GPU.
 	 */
 	public final K gpuFree() {
-		if (allocated)
+		System.out.println("Free " + getClass().getName() + ": (hash="
+				+ Integer.toString(hashCode(), 16) + ")");
+		if (allocThread != null)
 			gpuFreeInternal();
-		allocated = false;
-		if (WarningManager.GPUOBJECT_REFERENCE_WATCHING)
+		allocThread = null;
+		if (ref != null)
 			WarningManager.unwatchReference(ref);
 		return me();
+	}
+
+	public final boolean allocated() {
+		return allocThread != null;
+	}
+
+	public final boolean allocatedOnThisThread() {
+		return allocated() && allocThread == Thread.currentThread();
 	}
 }

@@ -1,5 +1,6 @@
 package com.pi.core.vertex;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 
@@ -146,7 +147,8 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 	}
 
 	/**
-	 * If you changed the vertex data you need to resync the buffer. This does that.
+	 * If you changed the vertex data you need to resync the buffer. This does
+	 * that.
 	 */
 	@Override
 	protected void gpuUploadInternal() {
@@ -205,13 +207,13 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 		bufferObject.gpuFree();
 	}
 
-	private static VertexData<?> current;
+	private static WeakReference<VertexData<?>> current;
 
 	public void activate() {
-		if (current == this)
+		if (current != null && current.get() == this)
 			return;
 		GL30.glBindVertexArray(vao);
-		current = this;
+		current = new WeakReference<>(this);
 	}
 
 	public static void deactivate() {
