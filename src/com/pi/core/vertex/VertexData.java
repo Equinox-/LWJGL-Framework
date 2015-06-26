@@ -154,8 +154,7 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 	}
 
 	/**
-	 * If you changed the vertex data you need to resync the buffer. This does
-	 * that.
+	 * If you changed the vertex data you need to resync the buffer. This does that.
 	 */
 	@Override
 	protected void gpuUploadInternal() {
@@ -214,13 +213,15 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 		bufferObject.gpuFree();
 	}
 
-	private static WeakReference<VertexData<?>> current;
+	@SuppressWarnings("rawtypes")
+	private static WeakReference<VertexData> current;
 
+	@SuppressWarnings("rawtypes")
 	public void activate() {
 		if (current != null && current.get() == this)
 			return;
 		GL30.glBindVertexArray(vao);
-		current = new WeakReference<>(this);
+		current = new WeakReference<VertexData>(this);
 	}
 
 	public static void deactivate() {
