@@ -3,7 +3,7 @@ package com.pi.user.camera;
 import org.lwjgl.glfw.GLFW;
 
 import com.pi.core.wind.GLWindow;
-import com.pi.math.MathUtil;
+import com.pi.math.Heap;
 import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.VectorBuff3;
 
@@ -154,13 +154,13 @@ public class Camera3rdPerson implements Camera {
 
 	@Override
 	public void transformRay(VectorBuff3 origin, VectorBuff3 direction) {
-		VectorBuff3 tmp = MathUtil.checkout(3);
+		VectorBuff3 tmp = Heap.checkout(3);
 		origin.add(position(tmp));
 		rotMatrix.makeIdentity().setAxisAngle(-pitch, 1, 0, 0);
 		rotMatrix.transform3(tmp, direction);
 
 		rotMatrix.makeIdentity().setAxisAngle(yaw, 0, 1, 0);
 		rotMatrix.transform3(direction, tmp).normalize();
-		MathUtil.checkin(tmp);
+		Heap.checkin(tmp);
 	}
 }
