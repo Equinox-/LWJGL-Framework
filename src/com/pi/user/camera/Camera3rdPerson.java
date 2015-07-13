@@ -129,10 +129,10 @@ public class Camera3rdPerson implements Camera {
 		matrix.preMultiplyTransform(0, 0, -offset);
 
 		rotMatrix.makeIdentity().setAxisAngle(pitch, 1, 0, 0);
-		rotMatrix.multiplyInto(matrix);
+		rotMatrix.preMul(matrix);
 
 		matrix.makeIdentity().setAxisAngle(yaw, 0, 1, 0);
-		matrix.multiplyInto(rotMatrix);
+		matrix.preMul(rotMatrix);
 
 		matrix.preMultiplyTransform(x, y, z);
 		return matrix;
