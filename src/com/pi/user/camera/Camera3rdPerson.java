@@ -33,13 +33,11 @@ public class Camera3rdPerson implements Camera {
 		this.lastMoveProc = -1;
 	}
 
-	public Camera3rdPerson rates(float yawRate, float pitchRate,
-			float offsetRate) {
+	public Camera3rdPerson rates(float yawRate, float pitchRate, float offsetRate) {
 		return rates(yawRate, pitchRate, offsetRate, moveRate);
 	}
 
-	public Camera3rdPerson rates(float yawRate, float pitchRate,
-			float offsetRate, float moveRate) {
+	public Camera3rdPerson rates(float yawRate, float pitchRate, float offsetRate, float moveRate) {
 		this.yawRate = yawRate;
 		this.pitchRate = pitchRate;
 		this.offsetRate = offsetRate;
@@ -126,12 +124,12 @@ public class Camera3rdPerson implements Camera {
 
 	@Override
 	public Matrix4 apply(Matrix4 matrix) {
-		matrix.preMultiplyTransform(0, 0, -offset);
+		matrix.preMultiplyTransform(0, -offset, 0);
 
 		rotMatrix.makeIdentity().setAxisAngle(pitch, 1, 0, 0);
 		rotMatrix.preMul(matrix);
 
-		matrix.makeIdentity().setAxisAngle(yaw, 0, 1, 0);
+		matrix.makeIdentity().setAxisAngle(yaw, 0, 0, 1);
 		matrix.preMul(rotMatrix);
 
 		matrix.preMultiplyTransform(x, y, z);
@@ -141,15 +139,15 @@ public class Camera3rdPerson implements Camera {
 	@Override
 	public VectorBuff3 position(VectorBuff3 tmp) {
 		float csB = (float) Math.cos(pitch) * -offset;
-		tmp.setV(csB * (float) Math.sin(yaw) - x, (float) Math.sin(pitch)
-				* offset - y, -csB * (float) Math.cos(yaw) - z);
+		tmp.setV(csB * (float) Math.sin(yaw) - x, (float) Math.sin(pitch) * offset - y,
+				-csB * (float) Math.cos(yaw) - z);
 		return tmp;
 	}
 
 	@Override
 	public String toString() {
-		return "Camera3rdPerson[yaw=" + Math.toDegrees(yaw) + ",pitch="
-				+ Math.toDegrees(pitch) + ",offset=" + offset + "]";
+		return "Camera3rdPerson[yaw=" + Math.toDegrees(yaw) + ",pitch=" + Math.toDegrees(pitch) + ",offset=" + offset
+				+ "]";
 	}
 
 	@Override
