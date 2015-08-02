@@ -100,100 +100,121 @@ public final class ShaderUniform {
 	private final IntBuffer intBuff = BufferUtils.createIntBuffer(4);
 	private final FloatBuffer floatBuff = BufferUtils.createFloatBuffer(4);
 
+	private void commitIntsToUBO(int[] vals) {
+		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
+		IntBuffer place = block.bound().integerImageAt(location[activeIndex]);
+		for (int i = 0; i < vals.length; i++) {
+			if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE || vals[i] != place.get(i)) {
+				place.put(i, vals[i]);
+				block.markDirty(location[activeIndex] + i * 4, location[activeIndex] + i * 4 + 4);
+			}
+		}
+	}
+
+	private void commitIntsToUNF(int[] vals) {
+		intBuff.position(0);
+		intBuff.put(vals).flip();
+		switch (vals.length) {
+		case 4:
+			GL20.glUniform4(location[activeIndex], intBuff);
+			break;
+		case 3:
+			GL20.glUniform3(location[activeIndex], intBuff);
+			break;
+		case 2:
+			GL20.glUniform2(location[activeIndex], intBuff);
+			break;
+		case 1:
+			GL20.glUniform1(location[activeIndex], intBuff);
+			break;
+		default:
+			throw new IllegalArgumentException("Can't commit " + vals.length + " ints to a uniform");
+		}
+	}
+
 	private void commitInts(int... vals) {
-		if (uniformBlockIndex >= 0) {
-			ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
-			IntBuffer place = block.bound().integerImageAt(location[activeIndex]);
-			for (int i = 0; i < vals.length; i++) {
-				if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE || vals[i] != place.get(i)) {
-					place.put(i, vals[i]);
-					block.markDirty(location[activeIndex] + i * 4, location[activeIndex] + i * 4 + 4);
-				}
+		if (uniformBlockIndex >= 0)
+			commitIntsToUBO(vals);
+		else
+			commitIntsToUNF(vals);
+	}
+
+	private void commitFloatsToUBO(float[] vals) {
+		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
+		FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);
+		for (int i = 0; i < vals.length; i++) {
+			if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE || vals[i] != place.get(i)) {
+				place.put(i, vals[i]);
+				block.markDirty(location[activeIndex] + i * 4, location[activeIndex] + i * 4 + 4);
 			}
-		} else {
-			intBuff.position(0);
-			intBuff.put(vals).flip();
-			switch (vals.length) {
-			case 4:
-				GL20.glUniform4(location[activeIndex], intBuff);
-				break;
-			case 3:
-				GL20.glUniform3(location[activeIndex], intBuff);
-				break;
-			case 2:
-				GL20.glUniform2(location[activeIndex], intBuff);
-				break;
-			case 1:
-				GL20.glUniform1(location[activeIndex], intBuff);
-				break;
-			default:
-				throw new IllegalArgumentException("Can't commit " + vals.length + " ints to a uniform");
-			}
+		}
+	}
+
+	private void commitFloatsToUNF(float[] vals) {
+		floatBuff.position(0);
+		floatBuff.put(vals).flip();
+		switch (vals.length) {
+		case 4:
+			GL20.glUniform4(location[activeIndex], floatBuff);
+			break;
+		case 3:
+			GL20.glUniform3(location[activeIndex], floatBuff);
+			break;
+		case 2:
+			GL20.glUniform2(location[activeIndex], floatBuff);
+			break;
+		case 1:
+			GL20.glUniform1(location[activeIndex], floatBuff);
+			break;
+		default:
+			throw new IllegalArgumentException("Can't commit " + vals.length + " floats to a uniform");
 		}
 	}
 
 	private void commitFloats(float... vals) {
-		if (uniformBlockIndex >= 0) {
-			ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
-			FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);
-			for (int i = 0; i < vals.length; i++) {
-				if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE || vals[i] != place.get(i)) {
-					place.put(i, vals[i]);
-					block.markDirty(location[activeIndex] + i * 4, location[activeIndex] + i * 4 + 4);
-				}
-			}
-		} else {
-			floatBuff.position(0);
-			floatBuff.put(vals).flip();
-			switch (vals.length) {
-			case 4:
-				GL20.glUniform4(location[activeIndex], floatBuff);
-				break;
-			case 3:
-				GL20.glUniform3(location[activeIndex], floatBuff);
-				break;
-			case 2:
-				GL20.glUniform2(location[activeIndex], floatBuff);
-				break;
-			case 1:
-				GL20.glUniform1(location[activeIndex], floatBuff);
-				break;
-			default:
-				throw new IllegalArgumentException("Can't commit " + vals.length + " floats to a uniform");
+		if (uniformBlockIndex >= 0)
+			commitFloatsToUBO(vals);
+		else
+			commitFloatsToUNF(vals);
+	}
+
+	private void commitFloatsToUBO(FloatBuffer f) {
+		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
+		FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);
+		final int n = f.remaining();
+		for (int i = 0; i < n; i++) {
+			float val = f.get();
+			if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE || val != place.get(i)) {
+				place.put(i, val);
+				block.markDirty(location[activeIndex] + i * 4, location[activeIndex] + i * 4 + 4);
 			}
 		}
 	}
 
-	private void commitFloats(FloatBuffer f) {
-		if (uniformBlockIndex >= 0) {
-			ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
-			FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);
-			final int n = f.remaining();
-			for (int i = 0; i < n; i++) {
-				float val = f.get();
-				if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE || val != place.get(i)) {
-					place.put(i, val);
-					block.markDirty(location[activeIndex] + i * 4, location[activeIndex] + i * 4 + 4);
-				}
-			}
-		} else {
-			switch (f.limit()) {
-			case 4:
-				GL20.glUniform4(location[activeIndex], f);
-				break;
-			case 3:
-				GL20.glUniform3(location[activeIndex], f);
-				break;
-			case 2:
-				GL20.glUniform2(location[activeIndex], f);
-				break;
-			case 1:
-				GL20.glUniform1(location[activeIndex], f);
-				break;
-			default:
-				throw new IllegalArgumentException("Can't commit " + f.limit() + " floats to a uniform");
-			}
+	private void commitFloatsToUNF(FloatBuffer f) {
+		switch (f.limit()) {
+		case 4:
+			GL20.glUniform4(location[activeIndex], f);
+			break;
+		case 3:
+			GL20.glUniform3(location[activeIndex], f);
+			break;
+		case 2:
+			GL20.glUniform2(location[activeIndex], f);
+			break;
+		case 1:
+			GL20.glUniform1(location[activeIndex], f);
+			break;
+		default:
+			throw new IllegalArgumentException("Can't commit " + f.limit() + " floats to a uniform");
 		}
+	}
+
+	private void commitFloats(FloatBuffer f) {
+		if (uniformBlockIndex >= 0)
+			commitFloatsToUBO(f);
+		else
+			commitFloatsToUNF(f);
 	}
 
 	public void texture(Texture t) {
@@ -344,31 +365,35 @@ public final class ShaderUniform {
 
 	public void vector(VectorBuff v) {
 		utilAllowed();
-		switch (v.dimension()) {
-		case 4:
-			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC4)
-				commitFloats(v.getAccessor());
-			else
-				typeMismatch("float vec4");
-			break;
-		case 3:
-			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC3)
-				commitFloats(v.getAccessor());
-			else
-				typeMismatch("float vec3");
-			break;
-		case 2:
-			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC2)
-				commitFloats(v.getAccessor());
-			else
-				typeMismatch("float vec2");
-			break;
-		case 1:
-			floating(v.get(0));
-			break;
-		default:
-			throw new IllegalArgumentException(
-					"Vectors of dimension " + v.dimension() + " can't be assigned to shader uniforms.");
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING)
+			commitFloats(v.getAccessor());
+		else {
+			switch (v.dimension()) {
+			case 4:
+				if (type == GL20.GL_FLOAT_VEC4)
+					commitFloats(v.getAccessor());
+				else
+					typeMismatch("float vec4");
+				break;
+			case 3:
+				if (type == GL20.GL_FLOAT_VEC3)
+					commitFloats(v.getAccessor());
+				else
+					typeMismatch("float vec3");
+				break;
+			case 2:
+				if (type == GL20.GL_FLOAT_VEC2)
+					commitFloats(v.getAccessor());
+				else
+					typeMismatch("float vec2");
+				break;
+			case 1:
+				floating(v.get(0));
+				break;
+			default:
+				throw new IllegalArgumentException(
+						"Vectors of dimension " + v.dimension() + " can't be assigned to shader uniforms.");
+			}
 		}
 	}
 
@@ -378,10 +403,14 @@ public final class ShaderUniform {
 
 	public void matrix(Matrix4 m, boolean transpose) {
 		utilAllowed();
-		// TODO making this work with UBOs
-		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_MAT4)
-			GL20.glUniformMatrix4(location[activeIndex], transpose, m.accessor());
-		else
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_MAT4) {
+			if (uniformBlockIndex >= 0) {
+				if (transpose)
+					throw new IllegalStateException("Can't upload transposed matrix to UBO");
+				commitFloatsToUBO(m.accessor());
+			} else
+				GL20.glUniformMatrix4(location[activeIndex], transpose, m.accessor());
+		} else
 			typeMismatch("float matrix4");
 	}
 

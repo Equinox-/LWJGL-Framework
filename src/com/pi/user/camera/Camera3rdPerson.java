@@ -5,6 +5,7 @@ import org.lwjgl.glfw.GLFW;
 import com.pi.core.wind.GLWindow;
 import com.pi.math.Heap;
 import com.pi.math.matrix.Matrix4;
+import com.pi.math.matrix.SpecialMatrix;
 import com.pi.math.vector.VectorBuff3;
 
 public class Camera3rdPerson implements Camera {
@@ -126,10 +127,12 @@ public class Camera3rdPerson implements Camera {
 	public Matrix4 apply(Matrix4 matrix) {
 		matrix.preMultiplyTransform(0, -offset, 0);
 
-		rotMatrix.makeIdentity().setAxisAngle(pitch, 1, 0, 0);
+//		rotMatrix.makeIdentity().setAxisAngle(pitch, 1, 0, 0);
+		SpecialMatrix.angleX(rotMatrix.makeIdentity(), pitch);
 		rotMatrix.preMul(matrix);
 
-		matrix.makeIdentity().setAxisAngle(yaw, 0, 0, 1);
+//		matrix.makeIdentity().setAxisAngle(yaw, 0, 0, 1);
+		SpecialMatrix.angleZ(matrix.makeIdentity(), yaw);
 		matrix.preMul(rotMatrix);
 
 		matrix.preMultiplyTransform(x, y, z);
@@ -154,10 +157,12 @@ public class Camera3rdPerson implements Camera {
 	public void transformRay(VectorBuff3 origin, VectorBuff3 direction) {
 		VectorBuff3 tmp = Heap.checkout(3);
 		origin.add(position(tmp));
-		rotMatrix.makeIdentity().setAxisAngle(-pitch, 1, 0, 0);
+//		rotMatrix.makeIdentity().setAxisAngle(-pitch, 1, 0, 0);
+		SpecialMatrix.angleX(rotMatrix.makeIdentity(), -pitch);
 		rotMatrix.transform3(tmp, direction);
 
-		rotMatrix.makeIdentity().setAxisAngle(yaw, 0, 1, 0);
+//		rotMatrix.makeIdentity().setAxisAngle(yaw, 0, 1, 0);
+		SpecialMatrix.angleZ(rotMatrix.makeIdentity(), yaw);
 		rotMatrix.transform3(direction, tmp).normalize();
 		Heap.checkin(tmp);
 	}

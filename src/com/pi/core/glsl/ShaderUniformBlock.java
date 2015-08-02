@@ -9,6 +9,10 @@ import com.pi.core.buffers.BufferType;
 import com.pi.core.buffers.GLGenericBuffer;
 
 public class ShaderUniformBlock {
+	/**
+	 * A persistent buffer means that the buffer only gets refreshed if it is
+	 * changed.
+	 */
 	static final boolean PERSISTENT_BUFFER_STATE = true;
 
 	private final int blockIndex;
@@ -17,17 +21,15 @@ public class ShaderUniformBlock {
 	private final int length;
 	private GLGenericBuffer bound;
 
-	public ShaderUniformBlock(ShaderProgram parent, int blockIndex,
-			String blockName) {
+	public ShaderUniformBlock(ShaderProgram parent, int blockIndex, String blockName) {
 		this.parent = parent;
 		this.blockName = blockName;
 		this.blockIndex = blockIndex;
 
-		this.length = GL31.glGetActiveUniformBlocki(parent.getID(), blockIndex,
-				GL31.GL_UNIFORM_BLOCK_DATA_SIZE);
+		this.length = GL31.glGetActiveUniformBlocki(parent.getID(), blockIndex, GL31.GL_UNIFORM_BLOCK_DATA_SIZE);
 
-		System.out.println("Shader uniform block by the name of " + blockName
-				+ " [index=" + blockIndex + ", len=" + length + "]");
+		System.out.println(
+				"Shader uniform block by the name of " + blockName + " [index=" + blockIndex + ", len=" + length + "]");
 
 	}
 
@@ -51,8 +53,7 @@ public class ShaderUniformBlock {
 
 	public GLGenericBuffer bound() {
 		if (bound == null) {
-			bound(new GLGenericBuffer(length).type(BufferType.UNIFORM)
-					.modify(BufferModifyHint.STREAM)
+			bound(new GLGenericBuffer(length).type(BufferType.UNIFORM).modify(BufferModifyHint.STREAM)
 					.access(BufferAccessHint.DRAW).gpuAlloc());
 		}
 		return bound;
