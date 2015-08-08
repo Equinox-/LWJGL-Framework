@@ -178,6 +178,11 @@ public final class ShaderUniform {
 			commitFloatsToUNF(vals);
 	}
 
+	public FloatBuffer uboAccessor() {
+		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
+		return block.bound().floatImageAt(location[activeIndex]);
+	}
+
 	private void commitFloatsToUBO(FloatBuffer f) {
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
 		FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);

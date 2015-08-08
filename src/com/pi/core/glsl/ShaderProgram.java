@@ -268,9 +268,9 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 
 	public ShaderUniform uniform(String name) {
 		ShaderUniform v = uniformsByName.get(name);
-		if (v == null)
-			System.err.println("Tried to query shader for invalid uniform: "
-					+ name);
+//		if (v == null)
+//			System.err.println("Tried to query shader for invalid uniform: "
+//					+ name);
 		return v;
 	}
 

@@ -58,9 +58,9 @@ public class ImageTexture extends Texture {
 				data.put((byte) ((argb >> 16) & 0xff));
 				data.put((byte) ((argb >> 8) & 0xff));
 				data.put((byte) (argb & 0xff));
-				if ((argb & 0xFFFFFF) == 0)
-					data.put((byte) 0);
-				else
+//				if ((argb & 0xFFFFFF) == 0)
+//					data.put((byte) 0);
+//				else
 					data.put((byte) ((argb >> 24) & 0xff));
 			}
 		}
