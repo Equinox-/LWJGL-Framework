@@ -7,10 +7,13 @@ import java.util.Arrays;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL21;
 import org.lwjgl.opengl.GL31;
 
 import com.pi.core.texture.Texture;
 import com.pi.core.util.WarningManager;
+import com.pi.math.matrix.Matrix3;
+import com.pi.math.matrix.Matrix34;
 import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.ByteVector4;
 import com.pi.math.vector.Vector;
@@ -197,7 +200,7 @@ public final class ShaderUniform {
 	}
 
 	private void commitFloatsToUNF(FloatBuffer f) {
-		switch (f.limit()) {
+		switch (f.remaining()) {
 		case 4:
 			GL20.glUniform4(location[activeIndex], f);
 			break;
@@ -211,7 +214,7 @@ public final class ShaderUniform {
 			GL20.glUniform1(location[activeIndex], f);
 			break;
 		default:
-			throw new IllegalArgumentException("Can't commit " + f.limit() + " floats to a uniform");
+			throw new IllegalArgumentException("Can't commit " + f.remaining() + " floats to a uniform");
 		}
 	}
 
@@ -417,6 +420,28 @@ public final class ShaderUniform {
 				GL20.glUniformMatrix4(location[activeIndex], transpose, m.accessor());
 		} else
 			typeMismatch("float matrix4");
+	}
+
+	public void matrix(Matrix34 m) {
+		utilAllowed();
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL21.GL_FLOAT_MAT4x3) {
+			if (uniformBlockIndex >= 0) {
+				commitFloatsToUBO(m.accessor());
+			} else
+				GL21.glUniformMatrix3x4(location[activeIndex], false, m.accessor());
+		} else
+			typeMismatch("float matrix34");
+	}
+
+	public void matrix(Matrix3 m) {
+		utilAllowed();
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_MAT3) {
+			if (uniformBlockIndex >= 0) {
+				commitFloatsToUBO(m.accessor());
+			} else
+				GL20.glUniformMatrix3(location[activeIndex], false, m.accessor());
+		} else
+			typeMismatch("float matrix34");
 	}
 
 	public void color(ByteVector4 c) {
