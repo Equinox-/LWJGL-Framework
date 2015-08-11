@@ -24,6 +24,14 @@ public class ShaderPreprocessor {
 		SHADER_INCLUDE_MAP.put(name, src);
 	}
 
+	public static void define(String name, float value) {
+		PREDEFINES_MAP.put(name.trim(), "(" + value + ")");
+	}
+
+	public static void define(String name, int value) {
+		PREDEFINES_MAP.put(name.trim(), "(" + value + ")");
+	}
+
 	public static void define(String name, String value) {
 		if (value == null)
 			PREDEFINES_MAP.remove(name.trim());
@@ -39,12 +47,10 @@ public class ShaderPreprocessor {
 		}
 	}
 
-	private static final Pattern INCLUDE = Pattern
-			.compile("#include[ \t]+?([^ \t\n\r]+)");
+	private static final Pattern INCLUDE = Pattern.compile("#include[ \t]+?([^ \t\n\r]+)");
 	private static final Pattern FOREACH = Pattern
 			.compile("#foreach[ \t]*\\([ \t]*([^,\n]*)[ \t]*,[ \t]*([^,\n]*)[ \t]*,[ \t]*([^,\n]*)[ \t]*\\)[ \t]*");
-	private static final Pattern VERSION = Pattern
-			.compile("#version[^\n\r]*(\r|)\n");
+	private static final Pattern VERSION = Pattern.compile("#version[^\n\r]*(\r|)\n");
 
 	public static String preprocess(String src) {
 		return doForeach(doIncludes(doDefines(src), new HashSet<String>()));
@@ -57,8 +63,7 @@ public class ShaderPreprocessor {
 		if (np)
 			res.append(src, 0, mt.end());
 		for (Entry<String, String> define : PREDEFINES_MAP.entrySet()) {
-			res.append("#define ").append(define.getKey()).append(' ')
-					.append(define.getValue()).append('\n');
+			res.append("#define ").append(define.getKey()).append(' ').append(define.getValue()).append('\n');
 
 		}
 		if (np)
@@ -79,10 +84,9 @@ public class ShaderPreprocessor {
 				if (hasIncluded.add(mt.group(1))) {
 					String included = SHADER_INCLUDE_MAP.get(mt.group(1));
 					if (included != null)
-						res.append(included);
+						res.append(included).append('\n');
 					else
-						System.err.println("Unable to include: " + mt.group(1)
-								+ " (It isn't defined)");
+						System.err.println("Unable to include: " + mt.group(1) + " (It isn't defined)");
 				}
 				prevHead = mt.end();
 			} while (mt.find());

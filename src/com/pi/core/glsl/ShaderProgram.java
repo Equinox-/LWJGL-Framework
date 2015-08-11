@@ -21,8 +21,7 @@ import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 import com.pi.io.FileUtil;
 
-public class ShaderProgram extends GPUObject<ShaderProgram> implements
-		Bindable, GLIdentifiable {
+public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, GLIdentifiable {
 	static final int MAX_TEXTURE_UNITS = 16;
 	private static ShaderProgram currentShader;
 
@@ -35,13 +34,12 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 	private ShaderUniformBlock[] uniformBlocksByID;
 
 	private final static Map<String, Integer> SHADER_TYPE_MAP;
+
 	static {
 		SHADER_TYPE_MAP = new HashMap<>();
 		SHADER_TYPE_MAP.put("GL_VERTEX_SHADER", GL20.GL_VERTEX_SHADER);
-		SHADER_TYPE_MAP.put("GL_TESS_CONTROL_SHADER",
-				GL40.GL_TESS_CONTROL_SHADER);
-		SHADER_TYPE_MAP.put("GL_TESS_EVALUATION_SHADER",
-				GL40.GL_TESS_EVALUATION_SHADER);
+		SHADER_TYPE_MAP.put("GL_TESS_CONTROL_SHADER", GL40.GL_TESS_CONTROL_SHADER);
+		SHADER_TYPE_MAP.put("GL_TESS_EVALUATION_SHADER", GL40.GL_TESS_EVALUATION_SHADER);
 		SHADER_TYPE_MAP.put("GL_GEOMETRY_SHADER", GL32.GL_GEOMETRY_SHADER);
 		SHADER_TYPE_MAP.put("GL_FRAGMENT_SHADER", GL20.GL_FRAGMENT_SHADER);
 		SHADER_TYPE_MAP.put("GL_COMPUTE_SHADER", GL43.GL_COMPUTE_SHADER);
@@ -69,13 +67,10 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 		this.programID = GL20.glCreateProgram();
 	}
 
-	private static final Pattern LINE_FINDER_AMD = Pattern
-			.compile("[0-9]+:([0-9]+)");
-	private static final Pattern LINE_FINDER_NVIDIA = Pattern
-			.compile("line ([0-9]+), column [0-9]+");
+	private static final Pattern LINE_FINDER_AMD = Pattern.compile("[0-9]+:([0-9]+)");
+	private static final Pattern LINE_FINDER_NVIDIA = Pattern.compile("line ([0-9]+), column [0-9]+");
 
-	private static int compileShader(String src, int type)
-			throws InstantiationException {
+	private static int compileShader(String src, int type) throws InstantiationException {
 		src = ShaderPreprocessor.preprocess(src);
 		String[] lines = src.split("\n");
 
@@ -93,8 +88,7 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 
 			for (int i = 0; i < logLines.length; i++) {
 				boolean foundLine = false;
-				for (Pattern pt : new Pattern[] { LINE_FINDER_AMD,
-						LINE_FINDER_NVIDIA }) {
+				for (Pattern pt : new Pattern[] { LINE_FINDER_AMD, LINE_FINDER_NVIDIA }) {
 					Matcher m = pt.matcher(logLines[i]);
 					if (m.find()) {
 						res.append(logLines[i]);
@@ -108,13 +102,12 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 						}
 						if (ctx >= 0) {
 							res.append("Context: ")
-									.append(ctx >= 0 && ctx < lines.length ? lines[ctx]
-											.trim() : "Unknown").append('\n');
+									.append(ctx >= 0 && ctx < lines.length ? lines[ctx].trim() : "Unknown")
+									.append('\n');
 							foundLine = true;
 							break;
 						}
 					}
-					break;
 				}
 				if (!foundLine)
 					res.append(logLines[i]).append('\n');
@@ -127,8 +120,7 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 
 	public ShaderProgram attach(int type, InputStream src) {
 		try {
-			attachedObjects.add(compileShader(FileUtil.readStreamFully(src),
-					type));
+			attachedObjects.add(compileShader(FileUtil.readStreamFully(src), type));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -151,12 +143,10 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 			int typeV = 0;
 			for (String line : lines) {
 				if (line.trim().startsWith("//")) {
-					String ttype = line.trim().substring(2).trim()
-							.toUpperCase();
+					String ttype = line.trim().substring(2).trim().toUpperCase();
 					Integer rt = SHADER_TYPE_MAP.get(ttype);
 					if (rt != null && tmp.length() > 0 && type != null) {
-						attachedObjects
-								.add(compileShader(tmp.toString(), typeV));
+						attachedObjects.add(compileShader(tmp.toString(), typeV));
 						tmp.setLength(0);
 					}
 					if (rt != null) {
@@ -230,21 +220,16 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 	}
 
 	private void loadUniforms() {
-		int uniformBlockCount = GL20.glGetProgrami(programID,
-				GL31.GL_ACTIVE_UNIFORM_BLOCKS);
+		int uniformBlockCount = GL20.glGetProgrami(programID, GL31.GL_ACTIVE_UNIFORM_BLOCKS);
 		uniformBlocksByID = new ShaderUniformBlock[uniformBlockCount];
 		uniformBlocksByName.clear();
 		for (int i = 0; i < uniformBlockCount; i++) {
 			String name = GL31.glGetActiveUniformBlockName(programID, i);
-			uniformBlocksByName
-					.put(name, uniformBlocksByID[i] = new ShaderUniformBlock(
-							this, i, name));
+			uniformBlocksByName.put(name, uniformBlocksByID[i] = new ShaderUniformBlock(this, i, name));
 		}
 
-		int uniformCount = GL20.glGetProgrami(programID,
-				GL20.GL_ACTIVE_UNIFORMS);
-		int uniformMaxNameLength = GL20.glGetProgrami(programID,
-				GL20.GL_ACTIVE_UNIFORM_MAX_LENGTH);
+		int uniformCount = GL20.glGetProgrami(programID, GL20.GL_ACTIVE_UNIFORMS);
+		int uniformMaxNameLength = GL20.glGetProgrami(programID, GL20.GL_ACTIVE_UNIFORM_MAX_LENGTH);
 		uniformsByID = new ShaderUniform[uniformCount];
 		uniformsByName.clear();
 
@@ -268,9 +253,9 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 
 	public ShaderUniform uniform(String name) {
 		ShaderUniform v = uniformsByName.get(name);
-//		if (v == null)
-//			System.err.println("Tried to query shader for invalid uniform: "
-//					+ name);
+		// if (v == null)
+		// System.err.println("Tried to query shader for invalid uniform: "
+		// + name);
 		return v;
 	}
 

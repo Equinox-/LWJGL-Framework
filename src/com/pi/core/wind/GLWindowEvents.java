@@ -14,6 +14,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWCharCallback;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
+import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
@@ -28,6 +29,7 @@ public class GLWindowEvents {
 	private GLFWCursorPosCallback cursorCallback;
 	private GLFWCharCallback charCallback;
 	private GLFWMouseButtonCallback mouseButtonCallback;
+	private GLFWFramebufferSizeCallback fbSizeCallback;
 
 	private BlockingQueue<Entry<Method, Object[]>> eventQueue = new LinkedBlockingQueue<>();
 
@@ -72,12 +74,21 @@ public class GLWindowEvents {
 				eventQueue.add(new AbstractMap.SimpleEntry<>(onScrollEvent, new Object[] { xoffset, yoffset }));
 			}
 		});
-		sizeCallback = GLFW.GLFWWindowSizeCallback(new GLFWWindowSizeCallback.SAM() {
+		fbSizeCallback = GLFW.GLFWFramebufferSizeCallback(new GLFWFramebufferSizeCallback.SAM() {
 			@Override
 			public void invoke(long window, int width, int height) {
 				if (window != attached.getWindowID())
 					return;
 				eventQueue.add(new AbstractMap.SimpleEntry<>(onSizeEvent, new Object[] { width, height }));
+			}
+		});
+		sizeCallback = GLFW.GLFWWindowSizeCallback(new GLFWWindowSizeCallback.SAM() {
+			@Override
+			public void invoke(long window, int width, int height) {
+				if (window != attached.getWindowID())
+					return;
+				GLWindowEvents.this.width = width;
+				GLWindowEvents.this.height = height;
 			}
 		});
 		cursorCallback = GLFW.GLFWCursorPosCallback(new GLFWCursorPosCallback.SAM() {
@@ -108,6 +119,7 @@ public class GLWindowEvents {
 		GLFW.glfwSetKeyCallback(attached.getWindowID(), keyCallback);
 		GLFW.glfwSetScrollCallback(attached.getWindowID(), scrollCallback);
 		GLFW.glfwSetWindowSizeCallback(attached.getWindowID(), sizeCallback);
+		GLFW.glfwSetFramebufferSizeCallback(attached.getWindowID(), fbSizeCallback);
 		GLFW.glfwSetCursorPosCallback(attached.getWindowID(), cursorCallback);
 		GLFW.glfwSetCharCallback(attached.getWindowID(), charCallback);
 		GLFW.glfwSetMouseButtonCallback(attached.getWindowID(), mouseButtonCallback);
@@ -223,20 +235,31 @@ public class GLWindowEvents {
 
 	private int width, height;
 
+	public int getWindowWidth() {
+		return width;
+	}
+
+	public int getWindowHeight() {
+		return height;
+	}
+
+	private int fbWidth, fbHeight;
+
+	// In practice we care about the frame buffer width, not window width
 	protected void onSizeEvent(int width, int height) {
-		this.width = width;
-		this.height = height;
+		this.fbWidth = width;
+		this.fbHeight = height;
 		for (EventListener l : listeners)
 			if (l.sizeChanged(width, height))
 				break;
 	}
 
 	public int getWidth() {
-		return width;
+		return fbWidth;
 	}
 
 	public int getHeight() {
-		return height;
+		return fbHeight;
 	}
 
 	private float mouseX, mouseY;
