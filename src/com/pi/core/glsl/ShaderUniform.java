@@ -103,7 +103,7 @@ public final class ShaderUniform {
 	private final IntBuffer intBuff = BufferUtils.createIntBuffer(4);
 	private final FloatBuffer floatBuff = BufferUtils.createFloatBuffer(4);
 
-	private void commitIntsToUBO(int[] vals) {
+	private final void commitIntsToUBO(int[] vals) {
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
 		IntBuffer place = block.bound().integerImageAt(location[activeIndex]);
 		for (int i = 0; i < vals.length; i++) {
@@ -114,7 +114,7 @@ public final class ShaderUniform {
 		}
 	}
 
-	private void commitIntsToUNF(int[] vals) {
+	private final void commitIntsToUNF(int[] vals) {
 		intBuff.position(0);
 		intBuff.put(vals).flip();
 		switch (vals.length) {
@@ -135,14 +135,14 @@ public final class ShaderUniform {
 		}
 	}
 
-	private void commitInts(int... vals) {
+	private final void commitInts(int... vals) {
 		if (uniformBlockIndex >= 0)
 			commitIntsToUBO(vals);
 		else
 			commitIntsToUNF(vals);
 	}
 
-	private void commitFloatsToUBO(float[] vals) {
+	private final void commitFloatsToUBO(float[] vals) {
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
 		FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);
 		for (int i = 0; i < vals.length; i++) {
@@ -153,7 +153,7 @@ public final class ShaderUniform {
 		}
 	}
 
-	private void commitFloatsToUNF(float[] vals) {
+	private final void commitFloatsToUNF(float[] vals) {
 		floatBuff.position(0);
 		floatBuff.put(vals).flip();
 		switch (vals.length) {
@@ -174,7 +174,7 @@ public final class ShaderUniform {
 		}
 	}
 
-	private void commitFloats(float... vals) {
+	private final void commitFloats(float... vals) {
 		if (uniformBlockIndex >= 0)
 			commitFloatsToUBO(vals);
 		else
@@ -186,7 +186,7 @@ public final class ShaderUniform {
 		return block.bound().floatImageAt(location[activeIndex]);
 	}
 
-	private void commitFloatsToUBO(FloatBuffer f) {
+	private final void commitFloatsToUBO(FloatBuffer f) {
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
 		FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);
 		final int n = f.remaining();
@@ -199,26 +199,26 @@ public final class ShaderUniform {
 		}
 	}
 
-	private void commitFloatsToUNF(FloatBuffer f) {
+	private final void commitFloatsToUNF(FloatBuffer f) {
 		switch (f.remaining()) {
 		case 4:
 			GL20.glUniform4(location[activeIndex], f);
-			break;
+			return;
 		case 3:
 			GL20.glUniform3(location[activeIndex], f);
-			break;
+			return;
 		case 2:
 			GL20.glUniform2(location[activeIndex], f);
-			break;
+			return;
 		case 1:
 			GL20.glUniform1(location[activeIndex], f);
-			break;
+			return;
 		default:
 			throw new IllegalArgumentException("Can't commit " + f.remaining() + " floats to a uniform");
 		}
 	}
 
-	private void commitFloats(FloatBuffer f) {
+	private final void commitFloats(FloatBuffer f) {
 		if (uniformBlockIndex >= 0)
 			commitFloatsToUBO(f);
 		else
@@ -323,28 +323,14 @@ public final class ShaderUniform {
 			typeMismatch("float");
 	}
 
-	public void vector(float x, float y) {
+	public void vector(float... vs) {
 		utilAllowed();
-		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC2)
-			commitFloats(x, y);
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || (vs.length == 1 && type == GL11.GL_FLOAT)
+				|| (vs.length == 2 && type == GL20.GL_FLOAT_VEC2) || (vs.length == 3 && type == GL20.GL_FLOAT_VEC3)
+				|| (vs.length == 4 && type == GL20.GL_FLOAT_VEC4))
+			commitFloats(vs);
 		else
-			typeMismatch("float vec2");
-	}
-
-	public void vector(float x, float y, float z) {
-		utilAllowed();
-		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC3)
-			commitFloats(x, y, z);
-		else
-			typeMismatch("float vec3");
-	}
-
-	public void vector(float x, float y, float z, float w) {
-		utilAllowed();
-		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC4)
-			commitFloats(x, y, z, w);
-		else
-			typeMismatch("float vec4");
+			typeMismatch(vs.length == 1 ? "float" : ("float vec" + vs.length));
 	}
 
 	public void vector(Vector v) {
@@ -445,7 +431,7 @@ public final class ShaderUniform {
 	}
 
 	public void color(ByteVector4 c) {
-		vector(c);
+		vector(c.get(0), c.get(1), c.get(2), c.get(3));
 	}
 
 	public int location() {
