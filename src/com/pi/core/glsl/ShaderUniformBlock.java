@@ -67,11 +67,15 @@ public class ShaderUniformBlock {
 	}
 
 	public void uploadIfNeeded() {
-		if (dirtyMin >= dirtyMax)
-			return;
-		bound().gpuUploadPartial(dirtyMin, dirtyMax);
-		dirtyMin = Integer.MAX_VALUE;
-		dirtyMax = Integer.MIN_VALUE;
+		if (ShaderUniformBlock.PERSISTENT_BUFFER_STATE) {
+			if (dirtyMin >= dirtyMax)
+				return;
+			bound().gpuUploadPartial(dirtyMin, dirtyMax);
+			dirtyMin = Integer.MAX_VALUE;
+			dirtyMax = Integer.MIN_VALUE;
+		} else {
+			upload();
+		}
 	}
 
 	public void upload() {

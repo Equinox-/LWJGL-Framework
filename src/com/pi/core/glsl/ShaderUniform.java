@@ -145,33 +145,21 @@ public final class ShaderUniform {
 	private final void commitFloatsToUBO(float[] vals) {
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
 		FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);
-		for (int i = 0; i < vals.length; i++) {
-			if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE || vals[i] != place.get(i)) {
-				place.put(i, vals[i]);
-				block.markDirty(location[activeIndex] + i * 4, location[activeIndex] + i * 4 + 4);
+		if (ShaderUniformBlock.PERSISTENT_BUFFER_STATE) {
+			for (int i = 0; i < vals.length; i++) {
+				if (vals[i] != place.get(i)) {
+					place.put(i, vals[i]);
+					block.markDirty(location[activeIndex] + i * 4, location[activeIndex] + i * 4 + 4);
+				}
 			}
-		}
+		} else
+			place.put(vals);
 	}
 
 	private final void commitFloatsToUNF(float[] vals) {
 		floatBuff.position(0);
 		floatBuff.put(vals).flip();
-		switch (vals.length) {
-		case 4:
-			GL20.glUniform4(location[activeIndex], floatBuff);
-			break;
-		case 3:
-			GL20.glUniform3(location[activeIndex], floatBuff);
-			break;
-		case 2:
-			GL20.glUniform2(location[activeIndex], floatBuff);
-			break;
-		case 1:
-			GL20.glUniform1(location[activeIndex], floatBuff);
-			break;
-		default:
-			throw new IllegalArgumentException("Can't commit " + vals.length + " floats to a uniform");
-		}
+		commitFloatsToUNF(floatBuff);
 	}
 
 	private final void commitFloats(float... vals) {
@@ -189,13 +177,17 @@ public final class ShaderUniform {
 	private final void commitFloatsToUBO(FloatBuffer f) {
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
 		FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);
-		final int n = f.remaining();
-		for (int i = 0; i < n; i++) {
-			float val = f.get();
-			if (!ShaderUniformBlock.PERSISTENT_BUFFER_STATE || val != place.get(i)) {
-				place.put(i, val);
-				block.markDirty(location[activeIndex] + i * 4, location[activeIndex] + i * 4 + 4);
+		if (ShaderUniformBlock.PERSISTENT_BUFFER_STATE) {
+			final int n = f.remaining();
+			for (int i = 0; i < n; i++) {
+				float val = f.get();
+				if (val != place.get(i)) {
+					place.put(i, val);
+					block.markDirty(location[activeIndex] + i * 4, location[activeIndex] + i * 4 + 4);
+				}
 			}
+		} else {
+			place.put(f);
 		}
 	}
 
