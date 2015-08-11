@@ -151,20 +151,20 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements
 			int typeV = 0;
 			for (String line : lines) {
 				if (line.trim().startsWith("//")) {
-					if (tmp.length() > 0 && type != null) {
+					String ttype = line.trim().substring(2).trim()
+							.toUpperCase();
+					Integer rt = SHADER_TYPE_MAP.get(ttype);
+					if (rt != null && tmp.length() > 0 && type != null) {
 						attachedObjects
 								.add(compileShader(tmp.toString(), typeV));
 						tmp.setLength(0);
 					}
-					String ttype = line.trim().substring(2).trim()
-							.toUpperCase();
-					Integer rt = SHADER_TYPE_MAP.get(ttype);
 					if (rt != null) {
 						type = ttype;
 						typeV = rt;
 					}
 				} else
-					tmp.append(line).append("\n");
+					tmp.append(line).append('\n');
 			}
 			if (tmp.length() > 0 && type != null) {
 				attachedObjects.add(compileShader(tmp.toString(), typeV));
