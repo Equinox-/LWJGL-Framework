@@ -14,6 +14,7 @@ public class ShaderUniformBlock {
 	 * changed.
 	 */
 	static final boolean PERSISTENT_BUFFER_STATE = true;
+	static final boolean ALLOW_UTILITY_ACCESS = false;
 
 	private final int blockIndex;
 	private final String blockName;

@@ -16,8 +16,7 @@ import com.pi.math.vector.ByteVector;
 import com.pi.math.vector.VectorBuff;
 import com.pi.math.volume.BoundingArea;
 
-public class VertexData<E> extends GPUObject<VertexData<E>> implements
-		GLIdentifiable {
+public class VertexData<E> extends GPUObject<VertexData<E>>implements GLIdentifiable {
 	public E[] vertexDB;
 	public final Class<E> vertexClass;
 	private int count;
@@ -30,8 +29,7 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 		this.layout = new VertexLayout(vertexClass);
 		this.count = count;
 		this.layout.validate();
-		this.bufferObject = new GLGenericBuffer(this.count
-				* this.layout.structureSize);
+		this.bufferObject = new GLGenericBuffer(this.count * this.layout.structureSize);
 
 		cpuAlloc();
 	}
@@ -84,59 +82,32 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 							Class<?> type = attr.getType().getComponentType();
 							Object array = attr.get(itm);
 							if (array == null) {
-								array = Array.newInstance(type, attr
-										.getAnnotation(AttrLayout.class)
-										.arraySize());
+								array = Array.newInstance(type, attr.getAnnotation(AttrLayout.class).arraySize());
 								attr.set(itm, array);
 							}
 
 							if (VectorBuff.class.isAssignableFrom(type)) {
-								Array.set(
-										array,
-										layout.attrIndex[j],
-										VectorBuff.make(
-												this.bufferObject
-														.floatImageAt(head
-																+ layout.attrOffset[j]),
-												0, layout.attrSize[j]));
-							} else if (type.isAssignableFrom(Matrix4.class)) {
-								Array.set(
-										array,
-										layout.attrIndex[j],
-										new Matrix4(
-												this.bufferObject
-														.floatImageAt(head
-																+ layout.attrOffset[j]),
-												0));
-							} else if (ByteVector.class.isAssignableFrom(type)) {
 								Array.set(array, layout.attrIndex[j],
-										ByteVector.make(
-												this.bufferObject.getBacking(),
-												head + layout.attrOffset[j],
+										VectorBuff.make(this.bufferObject.floatImageAt(head + layout.attrOffset[j]), 0,
 												layout.attrSize[j]));
+							} else if (type.isAssignableFrom(Matrix4.class)) {
+								Array.set(array, layout.attrIndex[j],
+										new Matrix4(this.bufferObject.floatImageAt(head + layout.attrOffset[j]), 0));
+							} else if (ByteVector.class.isAssignableFrom(type)) {
+								Array.set(array, layout.attrIndex[j], ByteVector.make(this.bufferObject.getBacking(),
+										head + layout.attrOffset[j], layout.attrSize[j]));
 							}
 						} else {
-							if (VectorBuff.class.isAssignableFrom(attr
-									.getType())) {
-								attr.set(itm, VectorBuff.make(
-										this.bufferObject.floatImageAt(head
-												+ layout.attrOffset[j]), 0,
-										layout.attrSize[j]));
-							} else if (attr.getType().isAssignableFrom(
-									Matrix4.class)) {
-								attr.set(
-										itm,
-										new Matrix4(
-												this.bufferObject
-														.floatImageAt(head
-																+ layout.attrOffset[j]),
-												0));
-							} else if (ByteVector.class.isAssignableFrom(attr
-									.getType())) {
-								attr.set(itm, ByteVector.make(
-										this.bufferObject.getBacking(), head
-												+ layout.attrOffset[j],
-										layout.attrSize[j]));
+							if (VectorBuff.class.isAssignableFrom(attr.getType())) {
+								attr.set(itm,
+										VectorBuff.make(this.bufferObject.floatImageAt(head + layout.attrOffset[j]), 0,
+												layout.attrSize[j]));
+							} else if (attr.getType().isAssignableFrom(Matrix4.class)) {
+								attr.set(itm,
+										new Matrix4(this.bufferObject.floatImageAt(head + layout.attrOffset[j]), 0));
+							} else if (ByteVector.class.isAssignableFrom(attr.getType())) {
+								attr.set(itm, ByteVector.make(this.bufferObject.getBacking(),
+										head + layout.attrOffset[j], layout.attrSize[j]));
 							}
 						}
 					}
@@ -154,7 +125,8 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 	}
 
 	/**
-	 * If you changed the vertex data you need to resync the buffer. This does that.
+	 * If you changed the vertex data you need to resync the buffer. This does
+	 * that.
 	 */
 	@Override
 	protected void gpuUploadInternal() {
@@ -175,16 +147,13 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 
 		for (int j = 0; j < layout.attrMapping.length; j++) {
 			if (layout.attrMapping[j] != null) {
-				if (layout.attrMapping[j].getType().isAssignableFrom(
-						Matrix4.class)) {
+				if (layout.attrMapping[j].getType().isAssignableFrom(Matrix4.class)) {
 					for (int r = 0; r < layout.attrSize[j]; r++)
-						GL20.glVertexAttribPointer(j + r, layout.attrSize[j],
-								layout.attrType[j], layout.attrNormalize[j],
-								layout.structureSize, layout.attrOffset[j] + r
-										* layout.attrSize[j] * 4);
+						GL20.glVertexAttribPointer(j + r, layout.attrSize[j], layout.attrType[j],
+								layout.attrNormalize[j], layout.structureSize,
+								layout.attrOffset[j] + r * layout.attrSize[j] * 4);
 				} else {
-					GL20.glVertexAttribPointer(j, layout.attrSize[j],
-							layout.attrType[j], layout.attrNormalize[j],
+					GL20.glVertexAttribPointer(j, layout.attrSize[j], layout.attrType[j], layout.attrNormalize[j],
 							layout.structureSize, layout.attrOffset[j]);
 				}
 			}
@@ -241,11 +210,6 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements
 	public void include(BoundingArea area, PositionVertex<? super E> cpy) {
 		for (int i = 0; i < vertexDB.length; i++)
 			area.include(cpy.position(vertexDB[i]));
-	}
-
-	@Override
-	protected VertexData<E> me() {
-		return this;
 	}
 
 	@Override

@@ -206,8 +206,4 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 		return height;
 	}
 
-	@Override
-	protected Texture me() {
-		return this;
-	}
 }

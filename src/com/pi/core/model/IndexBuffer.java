@@ -166,9 +166,4 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 	public String toString() {
 		return mode.name() + " x" + (indexCount / mode.stride());
 	}
-
-	@Override
-	protected IndexBuffer me() {
-		return this;
-	}
 }

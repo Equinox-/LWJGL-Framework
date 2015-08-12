@@ -166,6 +166,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 	 *            the new size
 	 * @return this buffer
 	 */
+	@SuppressWarnings("unchecked")
 	public R resize(int ns) {
 		if (size != ns) {
 			this.size = ns;
@@ -174,19 +175,20 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 			if (allocated())
 				allocBufferStorage();
 		}
-		return me();
+		return (R) this;
 	}
 
 	public int size() {
 		return size;
 	}
 
+	@SuppressWarnings("unchecked")
 	public R type(BufferType t) {
 		if (bufferPtr != -1)
 			throw new IllegalStateException(
 					"Can't change buffer type when allocated.");
 		this.type = t;
-		return me();
+		return (R) this;
 	}
 
 	public BufferType type() {
@@ -195,11 +197,5 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends
 
 	public E getBacking() {
 		return data;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	protected R me() {
-		return (R) this;
 	}
 }

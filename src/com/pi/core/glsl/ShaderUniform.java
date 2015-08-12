@@ -104,6 +104,8 @@ public final class ShaderUniform {
 	private final FloatBuffer floatBuff = BufferUtils.createFloatBuffer(4);
 
 	private final void commitIntsToUBO(int[] vals) {
+		if (!ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
+			throw new UnsupportedOperationException("Can't use utility access to UBO.");
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
 		IntBuffer place = block.bound().integerImageAt(location[activeIndex]);
 		for (int i = 0; i < vals.length; i++) {
@@ -143,6 +145,8 @@ public final class ShaderUniform {
 	}
 
 	private final void commitFloatsToUBO(float[] vals) {
+		if (!ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
+			throw new UnsupportedOperationException("Can't use utility access to UBO.");
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
 		FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);
 		if (ShaderUniformBlock.PERSISTENT_BUFFER_STATE) {
@@ -170,11 +174,15 @@ public final class ShaderUniform {
 	}
 
 	public FloatBuffer uboAccessor() {
+		if (!ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
+			throw new UnsupportedOperationException("Can't use utility access to UBO.");
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
 		return block.bound().floatImageAt(location[activeIndex]);
 	}
 
 	private final void commitFloatsToUBO(FloatBuffer f) {
+		if (!ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
+			throw new UnsupportedOperationException("Can't use utility access to UBO.");
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
 		FloatBuffer place = block.bound().floatImageAt(location[activeIndex]);
 		if (ShaderUniformBlock.PERSISTENT_BUFFER_STATE) {

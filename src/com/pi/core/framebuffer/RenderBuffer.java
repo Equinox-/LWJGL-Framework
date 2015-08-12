@@ -4,7 +4,7 @@ import org.lwjgl.opengl.GL30;
 
 import com.pi.core.util.GPUObject;
 
-public class RenderBuffer extends GPUObject<RenderBuffer> implements FrameBufferAttachable {
+public class RenderBuffer extends GPUObject<RenderBuffer>implements FrameBufferAttachable {
 	private int glID;
 	private final int width, height;
 	private final int internalFormat;
@@ -20,8 +20,7 @@ public class RenderBuffer extends GPUObject<RenderBuffer> implements FrameBuffer
 
 	public RenderBuffer msaaSamples(int msaaSamples) {
 		if (glID >= 0)
-			throw new IllegalStateException(
-					"Can't change the sample count when the render buffer is allocated.");
+			throw new IllegalStateException("Can't change the sample count when the render buffer is allocated.");
 		this.msaaSamples = msaaSamples;
 		return this;
 	}
@@ -41,11 +40,9 @@ public class RenderBuffer extends GPUObject<RenderBuffer> implements FrameBuffer
 			gpuFreeInternal();
 		glID = GL30.glGenRenderbuffers();
 		if (msaaSamples > 0) {
-			GL30.glRenderbufferStorageMultisample(GL30.GL_RENDERBUFFER,
-					msaaSamples, internalFormat, width, height);
+			GL30.glRenderbufferStorageMultisample(GL30.GL_RENDERBUFFER, msaaSamples, internalFormat, width, height);
 		} else {
-			GL30.glRenderbufferStorage(GL30.GL_RENDERBUFFER, internalFormat,
-					width, height);
+			GL30.glRenderbufferStorage(GL30.GL_RENDERBUFFER, internalFormat, width, height);
 		}
 	}
 
@@ -55,10 +52,4 @@ public class RenderBuffer extends GPUObject<RenderBuffer> implements FrameBuffer
 			GL30.glDeleteRenderbuffers(glID);
 		glID = -1;
 	}
-
-	@Override
-	protected RenderBuffer me() {
-		return this;
-	}
-
 }

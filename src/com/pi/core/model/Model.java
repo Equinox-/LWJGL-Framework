@@ -75,10 +75,6 @@ public class Model<E> extends GPUObject<Model<E>> {
 		// VertexData.deactivate(); Don't need this in theory.
 	}
 
-	@Override
-	protected Model<E> me() {
-		return this;
-	}
 
 	@Override
 	public String toString() {

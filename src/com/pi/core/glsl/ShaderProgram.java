@@ -270,13 +270,9 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 				ACTIVE_TEXTURE_UNITS[i] = textureUnit[i];
 			}
 		}
-		for (ShaderUniformBlock block : uniformBlocksByID) {
-			block.uploadIfNeeded();
-		}
-	}
-
-	@Override
-	protected ShaderProgram me() {
-		return this;
+		if (ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
+			for (ShaderUniformBlock block : uniformBlocksByID) {
+				block.uploadIfNeeded();
+			}
 	}
 }

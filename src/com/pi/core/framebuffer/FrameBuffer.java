@@ -209,9 +209,4 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 	public Set<FrameBufferAttachable> getColorAttachments() {
 		return colorAttachments;
 	}
-
-	@Override
-	protected FrameBuffer me() {
-		return this;
-	}
 }

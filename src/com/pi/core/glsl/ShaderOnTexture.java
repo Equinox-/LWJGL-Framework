@@ -47,8 +47,4 @@ public class ShaderOnTexture extends GPUObject<ShaderOnTexture> {
 		return fbo;
 	}
 
-	@Override
-	protected ShaderOnTexture me() {
-		return this;
-	}
 }

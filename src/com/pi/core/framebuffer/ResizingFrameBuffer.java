@@ -56,10 +56,6 @@ public class ResizingFrameBuffer extends GPUObject<ResizingFrameBuffer>
 			depth.gpuFree();
 	}
 
-	@Override
-	protected ResizingFrameBuffer me() {
-		return this;
-	}
 
 	@Override
 	public void bind() {
