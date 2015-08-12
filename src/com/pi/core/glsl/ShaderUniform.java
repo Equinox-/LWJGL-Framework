@@ -90,20 +90,11 @@ public final class ShaderUniform {
 		return type != -1;
 	}
 
-	private final void utilAllowed() {
-		if (WarningManager.GLSL_UNIFORM_TYPE_WATCHING && type == -1)
-			throw new IllegalStateException(
-					"Utility methods aren't allowed on uniform \"" + name + "\": It has an undefined type");
-	}
-
 	private final void typeMismatch(String provided) {
 		throw new IllegalStateException("Uniform " + name + " isn't of type " + provided + ".");
 	}
 
-	private final IntBuffer intBuff = BufferUtils.createIntBuffer(4);
-	private final FloatBuffer floatBuff = BufferUtils.createFloatBuffer(4);
-
-	private final void commitIntsToUBO(int[] vals) {
+	private final void commitToUBO(int... vals) {
 		if (!ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
 			throw new UnsupportedOperationException("Can't use utility access to UBO.");
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
@@ -116,35 +107,7 @@ public final class ShaderUniform {
 		}
 	}
 
-	private final void commitIntsToUNF(int[] vals) {
-		intBuff.position(0);
-		intBuff.put(vals).flip();
-		switch (vals.length) {
-		case 4:
-			GL20.glUniform4(location[activeIndex], intBuff);
-			break;
-		case 3:
-			GL20.glUniform3(location[activeIndex], intBuff);
-			break;
-		case 2:
-			GL20.glUniform2(location[activeIndex], intBuff);
-			break;
-		case 1:
-			GL20.glUniform1(location[activeIndex], intBuff);
-			break;
-		default:
-			throw new IllegalArgumentException("Can't commit " + vals.length + " ints to a uniform");
-		}
-	}
-
-	private final void commitInts(int... vals) {
-		if (uniformBlockIndex >= 0)
-			commitIntsToUBO(vals);
-		else
-			commitIntsToUNF(vals);
-	}
-
-	private final void commitFloatsToUBO(float[] vals) {
+	private final void commitToUBO(float... vals) {
 		if (!ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
 			throw new UnsupportedOperationException("Can't use utility access to UBO.");
 		ShaderUniformBlock block = prog.uniformBlock(uniformBlockIndex);
@@ -158,19 +121,6 @@ public final class ShaderUniform {
 			}
 		} else
 			place.put(vals);
-	}
-
-	private final void commitFloatsToUNF(float[] vals) {
-		floatBuff.position(0);
-		floatBuff.put(vals).flip();
-		commitFloatsToUNF(floatBuff);
-	}
-
-	private final void commitFloats(float... vals) {
-		if (uniformBlockIndex >= 0)
-			commitFloatsToUBO(vals);
-		else
-			commitFloatsToUNF(vals);
 	}
 
 	public FloatBuffer uboAccessor() {
@@ -199,34 +149,7 @@ public final class ShaderUniform {
 		}
 	}
 
-	private final void commitFloatsToUNF(FloatBuffer f) {
-		switch (f.remaining()) {
-		case 4:
-			GL20.glUniform4(location[activeIndex], f);
-			return;
-		case 3:
-			GL20.glUniform3(location[activeIndex], f);
-			return;
-		case 2:
-			GL20.glUniform2(location[activeIndex], f);
-			return;
-		case 1:
-			GL20.glUniform1(location[activeIndex], f);
-			return;
-		default:
-			throw new IllegalArgumentException("Can't commit " + f.remaining() + " floats to a uniform");
-		}
-	}
-
-	private final void commitFloats(FloatBuffer f) {
-		if (uniformBlockIndex >= 0)
-			commitFloatsToUBO(f);
-		else
-			commitFloatsToUNF(f);
-	}
-
 	public void texture(Texture t) {
-		utilAllowed();
 		if (WarningManager.GLSL_UNIFORM_TYPE_WATCHING && type != GL20.GL_SAMPLER_1D && type != GL20.GL_SAMPLER_1D_SHADOW
 				&& type != GL20.GL_SAMPLER_2D && type != GL20.GL_SAMPLER_2D_SHADOW && type != GL20.GL_SAMPLER_3D
 				&& type != GL20.GL_SAMPLER_CUBE)
@@ -272,65 +195,106 @@ public final class ShaderUniform {
 				}
 			}
 		}
-		commitInts(this.samplerID[activeIndex]);
+		// Can't have samplers in UBO anyways...
+		GL20.glUniform1i(location[activeIndex], this.samplerID[activeIndex]);
 	}
 
 	public void bool(boolean b) {
-		utilAllowed();
-		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL)
-			commitInts(b ? 1 : 0);
-		else
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL) {
+			if (uniformBlockIndex >= 0)
+				commitToUBO(b ? 1 : 0);
+			else
+				GL20.glUniform1i(location[activeIndex], b ? 1 : 0);
+		} else
 			typeMismatch("boolean");
 	}
 
 	public void bvector(boolean x, boolean y) {
-		utilAllowed();
+
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL_VEC2)
-			commitInts(x ? 1 : 0, y ? 1 : 0);
+			if (uniformBlockIndex >= 0)
+				commitToUBO(x ? 1 : 0, y ? 1 : 0);
+			else
+				GL20.glUniform2i(location[activeIndex], x ? 1 : 0, y ? 1 : 0);
 		else
 			typeMismatch("bool vec2");
 	}
 
 	public void bvector(boolean x, boolean y, boolean z) {
-		utilAllowed();
+
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL_VEC3)
-			commitInts(x ? 1 : 0, y ? 1 : 0, z ? 1 : 0);
+			if (uniformBlockIndex >= 0)
+				commitToUBO(x ? 1 : 0, y ? 1 : 0, z ? 1 : 0);
+			else
+				GL20.glUniform3i(location[activeIndex], x ? 1 : 0, y ? 1 : 0, z ? 1 : 0);
 		else
 			typeMismatch("bool vec2");
 	}
 
 	public void bvector(boolean x, boolean y, boolean z, boolean w) {
-		utilAllowed();
+
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL_VEC4)
-			commitInts(x ? 1 : 0, y ? 1 : 0, z ? 1 : 0, w ? 1 : 0);
+			if (uniformBlockIndex >= 0)
+				commitToUBO(x ? 1 : 0, y ? 1 : 0, z ? 1 : 0, w ? 1 : 0);
+			else
+				GL20.glUniform4i(location[activeIndex], x ? 1 : 0, y ? 1 : 0, z ? 1 : 0, w ? 1 : 0);
 		else
 			typeMismatch("bool vec4");
 	}
 
 	public void integer(int x) {
-		utilAllowed();
+
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL11.GL_INT)
-			commitInts(x);
+			if (uniformBlockIndex >= 0)
+				commitToUBO(x);
+			else
+				GL20.glUniform1i(location[activeIndex], x);
 		else
 			typeMismatch("int");
 	}
 
 	public void floating(float x) {
-		utilAllowed();
+
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL11.GL_FLOAT)
-			commitFloats(x);
+			if (uniformBlockIndex >= 0)
+				commitToUBO(x);
+			else
+				GL20.glUniform1f(location[activeIndex], x);
 		else
 			typeMismatch("float");
 	}
 
-	public void vector(float... vs) {
-		utilAllowed();
-		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || (vs.length == 1 && type == GL11.GL_FLOAT)
-				|| (vs.length == 2 && type == GL20.GL_FLOAT_VEC2) || (vs.length == 3 && type == GL20.GL_FLOAT_VEC3)
-				|| (vs.length == 4 && type == GL20.GL_FLOAT_VEC4))
-			commitFloats(vs);
+	public void vector(float x, float y) {
+
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC2)
+			if (uniformBlockIndex >= 0)
+				commitToUBO(x, y);
+			else
+				GL20.glUniform2f(location[activeIndex], x, y);
 		else
-			typeMismatch(vs.length == 1 ? "float" : ("float vec" + vs.length));
+			typeMismatch("float vec2");
+	}
+
+	public void vector(float x, float y, float z) {
+
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC3)
+			if (uniformBlockIndex >= 0)
+				commitToUBO(x, y, z);
+			else
+				GL20.glUniform3f(location[activeIndex], x, y, z);
+		else
+			typeMismatch("float vec3");
+	}
+
+	public void vector(float x, float y, float z, float w) {
+
+		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC4)
+			if (uniformBlockIndex >= 0)
+				commitToUBO(x, y, z, w);
+			else
+				GL20.glUniform4f(location[activeIndex], x, y, z, w);
+		else
+			typeMismatch("float vec4");
 	}
 
 	public void vector(Vector v) {
@@ -358,36 +322,40 @@ public final class ShaderUniform {
 	}
 
 	public void vector(VectorBuff v) {
-		utilAllowed();
-		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING)
-			commitFloats(v.getAccessor());
-		else {
-			switch (v.dimension()) {
-			case 4:
-				if (type == GL20.GL_FLOAT_VEC4)
-					commitFloats(v.getAccessor());
+		switch (v.dimension()) {
+		case 4:
+			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC4)
+				if (uniformBlockIndex >= 0)
+					commitFloatsToUBO(v.getAccessor());
 				else
-					typeMismatch("float vec4");
-				break;
-			case 3:
-				if (type == GL20.GL_FLOAT_VEC3)
-					commitFloats(v.getAccessor());
+					GL20.glUniform4(location[activeIndex], v.getAccessor());
+			else
+				typeMismatch("float vec4");
+			break;
+		case 3:
+			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC3)
+				if (uniformBlockIndex >= 0)
+					commitFloatsToUBO(v.getAccessor());
 				else
-					typeMismatch("float vec3");
-				break;
-			case 2:
-				if (type == GL20.GL_FLOAT_VEC2)
-					commitFloats(v.getAccessor());
+					GL20.glUniform3(location[activeIndex], v.getAccessor());
+			else
+				typeMismatch("float vec3");
+			break;
+		case 2:
+			if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC2)
+				if (uniformBlockIndex >= 0)
+					commitFloatsToUBO(v.getAccessor());
 				else
-					typeMismatch("float vec2");
-				break;
-			case 1:
-				floating(v.get(0));
-				break;
-			default:
-				throw new IllegalArgumentException(
-						"Vectors of dimension " + v.dimension() + " can't be assigned to shader uniforms.");
-			}
+					GL20.glUniform2(location[activeIndex], v.getAccessor());
+			else
+				typeMismatch("float vec2");
+			break;
+		case 1:
+			floating(v.get(0));
+			break;
+		default:
+			throw new IllegalArgumentException(
+					"Vectors of dimension " + v.dimension() + " can't be assigned to shader uniforms.");
 		}
 	}
 
@@ -396,7 +364,6 @@ public final class ShaderUniform {
 	}
 
 	public void matrix(Matrix4 m, boolean transpose) {
-		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_MAT4) {
 			if (uniformBlockIndex >= 0) {
 				if (transpose)
@@ -409,7 +376,6 @@ public final class ShaderUniform {
 	}
 
 	public void matrix(Matrix34 m) {
-		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL21.GL_FLOAT_MAT4x3) {
 			if (uniformBlockIndex >= 0) {
 				commitFloatsToUBO(m.accessor());
@@ -420,7 +386,6 @@ public final class ShaderUniform {
 	}
 
 	public void matrix(Matrix3 m) {
-		utilAllowed();
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_MAT3) {
 			if (uniformBlockIndex >= 0) {
 				commitFloatsToUBO(m.accessor());

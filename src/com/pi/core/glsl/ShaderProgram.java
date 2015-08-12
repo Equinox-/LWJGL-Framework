@@ -203,7 +203,7 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 	@Override
 	public void bind() {
 		if (programID == -1)
-			throw new RuntimeException("Attempted to bind a disposed shader.");
+			throw new RuntimeException("Attempted to bind an unallocated shader.");
 		if (currentShader == this)
 			return;
 		GL20.glUseProgram(programID);

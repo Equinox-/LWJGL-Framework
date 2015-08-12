@@ -47,6 +47,8 @@ public class ShaderUniformBlock {
 			throw new IllegalArgumentException("Invalid buffer type.");
 		if (b.size() < length)
 			throw new IllegalArgumentException("Invalid buffer length.");
+		if (this.bound == b)
+			return; // We don't need to setup other things.
 		this.bound = b;
 		GL31.glUniformBlockBinding(parent.getID(), blockIndex, blockIndex);
 		GL30.glBindBufferBase(GL31.GL_UNIFORM_BUFFER, blockIndex, b.getID());
