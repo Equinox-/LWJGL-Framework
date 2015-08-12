@@ -133,18 +133,8 @@ public class VertexData<E> extends GPUObject<VertexData<E>>implements GLIdentifi
 		bufferObject.gpuUpload();
 	}
 
-	@Override
-	protected void gpuAllocInternal() {
-		if (vao >= 0)
-			gpuFreeInternal();
-
-		// Dump the buffer
-		vao = GL30.glGenVertexArrays();
-		GL30.glBindVertexArray(vao);
-
-		bufferObject.gpuAlloc();
+	public void setupVertexParams() {
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferObject.getID());
-
 		for (int j = 0; j < layout.attrMapping.length; j++) {
 			if (layout.attrMapping[j] != null) {
 				if (layout.attrMapping[j].getType().isAssignableFrom(Matrix4.class)) {
@@ -171,6 +161,19 @@ public class VertexData<E> extends GPUObject<VertexData<E>>implements GLIdentifi
 					GL20.glEnableVertexAttribArray(j + r);
 			}
 		}
+	}
+
+	@Override
+	protected void gpuAllocInternal() {
+		if (vao >= 0)
+			gpuFreeInternal();
+
+		// Dump the buffer
+		vao = GL30.glGenVertexArrays();
+		GL30.glBindVertexArray(vao);
+
+		bufferObject.gpuAlloc();
+		setupVertexParams();
 
 		GL30.glBindVertexArray(0);
 	}

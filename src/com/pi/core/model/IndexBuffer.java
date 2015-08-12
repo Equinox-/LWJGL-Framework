@@ -5,6 +5,8 @@ import java.nio.ShortBuffer;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL31;
+import org.lwjgl.opengl.GL33;
 
 import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.util.GPUObject;
@@ -55,8 +57,7 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		}
 	}
 
-	private IndexBuffer(PrimitiveType mode, int indexSize,
-			GLGenericBuffer indexBuffer) {
+	private IndexBuffer(PrimitiveType mode, int indexSize, GLGenericBuffer indexBuffer) {
 		this.mode = mode;
 		this.indexBuffer = indexBuffer;
 		resize(indexBuffer.size() / indexSize, indexSize);
@@ -70,8 +71,7 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		this(mode, indices, 0, indices.length);
 	}
 
-	public IndexBuffer(PrimitiveType mode, GLGenericBuffer indices,
-			int indexSize) {
+	public IndexBuffer(PrimitiveType mode, GLGenericBuffer indices, int indexSize) {
 		this(mode, indexSize, indices);
 	}
 
@@ -97,8 +97,7 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 	}
 
 	public void resize(int nCount, int nSize) {
-		if (indexSize * indexCount < nCount * nSize
-				|| indexSize * indexCount > (12 + nCount) * nSize) {
+		if (indexSize * indexCount < nCount * nSize || indexSize * indexCount > (12 + nCount) * nSize) {
 			indexBuffer.resize(nCount * nSize);
 			this.intBuff = this.indexBuffer.integerImageAt(0);
 			this.shortBuff = this.indexBuffer.shortImageAt(0);
@@ -160,6 +159,11 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 	public void render() {
 		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, indexBuffer.getID());
 		GL11.glDrawElements(mode.mode(), indexCount, indexType, 0);
+	}
+
+	public void renderInstances(int n) {
+		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, indexBuffer.getID());
+		GL31.glDrawElementsInstanced(mode.mode(), indexCount, indexType, 0, n);
 	}
 
 	@Override
