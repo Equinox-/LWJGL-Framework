@@ -1,6 +1,5 @@
 package com.pi.core.vertex;
 
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 
@@ -9,20 +8,20 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
 import com.pi.core.buffers.GLGenericBuffer;
-import com.pi.core.util.GLIdentifiable;
+import com.pi.core.misc.VertexArrayObject;
 import com.pi.core.util.GPUObject;
 import com.pi.math.matrix.Matrix4;
 import com.pi.math.vector.ByteVector;
 import com.pi.math.vector.VectorBuff;
 import com.pi.math.volume.BoundingArea;
 
-public class VertexData<E> extends GPUObject<VertexData<E>>implements GLIdentifiable {
+public class VertexData<E> extends GPUObject<VertexData<E>> {
 	public E[] vertexDB;
 	public final Class<E> vertexClass;
 	private int count;
 	private final VertexLayout layout;
 	public final GLGenericBuffer bufferObject;
-	private int vao = -1;
+	private VertexArrayObject vao = new VertexArrayObject();
 
 	public VertexData(Class<E> vertexClass, int count) {
 		this.vertexClass = vertexClass;
@@ -165,12 +164,9 @@ public class VertexData<E> extends GPUObject<VertexData<E>>implements GLIdentifi
 
 	@Override
 	protected void gpuAllocInternal() {
-		if (vao >= 0)
-			gpuFreeInternal();
-
 		// Dump the buffer
-		vao = GL30.glGenVertexArrays();
-		GL30.glBindVertexArray(vao);
+		vao.gpuAlloc();
+		vao.bind();
 
 		bufferObject.gpuAlloc();
 		setupVertexParams();
@@ -180,30 +176,12 @@ public class VertexData<E> extends GPUObject<VertexData<E>>implements GLIdentifi
 
 	@Override
 	protected void gpuFreeInternal() {
-		if (vao >= 0)
-			GL30.glDeleteVertexArrays(vao);
+		vao.gpuFree();
 		bufferObject.gpuFree();
 	}
 
-	@SuppressWarnings("rawtypes")
-	private static WeakReference<VertexData> current;
-
-	@SuppressWarnings("rawtypes")
 	public void activate() {
-		if (current != null && current.get() == this)
-			return;
-		GL30.glBindVertexArray(vao);
-		current = new WeakReference<VertexData>(this);
-	}
-
-	public static void deactivate() {
-		GL30.glBindVertexArray(0);
-		current = null;
-	}
-
-	@Override
-	public int getID() {
-		return vao;
+		vao.bind();
 	}
 
 	public static interface PositionVertex<E> {
