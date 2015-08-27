@@ -51,7 +51,6 @@ public class ShaderUniformBlock {
 			return; // We don't need to setup other things.
 		this.bound = b;
 		GL31.glUniformBlockBinding(parent.getID(), blockIndex, blockIndex);
-		GL30.glBindBufferBase(GL31.GL_UNIFORM_BUFFER, blockIndex, b.getID());
 	}
 
 	public GLGenericBuffer bound() {
@@ -67,6 +66,10 @@ public class ShaderUniformBlock {
 	public void markDirty(int min, int max) {
 		this.dirtyMin = Math.min(dirtyMin, min);
 		this.dirtyMax = Math.max(dirtyMax, max);
+	}
+
+	public void recheckBinding() {
+		GL30.glBindBufferBase(GL31.GL_UNIFORM_BUFFER, blockIndex, bound.getID());
 	}
 
 	public void uploadIfNeeded() {

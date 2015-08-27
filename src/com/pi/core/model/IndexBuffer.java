@@ -6,7 +6,6 @@ import java.nio.ShortBuffer;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL31;
-import org.lwjgl.opengl.GL33;
 
 import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.util.GPUObject;

@@ -270,9 +270,10 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 				ACTIVE_TEXTURE_UNITS[i] = textureUnit[i];
 			}
 		}
-		if (ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
-			for (ShaderUniformBlock block : uniformBlocksByID) {
+		for (ShaderUniformBlock block : uniformBlocksByID) {
+			if (ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
 				block.uploadIfNeeded();
-			}
+			block.recheckBinding();
+		}
 	}
 }
