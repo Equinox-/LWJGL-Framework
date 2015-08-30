@@ -7,6 +7,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL31;
 
+import com.pi.core.buffers.BufferType;
 import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.util.GPUObject;
 
@@ -58,6 +59,7 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 
 	private IndexBuffer(PrimitiveType mode, int indexSize, GLGenericBuffer indexBuffer) {
 		this.mode = mode;
+		indexBuffer.type(BufferType.ELEMENT_ARRAY);
 		this.indexBuffer = indexBuffer;
 		resize(indexBuffer.size() / indexSize, indexSize);
 	}

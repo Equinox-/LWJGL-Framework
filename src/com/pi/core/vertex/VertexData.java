@@ -5,7 +5,6 @@ import java.lang.reflect.Field;
 
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL30;
 
 import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.misc.VertexArrayObject;
@@ -23,14 +22,17 @@ public class VertexData<E> extends GPUObject<VertexData<E>> {
 	public final GLGenericBuffer bufferObject;
 	private VertexArrayObject vao = new VertexArrayObject();
 
+	private void init() {
+		cpuAlloc();
+	}
+
 	public VertexData(Class<E> vertexClass, int count) {
 		this.vertexClass = vertexClass;
 		this.layout = new VertexLayout(vertexClass);
 		this.count = count;
 		this.layout.validate();
 		this.bufferObject = new GLGenericBuffer(this.count * this.layout.structureSize);
-
-		cpuAlloc();
+		init();
 	}
 
 	public VertexData(Class<E> vertexClass, GLGenericBuffer data) {
@@ -39,8 +41,7 @@ public class VertexData<E> extends GPUObject<VertexData<E>> {
 		this.count = data.size() / this.layout.structureSize;
 		this.layout.validate();
 		this.bufferObject = data;
-
-		cpuAlloc();
+		init();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -170,8 +171,7 @@ public class VertexData<E> extends GPUObject<VertexData<E>> {
 
 		bufferObject.gpuAlloc();
 		setupVertexParams();
-
-		GL30.glBindVertexArray(0);
+		VertexArrayObject.unbind();
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package com.pi.core.glsl;
 
+import java.lang.ref.WeakReference;
+
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL31;
 
@@ -18,20 +20,18 @@ public class ShaderUniformBlock {
 
 	private final int blockIndex;
 	private final String blockName;
-	private final ShaderProgram parent;
 	private final int length;
 	private GLGenericBuffer bound;
 
 	public ShaderUniformBlock(ShaderProgram parent, int blockIndex, String blockName) {
-		this.parent = parent;
 		this.blockName = blockName;
 		this.blockIndex = blockIndex;
 
 		this.length = GL31.glGetActiveUniformBlocki(parent.getID(), blockIndex, GL31.GL_UNIFORM_BLOCK_DATA_SIZE);
+		GL31.glUniformBlockBinding(parent.getID(), blockIndex, blockIndex);
 
 		System.out.println(
 				"Shader uniform block by the name of " + blockName + " [index=" + blockIndex + ", len=" + length + "]");
-
 	}
 
 	public String name() {
@@ -47,10 +47,7 @@ public class ShaderUniformBlock {
 			throw new IllegalArgumentException("Invalid buffer type.");
 		if (b.size() < length)
 			throw new IllegalArgumentException("Invalid buffer length.");
-		if (this.bound == b)
-			return; // We don't need to setup other things.
 		this.bound = b;
-		GL31.glUniformBlockBinding(parent.getID(), blockIndex, blockIndex);
 	}
 
 	public GLGenericBuffer bound() {
@@ -68,7 +65,15 @@ public class ShaderUniformBlock {
 		this.dirtyMax = Math.max(dirtyMax, max);
 	}
 
+	@SuppressWarnings("unchecked")
+	private static final WeakReference<GLGenericBuffer>[] bound_ubos = new WeakReference[128];
+
 	public void recheckBinding() {
+		if (blockIndex < bound_ubos.length) {
+			if (bound_ubos[blockIndex] != null && bound_ubos[blockIndex].get() == bound)
+				return;
+			bound_ubos[blockIndex] = new WeakReference<>(bound);
+		}
 		GL30.glBindBufferBase(GL31.GL_UNIFORM_BUFFER, blockIndex, bound.getID());
 	}
 

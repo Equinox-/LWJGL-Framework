@@ -155,15 +155,12 @@ public final class ShaderUniform {
 				&& type != GL20.GL_SAMPLER_CUBE)
 			typeMismatch("sampler");
 
-		if (this.samplerID[activeIndex] < ShaderProgram.MAX_TEXTURE_UNITS && this.samplerID[activeIndex] >= 0
-				&& prog.textureUnit[this.samplerID[activeIndex]] == t)
-			return;
-
 		final int prevSampler = this.samplerID[activeIndex];
 
+		if (prevSampler < prog.textureUnit.length && prevSampler >= 0 && prog.textureUnit[prevSampler] == t)
+			return;
+
 		if (prevSampler < prog.textureUnit.length) {
-			// if (prog.textureUnit[prevSampler] == t)
-			// return;
 			if (--prog.textureUnitRefCount[prevSampler] <= 0) {
 				prog.textureUnit[prevSampler] = null;
 				prog.textureUnitRefCount[prevSampler] = 0;
