@@ -262,11 +262,11 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 	public void commitData() {
 		for (int i = 0; i < textureUnit.length; i++) {
 			if (ACTIVE_TEXTURE_UNITS[i] != textureUnit[i]) {
-				Texture.glActiveTexture(i);
 				if (textureUnit[i] != null)
-					textureUnit[i].bind();
-				else
-					Texture.unbind();
+					textureUnit[i].bind(i);
+				// Unbound textures just have an undefined state.
+				// else
+				// Texture.unbind(i);
 				ACTIVE_TEXTURE_UNITS[i] = textureUnit[i];
 			}
 		}

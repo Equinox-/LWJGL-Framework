@@ -16,24 +16,22 @@ import com.pi.core.framebuffer.FrameBufferAttachable;
 import com.pi.core.util.Bindable;
 import com.pi.core.util.GPUObject;
 
-public class Texture extends GPUObject<Texture> implements Bindable,
-		FrameBufferAttachable {
+public class Texture extends GPUObject<Texture>implements Bindable, FrameBufferAttachable {
 	private static final int MAX_TEXTURE_UNITS = 64;
 	private static int activeTextureUnit = 0;
 	@SuppressWarnings("unchecked")
 	private static final WeakReference<Texture>[] currentTexture = new WeakReference[MAX_TEXTURE_UNITS];
 
 	private static final int[][] MIPMAP_FILTER_TABLE;
+
 	static {
 		TextureFilter[] filters = TextureFilter.values();
 		MIPMAP_FILTER_TABLE = new int[filters.length][filters.length];
 		for (int i = 0; i < filters.length; i++) {
 			for (int j = 0; j < filters.length; j++) {
-				String fName = "GL_" + filters[i].name() + "_MIPMAP_"
-						+ filters[j].name();
+				String fName = "GL_" + filters[i].name() + "_MIPMAP_" + filters[j].name();
 				try {
-					MIPMAP_FILTER_TABLE[i][j] = GL11.class.getField(fName)
-							.getInt(null);
+					MIPMAP_FILTER_TABLE[i][j] = GL11.class.getField(fName).getInt(null);
 				} catch (Exception e) {
 					System.err.println("Failed to find value for " + fName);
 					MIPMAP_FILTER_TABLE[i][j] = -1;
@@ -79,18 +77,15 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 		return this;
 	}
 
-	public Texture filter(TextureFilter mipmap, TextureFilter minFilter,
-			TextureFilter magFilter) {
+	public Texture filter(TextureFilter mipmap, TextureFilter minFilter, TextureFilter magFilter) {
 		if (minFilter == null)
 			throw new IllegalArgumentException("Minifying filter can't be null");
 		if (magFilter == null)
-			throw new IllegalArgumentException(
-					"Magnification filter can't be null");
+			throw new IllegalArgumentException("Magnification filter can't be null");
 		if (mipmap != null) {
 			// Validate the minFilter
 			if (MIPMAP_FILTER_TABLE[mipmap.ordinal()][minFilter.ordinal()] == -1)
-				throw new IllegalArgumentException("The mimap filter "
-						+ mipmap.name() + " and minifying filter "
+				throw new IllegalArgumentException("The mimap filter " + mipmap.name() + " and minifying filter "
 						+ minFilter.name() + " aren't compatible");
 		}
 		this.mipmapFilter = mipmap;
@@ -101,8 +96,7 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 
 	public Texture mipmapLevels(int mipmapLevels) {
 		if (texture >= 0)
-			throw new IllegalStateException(
-					"Can't change the number of mipmap levels when texture is allocated.");
+			throw new IllegalStateException("Can't change the number of mipmap levels when texture is allocated.");
 		this.mipmapLevels = mipmapLevels;
 		return this;
 	}
@@ -111,23 +105,17 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 	 * The texture MUST be bound for this to work.
 	 */
 	protected void commitParameters() {
-		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S,
-				sWrap.glID);
-		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T,
-				tWrap.glID);
-		GL11.glTexParameteri(
-				GL11.GL_TEXTURE_2D,
-				GL11.GL_TEXTURE_MIN_FILTER,
-				mipmapFilter != null ? MIPMAP_FILTER_TABLE[mipmapFilter
-						.ordinal()][minFilter.ordinal()] : minFilter.glID);
-		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER,
-				magFilter.glID);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, sWrap.glID);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, tWrap.glID);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, mipmapFilter != null
+				? MIPMAP_FILTER_TABLE[mipmapFilter.ordinal()][minFilter.ordinal()] : minFilter.glID);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, magFilter.glID);
 	}
 
-	private static final int[] DEPTH_FORMATS = { GL11.GL_DEPTH_COMPONENT,
-			GL14.GL_DEPTH_COMPONENT16, GL14.GL_DEPTH_COMPONENT24,
-			GL14.GL_DEPTH_COMPONENT32, GL30.GL_DEPTH24_STENCIL8,
-			GL30.GL_DEPTH32F_STENCIL8, GL30.GL_DEPTH_COMPONENT32F };
+	private static final int[] DEPTH_FORMATS = { GL11.GL_DEPTH_COMPONENT, GL14.GL_DEPTH_COMPONENT16,
+			GL14.GL_DEPTH_COMPONENT24, GL14.GL_DEPTH_COMPONENT32, GL30.GL_DEPTH24_STENCIL8, GL30.GL_DEPTH32F_STENCIL8,
+			GL30.GL_DEPTH_COMPONENT32F };
+
 	static {
 		Arrays.sort(DEPTH_FORMATS);
 	}
@@ -139,23 +127,19 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 		texture = GL11.glGenTextures();
 		bind();
 		if (GL.getCapabilities().OpenGL45) {
-			GL45.glTextureStorage2D(GL11.GL_TEXTURE_2D, mipmapLevels,
-					internalFormat, width, height);
+			GL45.glTextureStorage2D(GL11.GL_TEXTURE_2D, mipmapLevels, internalFormat, width, height);
 		} else {
 			int allocFmt = GL11.GL_RED;
 			if (Arrays.binarySearch(DEPTH_FORMATS, internalFormat) >= 0)
 				allocFmt = GL11.GL_DEPTH_COMPONENT;
 
-			GL11.glTexParameteri(GL11.GL_TEXTURE_2D,
-					GL12.GL_TEXTURE_BASE_LEVEL, 0);
-			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL,
-					mipmapLevels);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_BASE_LEVEL, 0);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, mipmapLevels);
 			int tmpW = width;
 			int tmpH = height;
 			for (int level = 0; level <= mipmapLevels; level++) {
-				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, level, internalFormat,
-						tmpW, tmpH, 0, allocFmt, GL11.GL_UNSIGNED_BYTE,
-						(ByteBuffer) null);
+				GL11.glTexImage2D(GL11.GL_TEXTURE_2D, level, internalFormat, tmpW, tmpH, 0, allocFmt,
+						GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
 				tmpW >>= 1;
 				tmpH >>= 1;
 			}
@@ -186,14 +170,33 @@ public class Texture extends GPUObject<Texture> implements Bindable,
 	public void bind() {
 		if (texture < 0)
 			throw new RuntimeException("Can't bind an unallocated texture.");
-		if (currentTexture[activeTextureUnit] != null
-				&& currentTexture[activeTextureUnit].get() == this)
+		if (currentTexture[activeTextureUnit] != null && currentTexture[activeTextureUnit].get() == this)
 			return;
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
 		currentTexture[activeTextureUnit] = new WeakReference<>(this);
 	}
 
+	public void bind(int unit) {
+		if (texture < 0)
+			throw new RuntimeException("Can't bind an unallocated texture.");
+		if (currentTexture[unit] != null && currentTexture[unit].get() == this)
+			return;
+		glActiveTexture(unit);
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		currentTexture[unit] = new WeakReference<>(this);
+	}
+
 	public static void unbind() {
+		if (currentTexture[activeTextureUnit] == null || currentTexture[activeTextureUnit].get() == null)
+			return;
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		currentTexture[activeTextureUnit] = null;
+	}
+
+	public static void unbind(int unit) {
+		if (currentTexture[unit] == null || currentTexture[unit].get() == null)
+			return;
+		glActiveTexture(unit);
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		currentTexture[activeTextureUnit] = null;
 	}
