@@ -28,10 +28,10 @@ public abstract class GLWindow {
 	}
 
 	public GLWindow(int major, int minor) {
-		this(major, minor, 0);
+		this(major, minor, 0, false);
 	}
 
-	public GLWindow(int major, int minor, int samples) {
+	public GLWindow(int major, int minor, int samples, boolean debug) {
 		if (GLFW.glfwInit() != GL11.GL_TRUE)
 			throw new RuntimeException("Unable to initialize GLFW");
 		BufferProvider.provider(new BufferProvider() {
@@ -49,17 +49,15 @@ public abstract class GLWindow {
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, major);
 		GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, samples);
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, minor);
+		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, debug ? GL11.GL_TRUE : GL11.GL_FALSE);
 		if (major >= 3)
 			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE);
 		if (major > 4 || (major == 3 && minor >= 3))
-			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE,
-					GLFW.GLFW_OPENGL_CORE_PROFILE);
+			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
 		else
-			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE,
-					GLFW.GLFW_OPENGL_ANY_PROFILE);
+			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_ANY_PROFILE);
 
-		windowID = GLFW.glfwCreateWindow(640, 480, "Window", MemoryUtil.NULL,
-				MemoryUtil.NULL);
+		windowID = GLFW.glfwCreateWindow(640, 480, "Window", MemoryUtil.NULL, MemoryUtil.NULL);
 
 		if (windowID == MemoryUtil.NULL) {
 			System.err.println("Error creating a window");

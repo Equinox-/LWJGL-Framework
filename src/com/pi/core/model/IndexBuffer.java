@@ -35,7 +35,9 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		for (int i = offset; i < rightOffset; i++)
 			maxVertexID = Math.max(index[i], maxVertexID);
 
-		if (maxVertexID < (1 << 8)) {
+		// It's typical for an unsigned byte not to be optimal for the hardware, so don't choose it automatically.
+		boolean unsigned_bytes = false;
+		if (unsigned_bytes && maxVertexID < (1 << 8)) {
 			return 1;
 		} else if (maxVertexID < (1 << 16)) {
 			return 2;
