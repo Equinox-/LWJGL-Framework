@@ -1,5 +1,7 @@
 package com.pi.core.glsl;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,15 +36,22 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 	private ShaderUniformBlock[] uniformBlocksByID;
 
 	private final static Map<String, Integer> SHADER_TYPE_MAP;
+	private final static Map<Integer, String> SHADER_TYPE_MAP_INVERSE;
+
+	private static void i(String t, int id) {
+		SHADER_TYPE_MAP.put(t, id);
+		SHADER_TYPE_MAP_INVERSE.put(id, t);
+	}
 
 	static {
 		SHADER_TYPE_MAP = new HashMap<>();
-		SHADER_TYPE_MAP.put("GL_VERTEX_SHADER", GL20.GL_VERTEX_SHADER);
-		SHADER_TYPE_MAP.put("GL_TESS_CONTROL_SHADER", GL40.GL_TESS_CONTROL_SHADER);
-		SHADER_TYPE_MAP.put("GL_TESS_EVALUATION_SHADER", GL40.GL_TESS_EVALUATION_SHADER);
-		SHADER_TYPE_MAP.put("GL_GEOMETRY_SHADER", GL32.GL_GEOMETRY_SHADER);
-		SHADER_TYPE_MAP.put("GL_FRAGMENT_SHADER", GL20.GL_FRAGMENT_SHADER);
-		SHADER_TYPE_MAP.put("GL_COMPUTE_SHADER", GL43.GL_COMPUTE_SHADER);
+		SHADER_TYPE_MAP_INVERSE = new HashMap<>();
+		i("GL_VERTEX_SHADER", GL20.GL_VERTEX_SHADER);
+		i("GL_TESS_CONTROL_SHADER", GL40.GL_TESS_CONTROL_SHADER);
+		i("GL_TESS_EVALUATION_SHADER", GL40.GL_TESS_EVALUATION_SHADER);
+		i("GL_GEOMETRY_SHADER", GL32.GL_GEOMETRY_SHADER);
+		i("GL_FRAGMENT_SHADER", GL20.GL_FRAGMENT_SHADER);
+		i("GL_COMPUTE_SHADER", GL43.GL_COMPUTE_SHADER);
 	}
 
 	// Needs to be accessed by ShaderUniform; therefore not private
@@ -72,6 +81,23 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 
 	private static int compileShader(String src, int type) throws InstantiationException {
 		src = ShaderPreprocessor.preprocess(src);
+		if (true) {
+			try {
+				BufferedWriter out = new BufferedWriter(new FileWriter("/tmp/shader_src", true));
+				for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
+					out.write(e.toString());
+					out.newLine();
+				}
+				out.write(SHADER_TYPE_MAP_INVERSE.get(type));
+				out.write(src);
+				out.newLine();
+				out.newLine();
+				out.newLine();
+				out.newLine();
+				out.close();
+			} catch (Exception e) {
+			}
+		}
 		String[] lines = src.split("\n");
 
 		int shader = GL20.glCreateShader(type);

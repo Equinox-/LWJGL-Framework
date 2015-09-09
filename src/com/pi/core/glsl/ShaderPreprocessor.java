@@ -53,7 +53,28 @@ public class ShaderPreprocessor {
 	private static final Pattern VERSION = Pattern.compile("#version[^\n\r]*(\r|)\n");
 
 	public static String preprocess(String src) {
-		return doForeach(doIncludes(doDefines(src), new HashSet<String>()));
+		return doLayoutDefines(doForeach(doIncludes(doDefines(src), new HashSet<String>())));
+	}
+
+	private static String doLayoutDefines(String src) {
+		StringBuilder res = new StringBuilder(src.length());
+		String[] lines = src.split("\n");
+		for (int i = 0; i < lines.length; i++) {
+			boolean mod = true;
+			while (mod) {
+				mod = false;
+				if (lines[i].toLowerCase().contains("layout"))
+					for (Entry<String, String> def : PREDEFINES_MAP.entrySet()) {
+						mod |= lines[i].contains(def.getKey());
+						String parse = def.getValue().trim();
+						if (parse.startsWith("(") && parse.endsWith(")"))
+							parse = parse.substring(1, parse.length() - 1);
+						lines[i] = lines[i].replace(def.getKey(), parse);
+					}
+			}
+			res.append(lines[i]).append('\n');
+		}
+		return res.toString();
 	}
 
 	private static String doDefines(String src) {
