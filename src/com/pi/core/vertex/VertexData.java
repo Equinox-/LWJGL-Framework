@@ -3,9 +3,9 @@ package com.pi.core.vertex;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 
-import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 
+import com.pi.core.buffers.BufferType;
 import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.misc.VertexArrayObject;
 import com.pi.core.util.GPUObject;
@@ -134,7 +134,7 @@ public class VertexData<E> extends GPUObject<VertexData<E>> {
 	}
 
 	public void setupVertexParams() {
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferObject.getID());
+		bufferObject.bind(BufferType.ARRAY);
 		for (int j = 0; j < layout.attrMapping.length; j++) {
 			if (layout.attrMapping[j] != null) {
 				if (layout.attrMapping[j].getType().isAssignableFrom(Matrix4.class)) {

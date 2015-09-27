@@ -10,8 +10,8 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL21;
 import org.lwjgl.opengl.GL31;
 
+import com.pi.core.debug.WarningManager;
 import com.pi.core.texture.Texture;
-import com.pi.core.util.WarningManager;
 import com.pi.math.matrix.Matrix3;
 import com.pi.math.matrix.Matrix34;
 import com.pi.math.matrix.Matrix4;

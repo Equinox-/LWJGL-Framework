@@ -17,6 +17,8 @@ import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL40;
 import org.lwjgl.opengl.GL43;
 
+import com.pi.core.debug.FrameCounter;
+import com.pi.core.debug.FrameCounter.FrameParam;
 import com.pi.core.texture.Texture;
 import com.pi.core.util.Bindable;
 import com.pi.core.util.GLIdentifiable;
@@ -233,11 +235,13 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 		if (currentShader == this)
 			return;
 		GL20.glUseProgram(programID);
+		FrameCounter.increment(FrameParam.SHADER_CHANGE);
 		currentShader = this;
 	}
 
 	public static void unbind() {
 		GL20.glUseProgram(0);
+		FrameCounter.increment(FrameParam.SHADER_CHANGE);
 		currentShader = null;
 	}
 
@@ -301,5 +305,6 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 				block.uploadIfNeeded();
 			block.recheckBinding();
 		}
+		FrameCounter.increment(FrameParam.SHADER_DATA_COMMIT);
 	}
 }

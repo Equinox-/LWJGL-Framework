@@ -12,6 +12,8 @@ import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL45;
 
+import com.pi.core.debug.FrameCounter;
+import com.pi.core.debug.FrameCounter.FrameParam;
 import com.pi.core.framebuffer.FrameBufferAttachable;
 import com.pi.core.util.Bindable;
 import com.pi.core.util.GPUObject;
@@ -174,6 +176,7 @@ public class Texture extends GPUObject<Texture>implements Bindable, FrameBufferA
 			return;
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
 		currentTexture[activeTextureUnit] = new WeakReference<>(this);
+		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
 
 	public void bind(int unit) {
@@ -184,6 +187,7 @@ public class Texture extends GPUObject<Texture>implements Bindable, FrameBufferA
 		glActiveTexture(unit);
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
 		currentTexture[unit] = new WeakReference<>(this);
+		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
 
 	public static void unbind() {
@@ -191,6 +195,7 @@ public class Texture extends GPUObject<Texture>implements Bindable, FrameBufferA
 			return;
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		currentTexture[activeTextureUnit] = null;
+		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
 
 	public static void unbind(int unit) {
@@ -199,6 +204,7 @@ public class Texture extends GPUObject<Texture>implements Bindable, FrameBufferA
 		glActiveTexture(unit);
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		currentTexture[activeTextureUnit] = null;
+		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
 
 	public int getWidth() {

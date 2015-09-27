@@ -9,6 +9,8 @@ import com.pi.core.buffers.BufferAccessHint;
 import com.pi.core.buffers.BufferModifyHint;
 import com.pi.core.buffers.BufferType;
 import com.pi.core.buffers.GLGenericBuffer;
+import com.pi.core.debug.FrameCounter;
+import com.pi.core.debug.FrameCounter.FrameParam;
 
 public class ShaderUniformBlock {
 	/**
@@ -75,6 +77,7 @@ public class ShaderUniformBlock {
 			bound_ubos[blockIndex] = new WeakReference<>(bound);
 		}
 		GL30.glBindBufferBase(GL31.GL_UNIFORM_BUFFER, blockIndex, bound.getID());
+		FrameCounter.increment(FrameParam.UNIFORM_BUFFER_INDEXED);
 	}
 
 	public void uploadIfNeeded() {

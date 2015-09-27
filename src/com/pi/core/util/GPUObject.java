@@ -5,6 +5,8 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.pi.core.debug.WarningManager;
+
 public abstract class GPUObject<K extends GPUObject<K>> {
 	// Used by the Warning Manager system
 	private static final Set<Method> scanned = new HashSet<>();

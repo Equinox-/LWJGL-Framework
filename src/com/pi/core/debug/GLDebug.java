@@ -1,4 +1,4 @@
-package com.pi.core.util;
+package com.pi.core.debug;
 
 import org.lwjgl.opengl.ARBDebugOutput;
 import org.lwjgl.opengl.GL;

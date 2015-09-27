@@ -1,4 +1,4 @@
-package com.pi.core.util;
+package com.pi.core.debug;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -6,6 +6,8 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.pi.core.util.GPUObject;
 
 public class WarningManager {
 	public static final boolean GPUOBJECT_REF_WATCHING = true;
@@ -26,7 +28,7 @@ public class WarningManager {
 
 	static Map<WeakReference<?>, AllocationParams> watchReferences;
 	@SuppressWarnings("rawtypes")
-	static ReferenceQueue<GPUObject> queue;
+	public static ReferenceQueue<GPUObject> queue;
 
 	private static AtomicBoolean referenceWatchState = new AtomicBoolean(true);
 	private static Thread referenceWatchThread;
@@ -45,15 +47,11 @@ public class WarningManager {
 							Reference ref = queue.remove(1000L);
 							AllocationParams e = watchReferences.remove(ref);
 							if (e != null) {
-								System.err.println("Reference to "
-										+ e.allocated.getName()
-										+ " lost without freeing: (hash="
-										+ Integer.toString(e.hash, 16) + ")");
+								System.err.println("Reference to " + e.allocated.getName()
+										+ " lost without freeing: (hash=" + Integer.toString(e.hash, 16) + ")");
 								for (int i = 3; i < e.stackTraceOnAlloc.length; i++)
-									if (!e.stackTraceOnAlloc[i].getClassName()
-											.endsWith("GPUObject"))
-										System.err.println("\tat "
-												+ e.stackTraceOnAlloc[i]);
+									if (!e.stackTraceOnAlloc[i].getClassName().endsWith("GPUObject"))
+										System.err.println("\tat " + e.stackTraceOnAlloc[i]);
 							}
 						} catch (InterruptedException e1) {
 							if (!referenceWatchState.get())
@@ -77,12 +75,11 @@ public class WarningManager {
 		}
 	}
 
-	static void watchReference(WeakReference<?> ref) {
-		watchReferences.put(ref, new AllocationParams(ref.get(), Thread
-				.currentThread().getStackTrace()));
+	public static void watchReference(WeakReference<?> ref) {
+		watchReferences.put(ref, new AllocationParams(ref.get(), Thread.currentThread().getStackTrace()));
 	}
 
-	static void unwatchReference(WeakReference<?> ref) {
+	public static void unwatchReference(WeakReference<?> ref) {
 		watchReferences.remove(ref);
 	}
 }

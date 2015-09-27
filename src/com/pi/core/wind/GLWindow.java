@@ -11,9 +11,10 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.system.MemoryUtil;
 
+import com.pi.core.debug.FrameCounter;
+import com.pi.core.debug.WarningManager;
 import com.pi.core.model.BasicShapes;
 import com.pi.core.texture.ColorTextures;
-import com.pi.core.util.WarningManager;
 import com.pi.math.BufferProvider;
 
 public abstract class GLWindow {
@@ -89,10 +90,14 @@ public abstract class GLWindow {
 		init();
 
 		while (valid()) {
+			FrameCounter.counter().beginFrameRender();
 			render();
+			FrameCounter.counter().switchRenderToUpdate();
 			GLFW.glfwPollEvents();
 			update();
+			FrameCounter.counter().switchUpdateToSwap();
 			GLFW.glfwSwapBuffers(windowID);
+			FrameCounter.counter().endFrameSwap();
 		}
 
 		dispose();

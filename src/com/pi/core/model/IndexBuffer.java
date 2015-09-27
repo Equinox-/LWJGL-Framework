@@ -4,7 +4,6 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL31;
 
 import com.pi.core.buffers.BufferType;
@@ -35,8 +34,9 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		for (int i = offset; i < rightOffset; i++)
 			maxVertexID = Math.max(index[i], maxVertexID);
 
-		// It's typical for an unsigned byte not to be optimal for the hardware, so don't choose it automatically.
-		boolean unsigned_bytes = false;
+		// It's typical for an unsigned byte not to be optimal for the hardware,
+		// so don't choose it automatically.
+		final boolean unsigned_bytes = false;
 		if (unsigned_bytes && maxVertexID < (1 << 8)) {
 			return 1;
 		} else if (maxVertexID < (1 << 16)) {
@@ -61,7 +61,6 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 
 	private IndexBuffer(PrimitiveType mode, int indexSize, GLGenericBuffer indexBuffer) {
 		this.mode = mode;
-		indexBuffer.type(BufferType.ELEMENT_ARRAY);
 		this.indexBuffer = indexBuffer;
 		resize(indexBuffer.size() / indexSize, indexSize);
 	}
@@ -160,12 +159,12 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 	}
 
 	public void render() {
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, indexBuffer.getID());
+		indexBuffer.bind(BufferType.ELEMENT_ARRAY);
 		GL11.glDrawElements(mode.mode(), indexCount, indexType, 0);
 	}
 
 	public void renderInstances(int n) {
-		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, indexBuffer.getID());
+		indexBuffer.bind(BufferType.ELEMENT_ARRAY);
 		GL31.glDrawElementsInstanced(mode.mode(), indexCount, indexType, 0, n);
 	}
 
