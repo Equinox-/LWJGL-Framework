@@ -5,6 +5,7 @@ import java.nio.ShortBuffer;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL31;
+import org.lwjgl.opengl.GL32;
 
 import com.pi.core.buffers.BufferType;
 import com.pi.core.buffers.GLGenericBuffer;
@@ -163,9 +164,19 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		GL11.glDrawElements(mode.mode(), indexCount, indexType, 0);
 	}
 
+	public void renderOffset(int base) {
+		indexBuffer.bind(BufferType.ELEMENT_ARRAY);
+		GL32.glDrawElementsBaseVertex(mode.mode(), indexCount, indexType, 0, base);
+	}
+
 	public void renderInstances(int n) {
 		indexBuffer.bind(BufferType.ELEMENT_ARRAY);
 		GL31.glDrawElementsInstanced(mode.mode(), indexCount, indexType, 0, n);
+	}
+
+	public void renderInstancesOffset(int n, int base) {
+		indexBuffer.bind(BufferType.ELEMENT_ARRAY);
+		GL32.glDrawElementsInstancedBaseVertex(mode.mode(), indexCount, indexType, 0, n, base);
 	}
 
 	@Override
