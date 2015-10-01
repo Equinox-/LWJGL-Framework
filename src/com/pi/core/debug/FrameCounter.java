@@ -109,6 +109,7 @@ public class FrameCounter {
 
 	public void endFrameSwap() {
 		final int frames = counters[FrameParam.FRAMES.ordinal()];
+		GL11.glFinish();
 		frameTimes[frames][5] = System.currentTimeMillis();
 		counters[FrameParam.FRAMES.ordinal()]++;
 	}
@@ -116,7 +117,6 @@ public class FrameCounter {
 	private void checkPrint() {
 		final int frames = counters[FrameParam.FRAMES.ordinal()];
 		if (frames >= blend) {
-			GL11.glFinish();
 			System.out.println(
 					frames + " frames at " + (frames * 1000 / (frameTimes[blend - 1][5] - frameTimes[0][2])) + " fps");
 			System.out.println(" frame no\tcpu\tgpu\tupdate\tswap\ttotal\tprimitives");
