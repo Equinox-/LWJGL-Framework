@@ -2,6 +2,7 @@ package com.pi.core.wind;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.Callbacks;
@@ -16,6 +17,7 @@ import com.pi.core.debug.WarningManager;
 import com.pi.core.model.BasicShapes;
 import com.pi.core.texture.ColorTextures;
 import com.pi.math.BufferProvider;
+import com.sun.scenario.effect.impl.BufferUtil;
 
 public abstract class GLWindow {
 	private final long windowID;
@@ -29,10 +31,10 @@ public abstract class GLWindow {
 	}
 
 	public GLWindow(int major, int minor) {
-		this(major, minor, 0, false);
+		this(major, minor, 0, false, false);
 	}
 
-	public GLWindow(int major, int minor, int samples, boolean debug) {
+	public GLWindow(int major, int minor, int samples, boolean debug, boolean fullscreen) {
 		if (GLFW.glfwInit() != GL11.GL_TRUE)
 			throw new RuntimeException("Unable to initialize GLFW");
 		BufferProvider.provider(new BufferProvider() {
@@ -58,7 +60,14 @@ public abstract class GLWindow {
 		else
 			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_ANY_PROFILE);
 
-		windowID = GLFW.glfwCreateWindow(640, 480, "Window", MemoryUtil.NULL, MemoryUtil.NULL);
+		int w = 1280, h = 720;
+		long monitor = fullscreen ? GLFW.glfwGetPrimaryMonitor() : MemoryUtil.NULL;
+		if (monitor != MemoryUtil.NULL) {
+			IntBuffer tmp = GLFW.glfwGetVideoMode(monitor).asIntBuffer();
+			w = tmp.get(0);
+			h = tmp.get(1);
+		}
+		windowID = GLFW.glfwCreateWindow(w, h, "Window", monitor, MemoryUtil.NULL);
 
 		if (windowID == MemoryUtil.NULL) {
 			System.err.println("Error creating a window");
