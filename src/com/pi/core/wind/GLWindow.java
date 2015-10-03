@@ -17,7 +17,6 @@ import com.pi.core.debug.WarningManager;
 import com.pi.core.model.BasicShapes;
 import com.pi.core.texture.ColorTextures;
 import com.pi.math.BufferProvider;
-import com.sun.scenario.effect.impl.BufferUtil;
 
 public abstract class GLWindow {
 	private final long windowID;
@@ -26,15 +25,18 @@ public abstract class GLWindow {
 	private final GLWindowEvents windowEvents;
 	private GLFWErrorCallback errorCallback;
 
+	private final boolean fullscreen;
+	private final boolean doubleBuffered;
+
 	public GLWindow() {
 		this(3, 3);
 	}
 
 	public GLWindow(int major, int minor) {
-		this(major, minor, 0, false, false);
+		this(major, minor, 0, false, false, true);
 	}
 
-	public GLWindow(int major, int minor, int samples, boolean debug, boolean fullscreen) {
+	public GLWindow(int major, int minor, int samples, boolean debug, boolean fullscreen, boolean doubleBuffered) {
 		if (GLFW.glfwInit() != GL11.GL_TRUE)
 			throw new RuntimeException("Unable to initialize GLFW");
 		BufferProvider.provider(new BufferProvider() {
@@ -52,6 +54,10 @@ public abstract class GLWindow {
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, major);
 		GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, samples);
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, minor);
+		if (this.doubleBuffered = doubleBuffered)
+			GLFW.glfwWindowHint(GLFW.GLFW_DOUBLE_BUFFER, GL11.GL_TRUE);
+		else
+			GLFW.glfwWindowHint(GLFW.GLFW_DOUBLE_BUFFER, GL11.GL_FALSE);
 		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, debug ? GL11.GL_TRUE : GL11.GL_FALSE);
 		if (major >= 3)
 			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE);
@@ -60,6 +66,7 @@ public abstract class GLWindow {
 		else
 			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_ANY_PROFILE);
 
+		this.fullscreen = fullscreen;
 		int w = 1280, h = 720;
 		long monitor = fullscreen ? GLFW.glfwGetPrimaryMonitor() : MemoryUtil.NULL;
 		if (monitor != MemoryUtil.NULL) {
@@ -78,7 +85,8 @@ public abstract class GLWindow {
 
 		GLFW.glfwMakeContextCurrent(windowID);
 		GLContext.createFromCurrent();
-		GLFW.glfwSwapInterval(1);
+		if (doubleBuffered)
+			GLFW.glfwSwapInterval(1);
 	}
 
 	public abstract void init();
@@ -105,7 +113,9 @@ public abstract class GLWindow {
 			GLFW.glfwPollEvents();
 			update();
 			FrameCounter.counter().switchUpdateToSwap();
-			GLFW.glfwSwapBuffers(windowID);
+			GL11.glFinish();
+			if (doubleBuffered)
+				GLFW.glfwSwapBuffers(windowID);
 			FrameCounter.counter().endFrameSwap();
 		}
 
@@ -144,6 +154,8 @@ public abstract class GLWindow {
 	}
 
 	public void setSize(int w, int h) {
+		if (fullscreen)
+			throw new UnsupportedOperationException("Not allowing resolution changes in full screen context");
 		GLFW.glfwSetWindowSize(windowID, w, h);
 	}
 

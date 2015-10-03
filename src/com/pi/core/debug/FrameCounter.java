@@ -1,5 +1,6 @@
 package com.pi.core.debug;
 
+import java.awt.Color;
 import java.util.function.Supplier;
 
 import org.lwjgl.opengl.GL11;
@@ -67,15 +68,23 @@ public class FrameCounter {
 	}
 
 	private final int[] counters = new int[FrameParam.values().length];
-	private int blend = 10; // Blend stats over 10 frames.
-	private long[][] frameTimes = new long[blend][6];
+	private final int blend; // Blend stats over 10 frames.
+	private final long[][] frameTimes;
+	private final LivePlotter plot;
 
 	private FrameCounter() {
-	}
-
-	public void blend(int frames) {
+		boolean plot = false;
+		if (plot) {
+			this.blend = 1;
+			// CPU, GPU, UPDATE, SWAP, TOTAL, PRIMITIVES
+			this.plot = new LivePlotter(128,
+					new Color[] { Color.RED, Color.BLUE, Color.GREEN, Color.PINK, Color.MAGENTA, Color.CYAN },
+					new int[] { 0, 0, 0, 0, 0, 1 });
+		} else {
+			this.blend = 10;
+			this.plot = null;
+		}
 		this.frameTimes = new long[blend][6];
-		this.blend = frames;
 	}
 
 	public void inc(FrameParam p, int c) {
@@ -131,6 +140,13 @@ public class FrameCounter {
 						+ (int) Math.round(gpuTime / 1000000.0) + "ms\t" + (frameTimes[i][4] - frameTimes[i][3])
 						+ "ms\t" + (frameTimes[i][5] - frameTimes[i][4]) + "ms\t"
 						+ (frameTimes[i][5] - frameTimes[i][2]) + "ms\t" + primitives);
+
+				if (plot != null) {
+					// CPU, GPU, UPDATE, SWAP, PRIMITIVES
+					plot.log(frameTimes[i][3] - frameTimes[i][2], Math.round(gpuTime / 1000000.0),
+							frameTimes[i][4] - frameTimes[i][3], frameTimes[i][5] - frameTimes[i][4],
+							frameTimes[i][5] - frameTimes[i][2], primitives);
+				}
 			}
 			for (FrameParam p : FrameParam.values()) {
 				if (p != FrameParam.FRAMES)

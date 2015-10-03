@@ -74,7 +74,6 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		int mhI = modifyHint.ordinal();
 		bind();
 		GL15.glBufferData(type.code(), size, HINT_TABLE[ahI][mhI]);
-		unbind();
 	}
 
 	@Override
@@ -127,7 +126,6 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		data.limit(data.capacity());
 		bind();
 		glBufferSubData(type.code(), 0, data);
-		unbind();
 
 		FrameCounter.increment(FrameParam.BUFFER_UPLOADS);
 		FrameCounter.increment(FrameParam.BUFFER_THROUGHPUT, data.capacity());
@@ -140,7 +138,6 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		data.limit(max);
 		bind();
 		glBufferSubData(type.code(), min, data);
-		unbind();
 
 		FrameCounter.increment(FrameParam.BUFFER_UPLOADS);
 		FrameCounter.increment(FrameParam.BUFFER_THROUGHPUT, max - min);
@@ -155,7 +152,6 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		data.position(0);
 		bind();
 		glGetBufferSubData(type.code(), 0, data);
-		unbind();
 	}
 
 	public void dispose() {
