@@ -1,6 +1,7 @@
 package com.pi.core.debug;
 
 import java.awt.Color;
+import java.io.PrintStream;
 import java.util.function.Supplier;
 
 import org.lwjgl.opengl.GL11;
@@ -71,6 +72,7 @@ public class FrameCounter {
 	private final int blend; // Blend stats over 10 frames.
 	private final long[][] frameTimes;
 	private final LivePlotter plot;
+	private final PrintStream print;
 
 	private FrameCounter() {
 		boolean plot = false;
@@ -84,6 +86,7 @@ public class FrameCounter {
 			this.blend = 10;
 			this.plot = null;
 		}
+		this.print = null;
 		this.frameTimes = new long[blend][6];
 	}
 
@@ -126,9 +129,11 @@ public class FrameCounter {
 	private void checkPrint() {
 		final int frames = counters[FrameParam.FRAMES.ordinal()];
 		if (frames >= blend) {
-			System.out.println(
-					frames + " frames at " + (frames * 1000 / (frameTimes[blend - 1][5] - frameTimes[0][2])) + " fps");
-			System.out.println(" frame no\tcpu\tgpu\tupdate\tswap\ttotal\tprimitives");
+			if (print != null) {
+				print.println(frames + " frames at " + (frames * 1000 / (frameTimes[blend - 1][5] - frameTimes[0][2]))
+						+ " fps");
+				print.println(" frame no\tcpu\tgpu\tupdate\tswap\ttotal\tprimitives");
+			}
 			for (int i = 0; i < blend; i++) {
 				long gpuTime = GL33.glGetQueryObjecti64((int) frameTimes[i][0], GL15.GL_QUERY_RESULT);
 				GL15.glDeleteQueries((int) frameTimes[i][0]);
@@ -136,11 +141,12 @@ public class FrameCounter {
 				long primitives = GL33.glGetQueryObjecti64((int) frameTimes[i][1], GL15.GL_QUERY_RESULT);
 				GL15.glDeleteQueries((int) frameTimes[i][1]);
 
-				System.out.println(" frame " + i + "\t" + (frameTimes[i][3] - frameTimes[i][2]) + "ms\t"
-						+ (int) Math.round(gpuTime / 1000000.0) + "ms\t" + (frameTimes[i][4] - frameTimes[i][3])
-						+ "ms\t" + (frameTimes[i][5] - frameTimes[i][4]) + "ms\t"
-						+ (frameTimes[i][5] - frameTimes[i][2]) + "ms\t" + primitives);
-
+				if (print != null) {
+					System.out.println(" frame " + i + "\t" + (frameTimes[i][3] - frameTimes[i][2]) + "ms\t"
+							+ (int) Math.round(gpuTime / 1000000.0) + "ms\t" + (frameTimes[i][4] - frameTimes[i][3])
+							+ "ms\t" + (frameTimes[i][5] - frameTimes[i][4]) + "ms\t"
+							+ (frameTimes[i][5] - frameTimes[i][2]) + "ms\t" + primitives);
+				}
 				if (plot != null) {
 					// CPU, GPU, UPDATE, SWAP, PRIMITIVES
 					plot.log(frameTimes[i][3] - frameTimes[i][2], Math.round(gpuTime / 1000000.0),
@@ -149,11 +155,12 @@ public class FrameCounter {
 				}
 			}
 			for (FrameParam p : FrameParam.values()) {
-				if (p != FrameParam.FRAMES)
-					System.out.println(p.namePad + (counters[p.ordinal()] / (float) frames) + " " + p.unit);
+				if (p != FrameParam.FRAMES && print != null)
+					print.println(p.namePad + (counters[p.ordinal()] / (float) frames) + " " + p.unit);
 				counters[p.ordinal()] = 0;
 			}
-			System.out.println();
+			if (print != null)
+				print.println();
 		}
 	}
 }

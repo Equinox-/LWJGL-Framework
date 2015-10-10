@@ -9,6 +9,4 @@ public interface Camera {
 	public void update();
 
 	public VectorBuff3 position(VectorBuff3 dest);
-	
-	public void transformRay(VectorBuff3 origin, VectorBuff3 direction);
 }

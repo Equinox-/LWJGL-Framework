@@ -13,12 +13,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWCharCallback;
+import org.lwjgl.glfw.GLFWCursorEnterCallback;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;
+import org.lwjgl.opengl.GL11;
 
 public class GLWindowEvents {
 	private final GLWindow attached;
@@ -30,6 +32,7 @@ public class GLWindowEvents {
 	private GLFWCharCallback charCallback;
 	private GLFWMouseButtonCallback mouseButtonCallback;
 	private GLFWFramebufferSizeCallback fbSizeCallback;
+	private GLFWCursorEnterCallback cursorEnterCallback;
 
 	private BlockingQueue<Entry<Method, Object[]>> eventQueue = new LinkedBlockingQueue<>();
 
@@ -114,6 +117,17 @@ public class GLWindowEvents {
 						new Object[] { System.currentTimeMillis(), xpos, ypos, mods }));
 			}
 		});
+		cursorEnterCallback = GLFW.GLFWCursorEnterCallback(new GLFWCursorEnterCallback.SAM() {
+			@Override
+			public void invoke(long window, int entered) {
+				if (window != attached.getWindowID())
+					return;
+				if (entered == GL11.GL_TRUE)
+					mouseInWindow = true;
+				else
+					mouseInWindow = false;
+			}
+		});
 		charCallback = GLFW.GLFWCharCallback(new GLFWCharCallback.SAM() {
 			@Override
 			public void invoke(long window, int codepoint) {
@@ -139,6 +153,7 @@ public class GLWindowEvents {
 		GLFW.glfwSetCursorPosCallback(attached.getWindowID(), cursorCallback);
 		GLFW.glfwSetCharCallback(attached.getWindowID(), charCallback);
 		GLFW.glfwSetMouseButtonCallback(attached.getWindowID(), mouseButtonCallback);
+		GLFW.glfwSetCursorEnterCallback(attached.getWindowID(), cursorEnterCallback);
 
 		// Init values
 		scrollPosX = scrollPosY = 0;
@@ -186,6 +201,8 @@ public class GLWindowEvents {
 		charCallback = null;
 		mouseButtonCallback.release();
 		mouseButtonCallback = null;
+		cursorEnterCallback.release();
+		cursorEnterCallback = null;
 	}
 
 	public void register(EventListener e) {
@@ -322,5 +339,11 @@ public class GLWindowEvents {
 	public int getWindowY() {
 		GLFW.glfwGetWindowPos(attached.getWindowID(), tmpX, tmpY);
 		return tmpY.get(0);
+	}
+
+	private boolean mouseInWindow = false;
+
+	public boolean mouseInWindow() {
+		return mouseInWindow;
 	}
 }
