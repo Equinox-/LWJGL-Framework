@@ -74,6 +74,8 @@ public class GLDebug {
 			return "Medium";
 		case ARBDebugOutput.GL_DEBUG_SEVERITY_LOW_ARB:
 			return "Low";
+		case KHRDebug.GL_DEBUG_SEVERITY_NOTIFICATION:
+			return "Notification";
 		default:
 			return "Unknown[" + Integer.toString(severity, 16) + "]";
 		}
@@ -82,11 +84,14 @@ public class GLDebug {
 	private static boolean reportStacks = false;
 
 	private static void debug(int source, int type, int id, int severity, int length, long message, long userParam) {
-		System.err.printf("Source:%s\tType:%s\tID:%d\tSeverity:%s\tMessage:%s\n", debugSource(source), debugType(type),
-				id, debugSeverity(severity), MemoryUtil.memDecodeASCII(message));
-		if (reportStacks) {
+		boolean error = (severity != KHRDebug.GL_DEBUG_SEVERITY_NOTIFICATION);
+		if (!error && !reportNotifications)
+			return;
+		(error ? System.err : System.out).printf("Source:%s\tType:%s\tID:%d\tSeverity:%s\tMessage:%s\n",
+				debugSource(source), debugType(type), id, debugSeverity(severity), MemoryUtil.memDecodeASCII(message));
+		if (reportStacks && error) {
 			StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-			for (int i = 5; i < Math.min(15, stack.length); i++) // Start at the native call
+			for (int i = 5; i < Math.min(15, stack.length); i++)
 				System.err.println("\tat " + stack[i]);
 		}
 	}
@@ -105,13 +110,11 @@ public class GLDebug {
 	};
 
 	private static enum DebugMode {
-		GL43,
-		KHR,
-		ARB,
-		NONE;
+		GL43, KHR, ARB, NONE;
 	}
 
 	private static DebugMode mode = DebugMode.NONE;
+	public static boolean reportNotifications = false;
 
 	public static boolean isDebugging() {
 		return mode == DebugMode.ARB || mode == DebugMode.GL43 || mode == DebugMode.KHR;
