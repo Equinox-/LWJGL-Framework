@@ -84,6 +84,7 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 		super.unbind();
 	}
 
+	@Override
 	public void cpuFree() {
 		vectors = null;
 		backing = null;

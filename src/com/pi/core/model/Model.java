@@ -11,8 +11,7 @@ public class Model<E> extends GPUObject<Model<E>> {
 
 	public Model(PrimitiveType mode, VertexData<E> vertexData, int[]... index) {
 		if (index.length < 1)
-			throw new IllegalArgumentException(
-					"Must include at least one index buffer.");
+			throw new IllegalArgumentException("Must include at least one index buffer.");
 		this.vertexData = vertexData;
 		this.indexes = new IndexBuffer[index.length];
 		for (int i = 0; i < index.length; i++)
@@ -21,8 +20,7 @@ public class Model<E> extends GPUObject<Model<E>> {
 
 	public Model(VertexData<E> vertexData, IndexBuffer... index) {
 		if (index.length < 1)
-			throw new IllegalArgumentException(
-					"Must include at least one index buffer.");
+			throw new IllegalArgumentException("Must include at least one index buffer.");
 		this.vertexData = vertexData;
 		this.indexes = index;
 	}
@@ -75,9 +73,14 @@ public class Model<E> extends GPUObject<Model<E>> {
 		// VertexData.deactivate(); Don't need this in theory.
 	}
 
-
 	@Override
 	public String toString() {
 		return "Model[" + vertexData + ", " + Arrays.toString(indexes) + "]";
+	}
+
+	public void cpuFree() {
+		vertexData.cpuFree();
+		for (IndexBuffer i : indexes)
+			i.buffer().cpuFree();
 	}
 }

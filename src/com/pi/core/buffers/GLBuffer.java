@@ -8,7 +8,6 @@ import com.pi.core.debug.FrameCounter;
 import com.pi.core.debug.FrameCounter.FrameParam;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
-import com.pi.math.FastMath;
 
 abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUObject<R> implements GLIdentifiable {
 	private static final int[][] HINT_TABLE;
@@ -188,7 +187,6 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 			final int cap = ns + pad;
 			if (data == null || data.capacity() < ns || data.capacity() > cap) {
 				data = genBuffer(cap);
-				System.out.println("Resize buffer: " + data.capacity() + " (" + ns + ") " + pad);
 			}
 			if (allocated())
 				allocBufferStorage();
