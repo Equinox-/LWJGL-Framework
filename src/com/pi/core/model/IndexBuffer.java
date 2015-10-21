@@ -37,7 +37,7 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 
 		// It's typical for an unsigned byte not to be optimal for the hardware,
 		// so don't choose it automatically.
-		final boolean unsigned_bytes = false;
+		boolean unsigned_bytes = false;
 		if (unsigned_bytes && maxVertexID < (1 << 8)) {
 			return 1;
 		} else if (maxVertexID < (1 << 16)) {

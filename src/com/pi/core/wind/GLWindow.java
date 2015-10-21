@@ -113,9 +113,10 @@ public abstract class GLWindow {
 			GLFW.glfwPollEvents();
 			update();
 			FrameCounter.counter().switchUpdateToSwap();
-			GL11.glFinish();
 			if (doubleBuffered)
 				GLFW.glfwSwapBuffers(windowID);
+			else
+				GL11.glFinish();
 			FrameCounter.counter().endFrameSwap();
 		}
 
@@ -131,6 +132,10 @@ public abstract class GLWindow {
 		GLFW.glfwTerminate();
 		WarningManager.termReferenceWatch();
 		System.exit(0);
+	}
+	
+	public float fps() {
+		return FrameCounter.counter().fps();
 	}
 
 	public boolean valid() {

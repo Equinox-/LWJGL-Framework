@@ -2,6 +2,10 @@ package com.pi.core.debug;
 
 import java.awt.Color;
 import java.io.PrintStream;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
 import org.lwjgl.opengl.GL11;
@@ -74,6 +78,21 @@ public class FrameCounter {
 	private final LivePlotter plot;
 	private final PrintStream print;
 
+	private final BlockingQueue<Integer> queueObjects = new LinkedBlockingQueue<>(50);
+
+	private int genQuery() {
+		Integer i = queueObjects.poll();
+		if (i != null)
+			return i.intValue();
+		else
+			return GL15.glGenQueries();
+	}
+
+	private void checkinQuery(int i) {
+		if (!queueObjects.offer(i))
+			GL15.glDeleteQueries(i);
+	}
+
 	private FrameCounter() {
 		boolean plot = false;
 		if (plot) {
@@ -98,10 +117,14 @@ public class FrameCounter {
 
 	public void beginFrameRender() {
 		checkPrint();
+		try {
+			Class.forName("com.pi.Core").getMethod("_resetAll").invoke(null);
+		} catch (Exception e) {
+		}
 		final int frames = counters[FrameParam.FRAMES.ordinal()];
-		frameTimes[frames][0] = GL15.glGenQueries();
+		frameTimes[frames][0] = genQuery();
 		GL15.glBeginQuery(GL33.GL_TIME_ELAPSED, (int) frameTimes[frames][0]);
-		frameTimes[frames][1] = GL15.glGenQueries();
+		frameTimes[frames][1] = genQuery();
 		GL15.glBeginQuery(GL30.GL_PRIMITIVES_GENERATED, (int) frameTimes[frames][1]);
 		frameTimes[frames][2] = System.currentTimeMillis();
 	}
@@ -111,7 +134,24 @@ public class FrameCounter {
 		GL15.glEndQuery(GL30.GL_PRIMITIVES_GENERATED);
 		GL15.glEndQuery(GL33.GL_TIME_ELAPSED);
 
+		GL11.glFinish();
 		frameTimes[frames][3] = System.currentTimeMillis();
+
+		// Thingy
+		try {
+			@SuppressWarnings("unchecked")
+			List<Object[]> lst = (List<Object[]>) Class.forName("com.pi.Core").getMethod("_getFullReport").invoke(null);
+			for (Iterator<Object[]> itr = lst.iterator(); itr.hasNext();) {
+				if (!itr.next()[0].toString().startsWith("org.lwjgl.opengl.")) {
+					itr.remove();
+				}
+			}
+			// Class.forName("com.pi.Core").getMethod("_printReport",
+			// List.class, PrintStream.class, boolean.class)
+			// .invoke(null, lst, System.out, false);
+			// System.out.println();
+		} catch (Exception e) {
+		}
 	}
 
 	public void switchUpdateToSwap() {
@@ -126,20 +166,25 @@ public class FrameCounter {
 		counters[FrameParam.FRAMES.ordinal()]++;
 	}
 
+	private float lastFPS = 0;
+
+	public float fps() {
+		return lastFPS;
+	}
+
 	private void checkPrint() {
 		final int frames = counters[FrameParam.FRAMES.ordinal()];
 		if (frames >= blend) {
+			lastFPS = (frames * 1000 / (frameTimes[blend - 1][5] - frameTimes[0][2]));
 			if (print != null) {
-				print.println(frames + " frames at " + (frames * 1000 / (frameTimes[blend - 1][5] - frameTimes[0][2]))
-						+ " fps");
+				print.println(frames + " frames at " + lastFPS + " fps");
 				print.println(" frame no\tcpu\tgpu\tupdate\tswap\ttotal\tprimitives");
 			}
 			for (int i = 0; i < blend; i++) {
 				long gpuTime = GL33.glGetQueryObjecti64((int) frameTimes[i][0], GL15.GL_QUERY_RESULT);
-				GL15.glDeleteQueries((int) frameTimes[i][0]);
-
+				checkinQuery((int) frameTimes[i][0]);
 				long primitives = GL33.glGetQueryObjecti64((int) frameTimes[i][1], GL15.GL_QUERY_RESULT);
-				GL15.glDeleteQueries((int) frameTimes[i][1]);
+				checkinQuery((int) frameTimes[i][1]);
 
 				if (print != null) {
 					System.out.println(" frame " + i + "\t" + (frameTimes[i][3] - frameTimes[i][2]) + "ms\t"

@@ -163,6 +163,10 @@ public class GLWindowEvents {
 		width = tmpA.get(0);
 		height = tmpB.get(0);
 
+		GLFW.glfwGetFramebufferSize(attached.getWindowID(), tmpA, tmpB);
+		fbWidth = tmpA.get(0);
+		fbHeight = tmpB.get(0);
+
 		mouseX = width / 2;
 		mouseY = height / 2;
 
