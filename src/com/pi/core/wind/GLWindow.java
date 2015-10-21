@@ -5,11 +5,12 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.Sys;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GLContext;
 import org.lwjgl.system.MemoryUtil;
 
 import com.pi.core.debug.FrameCounter;
@@ -51,6 +52,12 @@ public abstract class GLWindow {
 			}
 		});
 
+		if (!Sys.getVersion().equals("3.0.0b build 35"))
+			System.err.println(
+					"Warn: LWJGL-Framework was designed for LWJGL 3.0.0b build 35, this version of LWJGL is version "
+							+ Sys.getVersion());
+
+		GLFW.glfwDefaultWindowHints();
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, major);
 		GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, samples);
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, minor);
@@ -84,9 +91,9 @@ public abstract class GLWindow {
 		windowEvents = new GLWindowEvents(this);
 
 		GLFW.glfwMakeContextCurrent(windowID);
-		GLContext.createFromCurrent();
 		if (doubleBuffered)
 			GLFW.glfwSwapInterval(1);
+		GLFW.glfwShowWindow(windowID);
 	}
 
 	public abstract void init();
@@ -104,6 +111,7 @@ public abstract class GLWindow {
 
 		windowEvents.bind();
 
+		GL.createCapabilities();
 		init();
 
 		while (valid()) {
@@ -133,7 +141,7 @@ public abstract class GLWindow {
 		WarningManager.termReferenceWatch();
 		System.exit(0);
 	}
-	
+
 	public float fps() {
 		return FrameCounter.counter().fps();
 	}

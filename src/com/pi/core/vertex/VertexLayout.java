@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import org.lwjgl.opengl.GL;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
@@ -138,7 +138,7 @@ class VertexLayout {
 
 	public void validate() {
 		int maxID;
-		if (GL.getCurrent() != null)
+		if (GLFW.glfwGetCurrentContext() != 0)
 			maxID = GL11.glGetInteger(GL20.GL_MAX_VERTEX_ATTRIBS);
 		else
 			maxID = MAX_ATTR_COUNT;

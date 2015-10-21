@@ -325,7 +325,7 @@ public final class ShaderUniform {
 				if (uniformBlockIndex >= 0)
 					commitFloatsToUBO(v.getAccessor());
 				else
-					GL20.glUniform4(location[activeIndex], v.getAccessor());
+					GL20.glUniform4fv(location[activeIndex], v.getAccessor());
 			else
 				typeMismatch("float vec4");
 			break;
@@ -334,7 +334,7 @@ public final class ShaderUniform {
 				if (uniformBlockIndex >= 0)
 					commitFloatsToUBO(v.getAccessor());
 				else
-					GL20.glUniform3(location[activeIndex], v.getAccessor());
+					GL20.glUniform3fv(location[activeIndex], v.getAccessor());
 			else
 				typeMismatch("float vec3");
 			break;
@@ -343,7 +343,7 @@ public final class ShaderUniform {
 				if (uniformBlockIndex >= 0)
 					commitFloatsToUBO(v.getAccessor());
 				else
-					GL20.glUniform2(location[activeIndex], v.getAccessor());
+					GL20.glUniform2fv(location[activeIndex], v.getAccessor());
 			else
 				typeMismatch("float vec2");
 			break;
@@ -367,7 +367,7 @@ public final class ShaderUniform {
 					throw new IllegalStateException("Can't upload transposed matrix to UBO");
 				commitFloatsToUBO(m.accessor());
 			} else
-				GL20.glUniformMatrix4(location[activeIndex], transpose, m.accessor());
+				GL20.glUniformMatrix4fv(location[activeIndex], transpose, m.accessor());
 		} else
 			typeMismatch("float matrix4");
 	}
@@ -377,7 +377,7 @@ public final class ShaderUniform {
 			if (uniformBlockIndex >= 0) {
 				commitFloatsToUBO(m.accessor());
 			} else
-				GL21.glUniformMatrix3x4(location[activeIndex], false, m.accessor());
+				GL21.glUniformMatrix3x4fv(location[activeIndex], false, m.accessor());
 		} else
 			typeMismatch("float matrix34");
 	}
@@ -387,7 +387,7 @@ public final class ShaderUniform {
 			if (uniformBlockIndex >= 0) {
 				commitFloatsToUBO(m.accessor());
 			} else
-				GL20.glUniformMatrix3(location[activeIndex], false, m.accessor());
+				GL20.glUniformMatrix3fv(location[activeIndex], false, m.accessor());
 		} else
 			typeMismatch("float matrix34");
 	}

@@ -5,7 +5,6 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
-import org.lwjgl.opengl.GLContext;
 import org.lwjgl.opengl.GLDebugMessageARBCallback;
 import org.lwjgl.opengl.GLDebugMessageCallback;
 import org.lwjgl.opengl.KHRDebug;
@@ -21,7 +20,7 @@ public class GLDebug {
 	public static boolean checkError() {
 		int error = GL11.glGetError();
 		if (error != GL11.GL_NO_ERROR) {
-			System.err.println("Internal OpenGL Error: \t" + GLContext.translateGLErrorString(error));
+			System.err.println("Internal OpenGL Error: \t" + error);
 			System.err.println(Thread.currentThread().getStackTrace()[2]);
 			return true;
 		}
