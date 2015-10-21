@@ -317,6 +317,15 @@ public class GLWindowEvents {
 		return mouseY;
 	}
 
+	public void setMousePos(float x, float y) {
+		GLFW.glfwSetCursorPos(attached.getWindowID(), x, y);
+	}
+
+	public void setCursor(boolean b) {
+		GLFW.glfwSetInputMode(attached.getWindowID(), GLFW.GLFW_CURSOR,
+				b ? GLFW.GLFW_CURSOR_NORMAL : GLFW.GLFW_CURSOR_HIDDEN);
+	}
+
 	public float getDragStartX() {
 		return mouseButtonStates == 0 ? mouseX : dragStartX;
 	}
