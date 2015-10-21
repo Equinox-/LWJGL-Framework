@@ -84,7 +84,7 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 	private static int compileShader(String src, int type) throws InstantiationException {
 		src = ShaderPreprocessor.preprocess(src);
 		if (true) {
-			try {
+			try { 
 				BufferedWriter out = new BufferedWriter(new FileWriter("/tmp/shader_src", true));
 				for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
 					out.write(e.toString());

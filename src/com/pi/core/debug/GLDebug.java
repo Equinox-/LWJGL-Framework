@@ -42,8 +42,14 @@ public class GLDebug {
 			return "Portability";
 		case ARBDebugOutput.GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
 			return "Undefined behavior";
+		case KHRDebug.GL_DEBUG_TYPE_MARKER:
+			return "Marker";
+		case KHRDebug.GL_DEBUG_TYPE_POP_GROUP:
+			return "Pop Group";
+		case KHRDebug.GL_DEBUG_TYPE_PUSH_GROUP:
+			return "Push Group";
 		default:
-			return "Unknown[" + Integer.toString(type, 16) + "]";
+			return "Unknown[0x" + Integer.toString(type, 16) + "]";
 		}
 	}
 
@@ -62,7 +68,7 @@ public class GLDebug {
 		case ARBDebugOutput.GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
 			return "Window System";
 		default:
-			return "Unknown[" + Integer.toString(source, 16) + "]";
+			return "Unknown[0x" + Integer.toString(source, 16) + "]";
 		}
 	}
 
@@ -77,7 +83,7 @@ public class GLDebug {
 		case KHRDebug.GL_DEBUG_SEVERITY_NOTIFICATION:
 			return "Notification";
 		default:
-			return "Unknown[" + Integer.toString(severity, 16) + "]";
+			return "Unknown[0x" + Integer.toString(severity, 16) + "]";
 		}
 	}
 

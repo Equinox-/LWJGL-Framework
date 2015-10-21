@@ -4,6 +4,7 @@ import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.lwjgl.opengl.ARBDirectStateAccess;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -184,8 +185,12 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 			throw new RuntimeException("Can't bind an unallocated texture.");
 		if (currentTexture[unit] != null && currentTexture[unit].get() == this)
 			return;
-		glActiveTexture(unit);
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		if (GL.getCapabilities().GL_ARB_direct_state_access) {
+			ARBDirectStateAccess.glBindTextureUnit(unit, texture);
+		} else {
+			glActiveTexture(unit);
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		}
 		currentTexture[unit] = new WeakReference<>(this);
 		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
@@ -201,8 +206,12 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 	public static void unbind(int unit) {
 		if (currentTexture[unit] == null || currentTexture[unit].get() == null)
 			return;
-		glActiveTexture(unit);
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		if (GL.getCapabilities().GL_ARB_direct_state_access) {
+			ARBDirectStateAccess.glBindTextureUnit(unit, 0);
+		} else {
+			glActiveTexture(unit);
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		}
 		currentTexture[activeTextureUnit] = null;
 		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
