@@ -18,7 +18,7 @@ import com.pi.core.framebuffer.FrameBufferAttachable;
 import com.pi.core.util.Bindable;
 import com.pi.core.util.GPUObject;
 
-public class Texture extends GPUObject<Texture>implements Bindable, FrameBufferAttachable {
+public class Texture extends GPUObject<Texture> implements Bindable, FrameBufferAttachable {
 	private static final int MAX_TEXTURE_UNITS = 64;
 	private static int activeTextureUnit = 0;
 	@SuppressWarnings("unchecked")
@@ -215,4 +215,7 @@ public class Texture extends GPUObject<Texture>implements Bindable, FrameBufferA
 		return height;
 	}
 
+	public void cpuFree() {
+		
+	}
 }

@@ -44,7 +44,7 @@ public class WarningManager {
 					System.out.println("Reference watcher begins");
 					while (true) {
 						try {
-							Reference ref = queue.remove(1000L);
+							Reference ref = queue.remove(10000L);
 							AllocationParams e = watchReferences.remove(ref);
 							if (e != null) {
 								System.err.println("Reference to " + e.allocated.getName()
@@ -58,7 +58,6 @@ public class WarningManager {
 								break;
 							// Skip
 						}
-						System.gc(); // Collect, then check again
 					}
 					System.out.println("Reference watcher finishes");
 				}

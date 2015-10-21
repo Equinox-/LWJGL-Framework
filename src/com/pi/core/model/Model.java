@@ -28,7 +28,7 @@ public class Model<E> extends GPUObject<Model<E>> {
 	}
 
 	public final E vtx(int id) {
-		return vertexData.vertexDB[id];
+		return vertexData.v(id);
 	}
 
 	@Override

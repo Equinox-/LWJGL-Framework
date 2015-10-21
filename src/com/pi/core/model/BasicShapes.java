@@ -28,10 +28,10 @@ public class BasicShapes {
 	public Model<Vertex2D> getNDCScreenQuad() {
 		if (ndcScreenQuad == null) {
 			VertexData<Vertex2D> plVerts = new VertexData<>(Vertex2D.class, 4);
-			plVerts.vertexDB[0].pos.setV(-1, -1);
-			plVerts.vertexDB[1].pos.setV(1, -1);
-			plVerts.vertexDB[2].pos.setV(1, 1);
-			plVerts.vertexDB[3].pos.setV(-1, 1);
+			plVerts.v(0).pos.setV(-1, -1);
+			plVerts.v(1).pos.setV(1, -1);
+			plVerts.v(2).pos.setV(1, 1);
+			plVerts.v(3).pos.setV(-1, 1);
 			ndcScreenQuad = new Model<>(PrimitiveType.TRIANGLES, plVerts,
 					new int[] { 0, 1, 2, 0, 2, 3 });
 			ndcScreenQuad.gpuAllocInternal();

@@ -8,8 +8,9 @@ import com.pi.core.debug.FrameCounter;
 import com.pi.core.debug.FrameCounter.FrameParam;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
+import com.pi.math.FastMath;
 
-abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUObject<R>implements GLIdentifiable {
+abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUObject<R> implements GLIdentifiable {
 	private static final int[][] HINT_TABLE;
 
 	static {
@@ -123,7 +124,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		if (bufferPtr == -1)
 			throw new RuntimeException("Can't sync to GPU when no buffer object exists.");
 		data.position(0);
-		data.limit(data.capacity());
+		data.limit(size);
 		bind();
 		glBufferSubData(type.code(), 0, data);
 
@@ -176,18 +177,35 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 	 * 
 	 * @param ns
 	 *            the new size
+	 * @param pad
+	 *            Extra padding to add if having to resize the buffer.
 	 * @return this buffer
 	 */
 	@SuppressWarnings("unchecked")
-	public R resize(int ns) {
+	public R resize(int ns, int pad) {
 		if (size != ns) {
 			this.size = ns;
-			if (data != null)
-				data = genBuffer(ns);
+			final int cap = ns + pad;
+			if (data == null || data.capacity() < ns || data.capacity() > cap) {
+				data = genBuffer(cap);
+				System.out.println("Resize buffer: " + data.capacity() + " (" + ns + ") " + pad);
+			}
 			if (allocated())
 				allocBufferStorage();
 		}
 		return (R) this;
+	}
+
+	/**
+	 * Resizes the buffer. Warning: This DOES NOT preserve buffer contents. Can
+	 * be run even if buffer is allocated.
+	 * 
+	 * @param ns
+	 *            the new size
+	 * @return this buffer
+	 */
+	public R resize(int ns) {
+		return resize(ns, 32);
 	}
 
 	public int size() {

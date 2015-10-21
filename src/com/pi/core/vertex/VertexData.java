@@ -2,6 +2,7 @@ package com.pi.core.vertex;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.util.Iterator;
 
 import org.lwjgl.opengl.GL20;
 
@@ -14,9 +15,10 @@ import com.pi.math.vector.ByteVector;
 import com.pi.math.vector.VectorBuff;
 import com.pi.math.volume.BoundingArea;
 
-public class VertexData<E> extends GPUObject<VertexData<E>> {
-	public E[] vertexDB;
+public class VertexData<E> extends GPUObject<VertexData<E>> implements Iterable<E> {
+	private E[] vertexDB;
 	public final Class<E> vertexClass;
+	private int capacity;
 	private int count;
 	private final VertexLayout layout;
 	public final GLGenericBuffer bufferObject;
@@ -26,10 +28,19 @@ public class VertexData<E> extends GPUObject<VertexData<E>> {
 		cpuAlloc();
 	}
 
+	public E v(int i) {
+		return vertexDB[i];
+	}
+
+	public int count() {
+		return count;
+	}
+
 	public VertexData(Class<E> vertexClass, int count) {
 		this.vertexClass = vertexClass;
 		this.layout = new VertexLayout(vertexClass);
 		this.count = count;
+		this.capacity = count;
 		this.layout.validate();
 		this.bufferObject = new GLGenericBuffer(this.count * this.layout.structureSize);
 		init();
@@ -39,24 +50,19 @@ public class VertexData<E> extends GPUObject<VertexData<E>> {
 		this.vertexClass = vertexClass;
 		this.layout = new VertexLayout(vertexClass);
 		this.count = data.size() / this.layout.structureSize;
+		this.capacity = count;
 		this.layout.validate();
 		this.bufferObject = data;
 		init();
 	}
 
-	@SuppressWarnings("unchecked")
-	public VertexData<E> resize(int n) {
-		int oc = this.count;
+	public VertexData<E> resize(int n, int pad) {
+		int oc = vertexDB.length;
 		this.count = n;
-		if (oc < n || oc > n + 8) {
-			this.bufferObject.resize(n * this.layout.structureSize);
+		if (oc < n || oc > n + pad) {
+			this.capacity = n + pad;
+			this.bufferObject.resize(capacity * this.layout.structureSize, 0);
 			cpuAlloc();
-		} else if (oc < n) {
-			cpuAlloc();
-		} else if (n < oc) {
-			E[] tmp = vertexDB;
-			this.vertexDB = (E[]) Array.newInstance(vertexClass, count);
-			System.arraycopy(tmp, 0, this.vertexDB, 0, n);
 		}
 		return this;
 	}
@@ -65,12 +71,8 @@ public class VertexData<E> extends GPUObject<VertexData<E>> {
 		return layout.structureSize;
 	}
 
-	@SuppressWarnings("unchecked")
-	public void cpuAlloc() {
-		this.bufferObject.cpuAlloc();
-		this.vertexDB = (E[]) Array.newInstance(vertexClass, count);
-		// Allocate and link to the GL Generic Buffer.
-		for (int i = 0; i < vertexDB.length; i++) {
+	private void populate(int left, int right) {
+		for (int i = left; i < right; i++) {
 			try {
 				E itm = vertexClass.newInstance();
 				int head = i * layout.structureSize;
@@ -117,6 +119,13 @@ public class VertexData<E> extends GPUObject<VertexData<E>> {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public void cpuAlloc() {
+		this.bufferObject.cpuAlloc();
+		this.vertexDB = (E[]) Array.newInstance(vertexClass, capacity);
+		populate(0, capacity);
 	}
 
 	public void cpuFree() {
@@ -196,5 +205,22 @@ public class VertexData<E> extends GPUObject<VertexData<E>> {
 	@Override
 	public String toString() {
 		return vertexClass.getSimpleName() + " x" + count;
+	}
+
+	@Override
+	public Iterator<E> iterator() {
+		return new Iterator<E>() {
+			int head = 0;
+
+			@Override
+			public boolean hasNext() {
+				return head < count;
+			}
+
+			@Override
+			public E next() {
+				return vertexDB[head++];
+			}
+		};
 	}
 }

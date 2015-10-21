@@ -42,6 +42,7 @@ public class ImageTexture extends Texture {
 		return img;
 	}
 
+	@Override
 	public void cpuFree() {
 		img = null;
 	}
