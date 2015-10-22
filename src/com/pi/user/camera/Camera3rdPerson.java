@@ -9,6 +9,7 @@ import com.pi.math.vector.VectorBuff3;
 
 public class Camera3rdPerson implements Camera {
 	private final Matrix4 rotMatrix = new Matrix4().makeIdentity();
+	private final Matrix4 view = new Matrix4();
 	private final GLWindow window;
 
 	private float x, y, z;
@@ -123,19 +124,19 @@ public class Camera3rdPerson implements Camera {
 	}
 
 	@Override
-	public Matrix4 apply(Matrix4 matrix) {
-		matrix.preMultiplyTransform(0, -offset, 0);
+	public Matrix4 view() {
+		view.setTranslation(0, -offset, 0);
 
 		// rotMatrix.makeIdentity().setAxisAngle(pitch, 1, 0, 0);
 		SpecialMatrix.angleX(rotMatrix.makeIdentity(), pitch);
-		rotMatrix.preMul(matrix);
+		rotMatrix.preMul(view);
 
 		// matrix.makeIdentity().setAxisAngle(yaw, 0, 0, 1);
-		SpecialMatrix.angleZ(matrix.makeIdentity(), yaw);
-		matrix.preMul(rotMatrix);
-
-		matrix.preMultiplyTransform(x, y, z);
-		return matrix;
+		SpecialMatrix.angleZ(view.makeIdentity(), yaw);
+		view.preMul(rotMatrix);
+		view.preMultiplyTransform(x, y, z);
+		
+		return view;
 	}
 
 	@Override
