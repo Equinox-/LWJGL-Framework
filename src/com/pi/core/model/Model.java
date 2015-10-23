@@ -66,6 +66,12 @@ public class Model<E> extends GPUObject<Model<E>> {
 		indexes[0].render();
 	}
 
+	public void renderAll() {
+		vertexData.activate();
+		for (int i = 0; i < indexes.length; i++)
+			indexes[i].render();
+	}
+
 	public void render(int... indexBuffers) {
 		vertexData.activate();
 		for (int indexID : indexBuffers)
