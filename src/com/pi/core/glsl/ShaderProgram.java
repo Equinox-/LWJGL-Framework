@@ -25,7 +25,7 @@ import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
 import com.pi.io.FileUtil;
 
-public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, GLIdentifiable {
+public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable, GLIdentifiable {
 	static final int MAX_TEXTURE_UNITS = 16;
 	private static ShaderProgram currentShader;
 
@@ -40,7 +40,7 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 	private final static Map<String, Integer> SHADER_TYPE_MAP;
 	private final static Map<Integer, String> SHADER_TYPE_MAP_INVERSE;
 
-	private static void i(String t, int id) {
+	private static void insertShaderType(String t, int id) {
 		SHADER_TYPE_MAP.put(t, id);
 		SHADER_TYPE_MAP_INVERSE.put(id, t);
 	}
@@ -48,12 +48,12 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 	static {
 		SHADER_TYPE_MAP = new HashMap<>();
 		SHADER_TYPE_MAP_INVERSE = new HashMap<>();
-		i("GL_VERTEX_SHADER", GL20.GL_VERTEX_SHADER);
-		i("GL_TESS_CONTROL_SHADER", GL40.GL_TESS_CONTROL_SHADER);
-		i("GL_TESS_EVALUATION_SHADER", GL40.GL_TESS_EVALUATION_SHADER);
-		i("GL_GEOMETRY_SHADER", GL32.GL_GEOMETRY_SHADER);
-		i("GL_FRAGMENT_SHADER", GL20.GL_FRAGMENT_SHADER);
-		i("GL_COMPUTE_SHADER", GL43.GL_COMPUTE_SHADER);
+		insertShaderType("GL_VERTEX_SHADER", GL20.GL_VERTEX_SHADER);
+		insertShaderType("GL_TESS_CONTROL_SHADER", GL40.GL_TESS_CONTROL_SHADER);
+		insertShaderType("GL_TESS_EVALUATION_SHADER", GL40.GL_TESS_EVALUATION_SHADER);
+		insertShaderType("GL_GEOMETRY_SHADER", GL32.GL_GEOMETRY_SHADER);
+		insertShaderType("GL_FRAGMENT_SHADER", GL20.GL_FRAGMENT_SHADER);
+		insertShaderType("GL_COMPUTE_SHADER", GL43.GL_COMPUTE_SHADER);
 	}
 
 	// Needs to be accessed by ShaderUniform; therefore not private
@@ -81,10 +81,47 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 	private static final Pattern LINE_FINDER_AMD = Pattern.compile("[0-9]+:([0-9]+)");
 	private static final Pattern LINE_FINDER_NVIDIA = Pattern.compile("line ([0-9]+), column [0-9]+");
 
+	private static String shaderCompileLog(String[] lines, int shader) {
+		String log = GL20.glGetShaderInfoLog(shader, 4096);
+		String[] logLines = log.split("\n");
+		StringBuilder res = new StringBuilder(log.length());
+		int maxLen = 0;
+		for (String s : logLines)
+			maxLen = Math.max(maxLen, s.length());
+
+		for (int i = 0; i < logLines.length; i++) {
+			boolean foundLine = false;
+			for (Pattern pt : new Pattern[] { LINE_FINDER_AMD, LINE_FINDER_NVIDIA }) {
+				Matcher m = pt.matcher(logLines[i]);
+				if (m.find()) {
+					res.append(logLines[i]);
+					for (int r = logLines[i].length(); r < maxLen + 4; r++)
+						res.append(' ');
+					int ctx;
+					try {
+						ctx = Integer.parseInt(m.group(1)) - 1;
+					} catch (NumberFormatException e) {
+						ctx = -1;
+					}
+					if (ctx >= 0) {
+						res.append("Context: ").append(ctx >= 0 && ctx < lines.length ? lines[ctx].trim() : "Unknown")
+								.append('\n');
+						foundLine = true;
+						break;
+					}
+				}
+			}
+			if (!foundLine)
+				res.append(logLines[i]).append('\n');
+		}
+		return res.toString();
+	}
+
+	@SuppressWarnings("unused")
 	private static int compileShader(String src, int type) throws InstantiationException {
 		src = ShaderPreprocessor.preprocess(src);
-		if (true) {
-			try { 
+		if (false) {
+			try {
 				BufferedWriter out = new BufferedWriter(new FileWriter("/tmp/shader_src", true));
 				for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
 					out.write(e.toString());
@@ -105,43 +142,13 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 		int shader = GL20.glCreateShader(type);
 		GL20.glShaderSource(shader, src);
 		GL20.glCompileShader(shader);
+		String log = shaderCompileLog(lines, shader);
 		if (GL20.glGetShaderi(shader, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
-			String log = GL20.glGetShaderInfoLog(shader, 4096);
 			GL20.glDeleteShader(shader);
-			String[] logLines = log.split("\n");
-			StringBuilder res = new StringBuilder(log.length());
-			int maxLen = 0;
-			for (String s : logLines)
-				maxLen = Math.max(maxLen, s.length());
-
-			for (int i = 0; i < logLines.length; i++) {
-				boolean foundLine = false;
-				for (Pattern pt : new Pattern[] { LINE_FINDER_AMD, LINE_FINDER_NVIDIA }) {
-					Matcher m = pt.matcher(logLines[i]);
-					if (m.find()) {
-						res.append(logLines[i]);
-						for (int r = logLines[i].length(); r < maxLen + 4; r++)
-							res.append(' ');
-						int ctx;
-						try {
-							ctx = Integer.parseInt(m.group(1)) - 1;
-						} catch (NumberFormatException e) {
-							ctx = -1;
-						}
-						if (ctx >= 0) {
-							res.append("Context: ")
-									.append(ctx >= 0 && ctx < lines.length ? lines[ctx].trim() : "Unknown")
-									.append('\n');
-							foundLine = true;
-							break;
-						}
-					}
-				}
-				if (!foundLine)
-					res.append(logLines[i]).append('\n');
-			}
-			System.err.println("Shader compile failure: \n" + res.toString());
+			System.err.println("Shader compile failure: \n" + log);
 			throw new InstantiationException();
+		} else if (log.trim().length() > 0) {
+			System.err.println("Shader compile log: \n" + log);
 		}
 		return shader;
 	}
@@ -199,9 +206,11 @@ public class ShaderProgram extends GPUObject<ShaderProgram>implements Bindable, 
 		for (int obj : attachedObjects)
 			GL20.glAttachShader(programID, obj);
 		GL20.glLinkProgram(programID);
+		String info = GL20.glGetProgramInfoLog(programID, 1024);
+		if (info.trim().length() > 0)
+			System.err.println("Program log: " + info);
 		if (GL20.glGetProgrami(programID, GL20.GL_LINK_STATUS) == GL11.GL_FALSE) {
 			System.err.println("Shader program wasn't linked correctly.");
-			System.err.println(GL20.glGetProgramInfoLog(programID, 1024));
 			throw new RuntimeException();
 		}
 		loadUniforms();
