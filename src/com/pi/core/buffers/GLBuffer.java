@@ -81,6 +81,8 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		if (bufferPtr != -1)
 			gpuFreeInternal();
 		bufferPtr = GL15.glGenBuffers();
+		if (bufferPtr == -1)
+			throw new IllegalStateException("Failed to generate buffer");
 		allocBufferStorage();
 	}
 
@@ -101,6 +103,8 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 	}
 
 	public void bind(BufferType type) {
+		if (bufferPtr < 0)
+			throw new IllegalStateException("Can't bind an unallocated buffer");
 		GL15.glBindBuffer(type.code(), bufferPtr);
 		FrameCounter.increment(FrameParam.BUFFER_BINDS);
 	}
