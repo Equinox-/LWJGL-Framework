@@ -175,7 +175,10 @@ public class FrameCounter {
 	private void checkPrint() {
 		final int frames = counters[FrameParam.FRAMES.ordinal()];
 		if (frames >= blend) {
-			lastFPS = (frames * 1000 / (frameTimes[blend - 1][5] - frameTimes[0][2]));
+			long dt = frameTimes[blend - 1][5] - frameTimes[0][2];
+			if (dt == 0)
+				dt = 1;
+			lastFPS = (frames * 1000 / dt);
 			if (print != null) {
 				print.println(frames + " frames at " + lastFPS + " fps");
 				print.println(" frame no\tcpu\tgpu\tupdate\tswap\ttotal\tprimitives");

@@ -29,6 +29,8 @@ public abstract class GLWindow {
 	private final boolean fullscreen;
 	private final boolean doubleBuffered;
 
+	protected boolean frameCounter = false;
+
 	public GLWindow() {
 		this(3, 3);
 	}
@@ -115,17 +117,22 @@ public abstract class GLWindow {
 		init();
 
 		while (valid()) {
-			FrameCounter.counter().beginFrameRender();
+			boolean fc = frameCounter;
+			if (fc)
+				FrameCounter.counter().beginFrameRender();
 			render();
-			FrameCounter.counter().switchRenderToUpdate();
+			if (fc)
+				FrameCounter.counter().switchRenderToUpdate();
 			GLFW.glfwPollEvents();
 			update();
-			FrameCounter.counter().switchUpdateToSwap();
+			if (fc)
+				FrameCounter.counter().switchUpdateToSwap();
 			if (doubleBuffered)
 				GLFW.glfwSwapBuffers(windowID);
 			else
 				GL11.glFinish();
-			FrameCounter.counter().endFrameSwap();
+			if (fc)
+				FrameCounter.counter().endFrameSwap();
 		}
 
 		dispose();
