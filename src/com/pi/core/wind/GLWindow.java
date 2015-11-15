@@ -146,7 +146,6 @@ public abstract class GLWindow {
 		GLFW.glfwDestroyWindow(windowID);
 		GLFW.glfwTerminate();
 		WarningManager.termReferenceWatch();
-		System.exit(0);
 	}
 
 	public float fps() {
