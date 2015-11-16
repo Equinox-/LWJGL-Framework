@@ -138,6 +138,8 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 	public void gpuUploadPartial(int min, int max) {
 		if (bufferPtr == -1)
 			throw new RuntimeException("Can't sync to GPU when no buffer object exists.");
+		min = Math.max(min, 0);
+		max = Math.min(max, size - 1);
 		data.position(min);
 		data.limit(max);
 		bind();
