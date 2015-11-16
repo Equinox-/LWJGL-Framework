@@ -140,6 +140,8 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 			throw new RuntimeException("Can't sync to GPU when no buffer object exists.");
 		min = Math.max(min, 0);
 		max = Math.min(max, size - 1);
+		if (max <= min)
+			return;
 		data.position(min);
 		data.limit(max);
 		bind();
