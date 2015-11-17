@@ -1,6 +1,7 @@
 package com.pi.core.wind;
 
 import java.lang.reflect.Method;
+import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -302,6 +303,7 @@ public class GLWindowEvents {
 	private float mouseX, mouseY;
 
 	protected void onCursorPosEvent(long time, double x, double y, int mods) {
+		lastMousePosUpdate = System.currentTimeMillis();
 		this.mouseX = (float) x;
 		this.mouseY = (float) y;
 		for (EventListener l : listeners)
@@ -309,11 +311,28 @@ public class GLWindowEvents {
 				return;
 	}
 
+	private long lastMousePosUpdate = System.currentTimeMillis();
+
+	private void updateMousePosition() {
+		if (lastMousePosUpdate + 10 < System.currentTimeMillis()) {
+			DoubleBuffer xp = BufferUtils.createDoubleBuffer(1);
+			DoubleBuffer yp = BufferUtils.createDoubleBuffer(1);
+			GLFW.glfwGetCursorPos(attached.getWindowID(), xp, yp);
+			lastMousePosUpdate = System.currentTimeMillis();
+			float nx = (float) xp.get(0);
+			float ny = (float) yp.get(0);
+			this.mouseX = nx;
+			this.mouseY = ny;
+		}
+	}
+
 	public float getMouseX() {
+		updateMousePosition();
 		return mouseX;
 	}
 
 	public float getMouseY() {
+		updateMousePosition();
 		return mouseY;
 	}
 
@@ -323,7 +342,7 @@ public class GLWindowEvents {
 
 	public void setCursor(boolean b) {
 		GLFW.glfwSetInputMode(attached.getWindowID(), GLFW.GLFW_CURSOR,
-				b ? GLFW.GLFW_CURSOR_NORMAL : GLFW.GLFW_CURSOR_HIDDEN);
+				b ? GLFW.GLFW_CURSOR_NORMAL : GLFW.GLFW_CURSOR_DISABLED);
 	}
 
 	public float getDragStartX() {
