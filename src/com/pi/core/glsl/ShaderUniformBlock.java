@@ -32,8 +32,8 @@ public class ShaderUniformBlock {
 		this.length = GL31.glGetActiveUniformBlocki(parent.getID(), blockIndex, GL31.GL_UNIFORM_BLOCK_DATA_SIZE);
 		GL31.glUniformBlockBinding(parent.getID(), blockIndex, blockIndex);
 
-		System.out.println(
-				"Shader uniform block by the name of " + blockName + " [index=" + blockIndex + ", len=" + length + "]");
+//		System.out.println(
+//				"Shader uniform block by the name of " + blockName + " [index=" + blockIndex + ", len=" + length + "]");
 	}
 
 	public String name() {
