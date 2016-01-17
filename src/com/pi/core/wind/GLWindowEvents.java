@@ -123,10 +123,7 @@ public class GLWindowEvents {
 			public void invoke(long window, int entered) {
 				if (window != attached.getWindowID())
 					return;
-				if (entered == GL11.GL_TRUE)
-					mouseInWindow = true;
-				else
-					mouseInWindow = false;
+				mouseInWindow = (entered != GL11.GL_FALSE);
 			}
 		});
 		charCallback = GLFW.GLFWCharCallback(new GLFWCharCallback.SAM() {
