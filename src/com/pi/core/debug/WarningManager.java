@@ -14,22 +14,9 @@ public class WarningManager {
 	public static final boolean GPUOBJECT_METHOD_ELEVATION = true;
 	public static final boolean GLSL_UNIFORM_TYPE_WATCHING = true;
 
-	private static class AllocationParams {
-		int hash;
-		StackTraceElement[] stackTraceOnAlloc;
-		Class<?> allocated;
-
-		AllocationParams(Object allocated, StackTraceElement[] stack) {
-			this.allocated = allocated.getClass();
-			this.hash = allocated.hashCode();
-			this.stackTraceOnAlloc = stack;
-		}
-	}
-
-	static Map<WeakReference<?>, AllocationParams> watchReferences;
+	private static Map<WeakReference<?>, AllocationParams> watchReferences;
 	@SuppressWarnings("rawtypes")
 	public static ReferenceQueue<GPUObject> queue;
-
 	private static AtomicBoolean referenceWatchState = new AtomicBoolean(true);
 	private static Thread referenceWatchThread;
 
@@ -62,6 +49,18 @@ public class WarningManager {
 					System.out.println("Reference watcher finishes");
 				}
 			}).start();
+		}
+	}
+
+	private static class AllocationParams {
+		private int hash;
+		private StackTraceElement[] stackTraceOnAlloc;
+		private Class<?> allocated;
+
+		private AllocationParams(Object allocated, StackTraceElement[] stack) {
+			this.allocated = allocated.getClass();
+			this.hash = allocated.hashCode();
+			this.stackTraceOnAlloc = stack;
 		}
 	}
 

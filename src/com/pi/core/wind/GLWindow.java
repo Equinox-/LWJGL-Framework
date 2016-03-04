@@ -76,7 +76,8 @@ public abstract class GLWindow {
 			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_ANY_PROFILE);
 
 		this.fullscreen = fullscreen;
-		int w = 1280, h = 720;
+		int w = 1280;
+		int h = 720;
 		long monitor = fullscreen ? GLFW.glfwGetPrimaryMonitor() : MemoryUtil.NULL;
 		if (monitor != MemoryUtil.NULL) {
 			IntBuffer tmp = GLFW.glfwGetVideoMode(monitor).asIntBuffer();

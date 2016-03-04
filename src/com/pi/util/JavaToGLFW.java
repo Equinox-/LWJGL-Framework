@@ -11,13 +11,13 @@ public class JavaToGLFW {
 	private static final Map<Integer, Integer> jToG = new HashMap<>();
 	private static final Map<Integer, Integer> gToJ = new HashMap<>();
 
-	private static void ins(int j, int g) {
-		if (jToG.containsKey(j))
-			throw new RuntimeException();
-		jToG.put(j, g);
-		if (gToJ.containsKey(g))
-			throw new RuntimeException();
-		gToJ.put(g, j);
+	private static void ins(int java, int glfw) {
+		if (jToG.containsKey(java))
+			throw new IllegalStateException("Java key already registered");
+		jToG.put(java, glfw);
+		if (gToJ.containsKey(glfw))
+			throw new IllegalStateException("OpenGL key already registered");
+		gToJ.put(glfw, java);
 	}
 
 	public static int javaToGLFW(int java) {

@@ -55,7 +55,14 @@ public class GLWindowEvents {
 			throw new RuntimeException(e);
 		}
 	}
-
+	private int width, height;
+	private int fbWidth, fbHeight;
+	private float mouseX, mouseY;
+	private long lastMousePosUpdate = System.currentTimeMillis();
+	private boolean mouseInWindow = false;
+	private float scrollPosX, scrollPosY;
+	private int mouseButtonStates;
+	private float dragStartX, dragStartY;
 	private Thread eventProcessor;
 
 	public GLWindowEvents(final GLWindow window) {
@@ -173,23 +180,25 @@ public class GLWindowEvents {
 			eventProcessor.stop();
 		}
 
-		this.eventProcessor = new Thread("Event Processor") {
-			@Override
-			public void run() {
-				System.out.println("Event processor beginning...");
-				while (attached.valid()) {
-					try {
-						Entry<Method, Object[]> event = eventQueue.take();
-						event.getKey().invoke(GLWindowEvents.this, event.getValue());
-					} catch (Exception e) {
-						e.printStackTrace();
-						System.err.println("Event processing failed.");
-					}
-				}
-				System.out.println("Event processor ending...");
-			}
-		};
+		this.eventProcessor = new Thread(new EventProcessorThread(), "Event Processor");
 		this.eventProcessor.start();
+	}
+
+	private class EventProcessorThread implements Runnable {
+		@Override
+		public void run() {
+			System.out.println("Event processor beginning...");
+			while (attached.valid()) {
+				try {
+					Entry<Method, Object[]> event = eventQueue.take();
+					event.getKey().invoke(GLWindowEvents.this, event.getValue());
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.err.println("Event processing failed.");
+				}
+			}
+			System.out.println("Event processor ending...");
+		}
 	}
 
 	public void release() {
@@ -214,9 +223,6 @@ public class GLWindowEvents {
 	public boolean deregister(EventListener e) {
 		return listeners.remove(e);
 	}
-
-	private int mouseButtonStates;
-	private float dragStartX, dragStartY;
 
 	protected void onMouseButtonEvent(long time, int button, int action, int mods) {
 		for (EventListener l : listeners)
@@ -250,8 +256,6 @@ public class GLWindowEvents {
 			}
 	}
 
-	private float scrollPosX, scrollPosY;
-
 	protected void onScrollEvent(long time, double dx, double dy) {
 		scrollPosX += dx;
 		scrollPosY += dy;
@@ -268,8 +272,6 @@ public class GLWindowEvents {
 		return scrollPosY;
 	}
 
-	private int width, height;
-
 	public int getWindowWidth() {
 		return width;
 	}
@@ -277,8 +279,6 @@ public class GLWindowEvents {
 	public int getWindowHeight() {
 		return height;
 	}
-
-	private int fbWidth, fbHeight;
 
 	// In practice we care about the frame buffer width, not window width
 	protected void onSizeEvent(long time, int width, int height) {
@@ -297,8 +297,6 @@ public class GLWindowEvents {
 		return fbHeight;
 	}
 
-	private float mouseX, mouseY;
-
 	protected void onCursorPosEvent(long time, double x, double y, int mods) {
 		lastMousePosUpdate = System.currentTimeMillis();
 		this.mouseX = (float) x;
@@ -307,8 +305,6 @@ public class GLWindowEvents {
 			if (l.mouseMoved(time, (float) x, (float) y, mods))
 				return;
 	}
-
-	private long lastMousePosUpdate = System.currentTimeMillis();
 
 	private void updateMousePosition() {
 		if (lastMousePosUpdate + 10 < System.currentTimeMillis()) {
@@ -369,8 +365,6 @@ public class GLWindowEvents {
 		GLFW.glfwGetWindowPos(attached.getWindowID(), tmpX, tmpY);
 		return tmpY.get(0);
 	}
-
-	private boolean mouseInWindow = false;
 
 	public boolean mouseInWindow() {
 		return mouseInWindow;

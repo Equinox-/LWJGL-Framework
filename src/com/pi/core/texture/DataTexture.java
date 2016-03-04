@@ -17,8 +17,7 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 
 	private static int floatFormatForDimension(int dimension) {
 		if (dimension > 4 || dimension < 1)
-			throw new IllegalArgumentException(
-					"Vector textures must have a dimension between 1 and 4");
+			throw new IllegalArgumentException("Vector textures must have a dimension between 1 and 4");
 		switch (dimension) {
 		case 1:
 			return GL30.GL_R32F;
@@ -29,7 +28,10 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 		case 4:
 			return GL30.GL_RGBA32F;
 		default:
-			throw new IllegalArgumentException("Illegal dimension"); // This should never happen
+			throw new IllegalArgumentException("Illegal dimension"); // This
+																		// should
+																		// never
+																		// happen
 		}
 	}
 
@@ -39,12 +41,15 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 			@SuppressWarnings({ "unchecked", "unused" })
 			T t = (T) VectorBuff.make(dimension);
 		} catch (ClassCastException e) {
-			throw new IllegalArgumentException(
-					"Can't use this vtype with the given dimension.");
+			throw new IllegalArgumentException("Can't use this vtype with the given dimension.");
 		}
 
 		this.dimension = dimension;
-		super.wrap(TextureWrap.CLAMP_TO_EDGE, TextureWrap.CLAMP_TO_EDGE); // Typical, but can be changed.
+		super.wrap(TextureWrap.CLAMP_TO_EDGE, TextureWrap.CLAMP_TO_EDGE); // Typical,
+																			// but
+																			// can
+																			// be
+																			// changed.
 		super.filter(null, TextureFilter.NEAREST, TextureFilter.NEAREST);
 		super.mipmapLevels(0);
 
@@ -61,6 +66,8 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 		case 4:
 			stashFormat = GL11.GL_RGBA;
 			break;
+		default:
+			throw new IllegalArgumentException("Invalid dimension.");
 		}
 		cpuAlloc();
 	}
@@ -70,8 +77,8 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 		super.bind();
 		super.commitParameters();
 		backing.position(0);
-		GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, super.getWidth(),
-				super.getHeight(), stashFormat, GL11.GL_FLOAT, backing);
+		GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, super.getWidth(), super.getHeight(), stashFormat,
+				GL11.GL_FLOAT, backing);
 		super.unbind();
 	}
 
@@ -79,8 +86,7 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 	protected void gpuDownloadInternal() {
 		super.bind();
 		backing.position(0);
-		GL11.glGetTexImage(GL11.GL_TEXTURE_2D, 0, stashFormat, GL11.GL_FLOAT,
-				backing);
+		GL11.glGetTexImage(GL11.GL_TEXTURE_2D, 0, stashFormat, GL11.GL_FLOAT, backing);
 		super.unbind();
 	}
 
@@ -93,12 +99,10 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 	@SuppressWarnings("unchecked")
 	public void cpuAlloc() {
 		vectors = (T[][]) new VectorBuff[getWidth()][getHeight()];
-		backing = BufferUtils.createFloatBuffer(getWidth() * getHeight()
-				* dimension);
+		backing = BufferUtils.createFloatBuffer(getWidth() * getHeight() * dimension);
 		for (int j = 0; j < getHeight(); j++) {
 			for (int i = 0; i < getWidth(); i++) {
-				vectors[i][j] = (T) VectorBuff.make(backing, ((j * getWidth()) + i)
-						* dimension, dimension);
+				vectors[i][j] = (T) VectorBuff.make(backing, ((j * getWidth()) + i) * dimension, dimension);
 			}
 		}
 	}

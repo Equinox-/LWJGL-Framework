@@ -196,51 +196,51 @@ public final class ShaderUniform {
 		GL20.glUniform1i(location[activeIndex], this.samplerID[activeIndex]);
 	}
 
+	private static final int boolToInt(boolean b) {
+		return b ? 1 : 0;
+	}
+
 	public void bool(boolean b) {
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL) {
 			if (uniformBlockIndex >= 0)
 				commitToUBO(b ? 1 : 0);
 			else
-				GL20.glUniform1i(location[activeIndex], b ? 1 : 0);
+				GL20.glUniform1i(location[activeIndex], boolToInt(b));
 		} else
 			typeMismatch("boolean");
 	}
 
 	public void bvector(boolean x, boolean y) {
-
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL_VEC2)
 			if (uniformBlockIndex >= 0)
 				commitToUBO(x ? 1 : 0, y ? 1 : 0);
 			else
-				GL20.glUniform2i(location[activeIndex], x ? 1 : 0, y ? 1 : 0);
+				GL20.glUniform2i(location[activeIndex], boolToInt(x), boolToInt(y));
 		else
 			typeMismatch("bool vec2");
 	}
 
 	public void bvector(boolean x, boolean y, boolean z) {
-
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL_VEC3)
 			if (uniformBlockIndex >= 0)
 				commitToUBO(x ? 1 : 0, y ? 1 : 0, z ? 1 : 0);
 			else
-				GL20.glUniform3i(location[activeIndex], x ? 1 : 0, y ? 1 : 0, z ? 1 : 0);
+				GL20.glUniform3i(location[activeIndex], boolToInt(x), boolToInt(y), boolToInt(z));
 		else
 			typeMismatch("bool vec2");
 	}
 
 	public void bvector(boolean x, boolean y, boolean z, boolean w) {
-
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_BOOL_VEC4)
 			if (uniformBlockIndex >= 0)
 				commitToUBO(x ? 1 : 0, y ? 1 : 0, z ? 1 : 0, w ? 1 : 0);
 			else
-				GL20.glUniform4i(location[activeIndex], x ? 1 : 0, y ? 1 : 0, z ? 1 : 0, w ? 1 : 0);
+				GL20.glUniform4i(location[activeIndex], boolToInt(x), boolToInt(y), boolToInt(z), boolToInt(w));
 		else
 			typeMismatch("bool vec4");
 	}
 
 	public void integer(int x) {
-
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL11.GL_INT)
 			if (uniformBlockIndex >= 0)
 				commitToUBO(x);
@@ -251,7 +251,6 @@ public final class ShaderUniform {
 	}
 
 	public void floating(float x) {
-
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL11.GL_FLOAT)
 			if (uniformBlockIndex >= 0)
 				commitToUBO(x);
@@ -262,7 +261,6 @@ public final class ShaderUniform {
 	}
 
 	public void vector(float x, float y) {
-
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC2)
 			if (uniformBlockIndex >= 0)
 				commitToUBO(x, y);
@@ -273,7 +271,6 @@ public final class ShaderUniform {
 	}
 
 	public void vector(float x, float y, float z) {
-
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC3)
 			if (uniformBlockIndex >= 0)
 				commitToUBO(x, y, z);
@@ -284,7 +281,6 @@ public final class ShaderUniform {
 	}
 
 	public void vector(float x, float y, float z, float w) {
-
 		if (!WarningManager.GLSL_UNIFORM_TYPE_WATCHING || type == GL20.GL_FLOAT_VEC4)
 			if (uniformBlockIndex >= 0)
 				commitToUBO(x, y, z, w);

@@ -49,14 +49,17 @@ public class DumpMax {
 
 			@Override
 			public void render() {
+				// Nothing
 			}
 
 			@Override
 			public void update() {
+				// Nothing
 			}
 
 			@Override
 			public void dispose() {
+				// Nothing
 			}
 		};
 		tmp.start();

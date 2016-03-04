@@ -117,7 +117,8 @@ public class ShaderPreprocessor {
 			return src;
 	}
 
-	private static int evalMath(String code) {
+	private static int evalMath(String src) {
+		String code = src;
 		for (Entry<String, String> entry : PREDEFINES_MAP.entrySet())
 			code = code.replace(entry.getKey(), entry.getValue());
 		code = code.replaceAll("[()]", "").trim();

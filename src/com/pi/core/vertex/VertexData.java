@@ -6,6 +6,7 @@ import java.util.Iterator;
 
 import org.lwjgl.opengl.GL20;
 
+import com.pi.core.GLException;
 import com.pi.core.buffers.BufferType;
 import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.misc.VertexArrayObject;
@@ -116,7 +117,7 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements Iterable<
 				}
 				vertexDB[i] = itm;
 			} catch (Exception e) {
-				throw new RuntimeException(e);
+				throw new GLException("Unable to create VertexData", e);
 			}
 		}
 	}

@@ -9,16 +9,15 @@ import javax.swing.JFrame;
 
 public class LivePlotter extends JFrame {
 	private static final long serialVersionUID = 1L;
-
 	private static final int Y_TOP_PAD = 50;
 	private static final int GEN_PAD = 20;
 
 	private BufferStrategy strat;
-
 	private final float[][] data;
 	private final Color[] legend;
 	private final int[] scale;
 	private final int chunks;
+	private int curr = 0;
 
 	public LivePlotter(int chunks, Color[] leg, int[] scale) {
 		setSize(500, 500);
@@ -30,8 +29,6 @@ public class LivePlotter extends JFrame {
 		this.data = new float[chunks][leg.length];
 		this.scale = scale;
 	}
-
-	private int curr = 0;
 
 	private int x(int x) {
 		return (getWidth() - 2 * GEN_PAD) * (x - 1) / (chunks - 1) + GEN_PAD;

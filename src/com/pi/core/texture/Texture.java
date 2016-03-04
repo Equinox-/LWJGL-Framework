@@ -24,10 +24,13 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 	private static int activeTextureUnit = 0;
 	@SuppressWarnings("unchecked")
 	private static final WeakReference<Texture>[] currentTexture = new WeakReference[MAX_TEXTURE_UNITS];
-
 	private static final int[][] MIPMAP_FILTER_TABLE;
+	private static final int[] DEPTH_FORMATS = { GL11.GL_DEPTH_COMPONENT, GL14.GL_DEPTH_COMPONENT16,
+			GL14.GL_DEPTH_COMPONENT24, GL14.GL_DEPTH_COMPONENT32, GL30.GL_DEPTH24_STENCIL8, GL30.GL_DEPTH32F_STENCIL8,
+			GL30.GL_DEPTH_COMPONENT32F };
 
 	static {
+		Arrays.sort(DEPTH_FORMATS);
 		TextureFilter[] filters = TextureFilter.values();
 		MIPMAP_FILTER_TABLE = new int[filters.length][filters.length];
 		for (int i = 0; i < filters.length; i++) {
@@ -85,12 +88,9 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 			throw new IllegalArgumentException("Minifying filter can't be null");
 		if (magFilter == null)
 			throw new IllegalArgumentException("Magnification filter can't be null");
-		if (mipmap != null) {
-			// Validate the minFilter
-			if (MIPMAP_FILTER_TABLE[mipmap.ordinal()][minFilter.ordinal()] == -1)
-				throw new IllegalArgumentException("The mimap filter " + mipmap.name() + " and minifying filter "
-						+ minFilter.name() + " aren't compatible");
-		}
+		if (mipmap != null && MIPMAP_FILTER_TABLE[mipmap.ordinal()][minFilter.ordinal()] == -1)
+			throw new IllegalArgumentException("The mimap filter " + mipmap.name() + " and minifying filter "
+					+ minFilter.name() + " aren't compatible");
 		this.mipmapFilter = mipmap;
 		this.minFilter = minFilter;
 		this.magFilter = magFilter;
@@ -113,14 +113,6 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, mipmapFilter != null
 				? MIPMAP_FILTER_TABLE[mipmapFilter.ordinal()][minFilter.ordinal()] : minFilter.glID);
 		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, magFilter.glID);
-	}
-
-	private static final int[] DEPTH_FORMATS = { GL11.GL_DEPTH_COMPONENT, GL14.GL_DEPTH_COMPONENT16,
-			GL14.GL_DEPTH_COMPONENT24, GL14.GL_DEPTH_COMPONENT32, GL30.GL_DEPTH24_STENCIL8, GL30.GL_DEPTH32F_STENCIL8,
-			GL30.GL_DEPTH_COMPONENT32F };
-
-	static {
-		Arrays.sort(DEPTH_FORMATS);
 	}
 
 	@Override
@@ -225,6 +217,6 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 	}
 
 	public void cpuFree() {
-		
+		// Do nothing for the generic texture
 	}
 }

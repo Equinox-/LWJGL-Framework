@@ -8,6 +8,7 @@ import com.pi.core.vertex.VertexData;
 public class Model<E> extends GPUObject<Model<E>> {
 	public final VertexData<E> vertexData;
 	public final IndexBuffer[] indexes;
+	private boolean indexUploaded = false;
 
 	public Model(PrimitiveType mode, VertexData<E> vertexData, int[]... index) {
 		if (index.length < 1)
@@ -47,12 +48,9 @@ public class Model<E> extends GPUObject<Model<E>> {
 		vertexData.gpuFree();
 	}
 
-	private boolean indexUploaded = false;
-
 	@Override
 	protected void gpuUploadInternal() {
-		if (!indexUploaded) { // The index can't change, therefore only need to
-								// upload once per alloc. TODO Watch this
+		if (!indexUploaded) {
 			for (IndexBuffer index : indexes)
 				index.gpuUploadInternal();
 		}

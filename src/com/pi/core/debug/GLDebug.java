@@ -17,6 +17,11 @@ import com.pi.core.misc.VertexArrayObject;
 import com.pi.core.texture.Texture;
 
 public class GLDebug {
+	private static boolean reportStacks = false;
+	private static DebugMode mode = DebugMode.NONE;
+	public static boolean reportNotifications = false;
+	private static int id = 0;
+
 	public static boolean checkError() {
 		int error = GL11.glGetError();
 		if (error != GL11.GL_NO_ERROR) {
@@ -86,8 +91,6 @@ public class GLDebug {
 		}
 	}
 
-	private static boolean reportStacks = false;
-
 	private static void debug(int source, int type, int id, int severity, int length, long message, long userParam) {
 		boolean error = (severity != KHRDebug.GL_DEBUG_SEVERITY_NOTIFICATION);
 		if (!error && !reportNotifications)
@@ -115,11 +118,11 @@ public class GLDebug {
 	};
 
 	private static enum DebugMode {
-		GL43, KHR, ARB, NONE;
+		GL43,
+		KHR,
+		ARB,
+		NONE;
 	}
-
-	private static DebugMode mode = DebugMode.NONE;
-	public static boolean reportNotifications = false;
 
 	public static boolean isDebugging() {
 		return mode == DebugMode.ARB || mode == DebugMode.GL43 || mode == DebugMode.KHR;
@@ -168,8 +171,6 @@ public class GLDebug {
 		}
 		return false;
 	}
-
-	private static int id = 0;
 
 	public static void nameObject(Texture t, String name) {
 		if (!t.allocated())

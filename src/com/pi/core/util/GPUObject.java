@@ -19,10 +19,8 @@ public abstract class GPUObject<K extends GPUObject<K>> {
 			Class<?> base = getClass();
 			Method[] mm = base.getMethods();
 			for (Method k : mm) {
-				if (k.getName().endsWith("Internal") || k.getName().equals("me")) {
-					if (scanned.add(k))
-						System.err.println("Internal GPU method is public:\t" + k);
-				}
+				if ((k.getName().endsWith("Internal") || k.getName().equals("me")) && scanned.add(k))
+					System.err.println("Internal GPU method is public:\t" + k);
 			}
 		}
 		if (WarningManager.GPUOBJECT_REF_WATCHING)

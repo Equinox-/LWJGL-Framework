@@ -14,6 +14,13 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL33;
 
 public class FrameCounter {
+	private final int[] counters = new int[FrameParam.values().length];
+	private final int blend; // Blend stats over 10 frames.
+	private final long[][] frameTimes;
+	private final LivePlotter plot;
+	private final PrintStream print;
+	private final BlockingQueue<Integer> queueObjects = new LinkedBlockingQueue<>(50);
+
 	private static final ThreadLocal<FrameCounter> fCounts = ThreadLocal.withInitial(new Supplier<FrameCounter>() {
 		@Override
 		public FrameCounter get() {
@@ -71,14 +78,6 @@ public class FrameCounter {
 			}
 		}
 	}
-
-	private final int[] counters = new int[FrameParam.values().length];
-	private final int blend; // Blend stats over 10 frames.
-	private final long[][] frameTimes;
-	private final LivePlotter plot;
-	private final PrintStream print;
-
-	private final BlockingQueue<Integer> queueObjects = new LinkedBlockingQueue<>(50);
 
 	private int genQuery() {
 		Integer i = queueObjects.poll();

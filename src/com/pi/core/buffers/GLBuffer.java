@@ -54,7 +54,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		if (a == null)
 			throw new IllegalArgumentException("The buffer access hint must not be null.");
 		if (bufferPtr != -1)
-			throw new RuntimeException("Can't change buffer hints while allocated on the GPU");
+			throw new IllegalStateException("Can't change buffer hints while allocated on the GPU");
 		this.accessHint = a;
 		return (R) this;
 	}
@@ -64,7 +64,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		if (a == null)
 			throw new IllegalArgumentException("The buffer modify hint must not be null.");
 		if (bufferPtr != -1)
-			throw new RuntimeException("Can't change buffer hints while allocated on the GPU");
+			throw new IllegalStateException("Can't change buffer hints while allocated on the GPU");
 		this.modifyHint = a;
 		return (R) this;
 	}

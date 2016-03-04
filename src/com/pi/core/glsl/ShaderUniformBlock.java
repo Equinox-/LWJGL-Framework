@@ -17,8 +17,15 @@ public class ShaderUniformBlock {
 	 * A persistent buffer means that the buffer only gets refreshed if it is
 	 * changed.
 	 */
-	static final boolean PERSISTENT_BUFFER_STATE = true;
-	static final boolean ALLOW_UTILITY_ACCESS = false;
+	public static final boolean PERSISTENT_BUFFER_STATE = true;
+	/**
+	 * If true allow the usage of the ShaderUniform family of functions to
+	 * assign to uniform blocks.
+	 */
+	public static final boolean ALLOW_UTILITY_ACCESS = false;
+
+	@SuppressWarnings("unchecked")
+	private static final WeakReference<GLGenericBuffer>[] bound_ubos = new WeakReference[128];
 
 	private final int blockIndex;
 	private final String blockName;
@@ -32,8 +39,9 @@ public class ShaderUniformBlock {
 		this.length = GL31.glGetActiveUniformBlocki(parent.getID(), blockIndex, GL31.GL_UNIFORM_BLOCK_DATA_SIZE);
 		GL31.glUniformBlockBinding(parent.getID(), blockIndex, blockIndex);
 
-//		System.out.println(
-//				"Shader uniform block by the name of " + blockName + " [index=" + blockIndex + ", len=" + length + "]");
+		// System.out.println(
+		// "Shader uniform block by the name of " + blockName + " [index=" +
+		// blockIndex + ", len=" + length + "]");
 	}
 
 	public String name() {
@@ -60,15 +68,13 @@ public class ShaderUniformBlock {
 		return bound;
 	}
 
-	public int dirtyMin, dirtyMax;
+	public int dirtyMin;
+	public int dirtyMax;
 
 	public void markDirty(int min, int max) {
 		this.dirtyMin = Math.min(dirtyMin, min);
 		this.dirtyMax = Math.max(dirtyMax, max);
 	}
-
-	@SuppressWarnings("unchecked")
-	private static final WeakReference<GLGenericBuffer>[] bound_ubos = new WeakReference[128];
 
 	public void recheckBinding() {
 		if (blockIndex < bound_ubos.length) {

@@ -7,15 +7,10 @@ import com.pi.core.texture.Texture;
 import com.pi.core.util.Bindable;
 import com.pi.core.util.GPUObject;
 
-public class ResizingFrameBuffer extends GPUObject<ResizingFrameBuffer>
-		implements Bindable {
+public class ResizingFrameBuffer extends GPUObject<ResizingFrameBuffer> implements Bindable {
 	private FrameBuffer target;
 	private Texture color;
 	private Texture depth;
-
-	public ResizingFrameBuffer() {
-	}
-
 	private int width, height;
 
 	public void size(int w, int h) {
@@ -24,16 +19,14 @@ public class ResizingFrameBuffer extends GPUObject<ResizingFrameBuffer>
 	}
 
 	protected void verify() {
-		if (target == null || color.getWidth() != width
-				|| color.getHeight() != height) {
+		if (target == null || color.getWidth() != width || color.getHeight() != height) {
 			if (target != null) {
 				target.gpuFree();
 				color.gpuFree();
 				depth.gpuFree();
 			}
 			color = new Texture(width, height, GL11.GL_RGB).gpuAlloc();
-			depth = new Texture(width, height, GL30.GL_DEPTH_COMPONENT32F)
-					.gpuAlloc();
+			depth = new Texture(width, height, GL30.GL_DEPTH_COMPONENT32F).gpuAlloc();
 			target = new FrameBuffer();
 			target.attachColor(color);
 			target.attachDepth(depth);
@@ -55,7 +48,6 @@ public class ResizingFrameBuffer extends GPUObject<ResizingFrameBuffer>
 		if (depth != null)
 			depth.gpuFree();
 	}
-
 
 	@Override
 	public void bind() {
