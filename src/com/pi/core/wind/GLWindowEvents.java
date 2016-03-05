@@ -24,22 +24,6 @@ import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.opengl.GL11;
 
 public class GLWindowEvents {
-	private class EventProcessorThread implements Runnable {
-		@Override
-		public void run() {
-			System.out.println("Event processor beginning...");
-			while (attached.valid()) {
-				try {
-					Entry<Method, Object[]> event = eventQueue.take();
-					event.getKey().invoke(GLWindowEvents.this, event.getValue());
-				} catch (Exception e) {
-					e.printStackTrace();
-					System.err.println("Event processing failed.");
-				}
-			}
-			System.out.println("Event processor ending...");
-		}
-	}
 	private static Method onKeyEvent, onScrollEvent, onSizeEvent, onCursorPosEvent, onCharEvent, onMouseButtonEvent;
 	static {
 		try {
@@ -64,12 +48,12 @@ public class GLWindowEvents {
 	private GLFWWindowSizeCallback sizeCallback;
 	private GLFWCursorPosCallback cursorCallback;
 	private GLFWCharCallback charCallback;
-
 	private GLFWMouseButtonCallback mouseButtonCallback;
 
 	private GLFWFramebufferSizeCallback fbSizeCallback;
 
 	private GLFWCursorEnterCallback cursorEnterCallback;
+
 	private BlockingQueue<Entry<Method, Object[]>> eventQueue = new LinkedBlockingQueue<>();
 	private int width, height;
 	private int fbWidth, fbHeight;
@@ -79,7 +63,6 @@ public class GLWindowEvents {
 	private float scrollPosX, scrollPosY;
 	private int mouseButtonStates;
 	private float dragStartX, dragStartY;
-
 	private Thread eventProcessor;
 
 	private final IntBuffer tmpX = BufferUtils.createIntBuffer(1), tmpY = BufferUtils.createIntBuffer(1);
@@ -367,6 +350,23 @@ public class GLWindowEvents {
 			float ny = (float) yp.get(0);
 			this.mouseX = nx;
 			this.mouseY = ny;
+		}
+	}
+
+	private class EventProcessorThread implements Runnable {
+		@Override
+		public void run() {
+			System.out.println("Event processor beginning...");
+			while (attached.valid()) {
+				try {
+					Entry<Method, Object[]> event = eventQueue.take();
+					event.getKey().invoke(GLWindowEvents.this, event.getValue());
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.err.println("Event processing failed.");
+				}
+			}
+			System.out.println("Event processor ending...");
 		}
 	}
 }

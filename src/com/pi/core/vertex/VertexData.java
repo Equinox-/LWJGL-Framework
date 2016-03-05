@@ -17,16 +17,12 @@ import com.pi.math.vector.VectorBuff;
 import com.pi.math.volume.BoundingArea;
 
 public class VertexData<E> extends GPUObject<VertexData<E>> implements Iterable<E> {
-	public static interface PositionVertex<E> {
-		public VectorBuff position(E vtx);
-	}
 	private E[] vertexDB;
 	public final Class<E> vertexClass;
 	private int capacity;
 	private int count;
 	private final VertexLayout layout;
 	public final GLGenericBuffer bufferObject;
-
 	private VertexArrayObject vao = new VertexArrayObject();
 
 	public VertexData(Class<E> vertexClass, GLGenericBuffer data) {
@@ -223,5 +219,9 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements Iterable<
 
 	public int vertexSize() {
 		return layout.structureSize;
+	}
+
+	public static interface PositionVertex<E> {
+		public VectorBuff position(E vtx);
 	}
 }

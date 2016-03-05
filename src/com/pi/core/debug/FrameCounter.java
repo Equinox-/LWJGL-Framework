@@ -14,44 +14,6 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL33;
 
 public class FrameCounter {
-	public static enum FrameParam {
-		FRAMES,
-		BUFFER_BINDS,
-		BUFFER_UPLOADS,
-		BUFFER_THROUGHPUT("Bpf"),
-		VAO_CHANGE,
-		SHADER_CHANGE,
-		SHADER_DATA_COMMIT,
-		TEXTURE_BINDS,
-		UNIFORM_BUFFER_INDEXED;
-
-		static {
-			int mlen = 0;
-			for (FrameParam p : values())
-				mlen = Math.max(mlen, p.name().length());
-			mlen += 4;
-			StringBuilder bs = new StringBuilder(mlen);
-			for (FrameParam p : values()) {
-				bs.append(p.name());
-				while (bs.length() < mlen)
-					bs.append(' ');
-				p.namePad = bs.toString();
-				bs.delete(0, bs.length());
-			}
-		}
-
-		private String namePad;
-
-		private final String unit;
-
-		private FrameParam() {
-			this("pf");
-		}
-
-		private FrameParam(String unit) {
-			this.unit = unit;
-		}
-	}
 	private static final ThreadLocal<FrameCounter> fCounts = ThreadLocal.withInitial(new Supplier<FrameCounter>() {
 		@Override
 		public FrameCounter get() {
@@ -68,7 +30,6 @@ public class FrameCounter {
 		counter().inc(p, c);
 	}
 	private final int[] counters = new int[FrameParam.values().length];
-
 	private final int blend; // Blend stats over 10 frames.
 
 	private final long[][] frameTimes;
@@ -209,5 +170,44 @@ public class FrameCounter {
 	public void switchUpdateToSwap() {
 		final int frames = counters[FrameParam.FRAMES.ordinal()];
 		frameTimes[frames][4] = System.currentTimeMillis();
+	}
+
+	public static enum FrameParam {
+		FRAMES,
+		BUFFER_BINDS,
+		BUFFER_UPLOADS,
+		BUFFER_THROUGHPUT("Bpf"),
+		VAO_CHANGE,
+		SHADER_CHANGE,
+		SHADER_DATA_COMMIT,
+		TEXTURE_BINDS,
+		UNIFORM_BUFFER_INDEXED;
+
+		static {
+			int mlen = 0;
+			for (FrameParam p : values())
+				mlen = Math.max(mlen, p.name().length());
+			mlen += 4;
+			StringBuilder bs = new StringBuilder(mlen);
+			for (FrameParam p : values()) {
+				bs.append(p.name());
+				while (bs.length() < mlen)
+					bs.append(' ');
+				p.namePad = bs.toString();
+				bs.delete(0, bs.length());
+			}
+		}
+
+		private String namePad;
+
+		private final String unit;
+
+		private FrameParam() {
+			this("pf");
+		}
+
+		private FrameParam(String unit) {
+			this.unit = unit;
+		}
 	}
 }

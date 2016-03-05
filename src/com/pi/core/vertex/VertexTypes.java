@@ -5,6 +5,9 @@ import com.pi.math.vector.VectorBuff2;
 import com.pi.math.vector.VectorBuff3;
 
 public class VertexTypes {
+	private VertexTypes() {
+	}
+
 	public static class ColoredVertex3D extends LitVertex3D {
 		@AttrLayout(layout = 2)
 		public ByteVector4 color;
@@ -33,8 +36,5 @@ public class VertexTypes {
 	public static class Vertex3D {
 		@AttrLayout(layout = 0)
 		public VectorBuff3 pos;
-	}
-
-	private VertexTypes() {
 	}
 }

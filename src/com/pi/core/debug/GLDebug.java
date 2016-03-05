@@ -17,16 +17,9 @@ import com.pi.core.misc.VertexArrayObject;
 import com.pi.core.texture.Texture;
 
 public class GLDebug {
-	private static enum DebugMode {
-		GL43,
-		KHR,
-		ARB,
-		NONE;
-	}
 	private static boolean reportStacks = false;
 	private static DebugMode mode = DebugMode.NONE;
 	public static boolean reportNotifications = false;
-
 	private static int id = 0;
 
 	private static final GLDebugMessageCallback debug_callback = new GLDebugMessageCallback() {
@@ -80,6 +73,7 @@ public class GLDebug {
 			return "Unknown[0x" + Integer.toString(severity, 16) + "]";
 		}
 	}
+
 	private static String debugSource(int source) {
 		switch (source) {
 		case ARBDebugOutput.GL_DEBUG_SOURCE_API_ARB:
@@ -98,7 +92,6 @@ public class GLDebug {
 			return "Unknown[0x" + Integer.toString(source, 16) + "]";
 		}
 	}
-
 	private static String debugType(int type) {
 		switch (type) {
 		case ARBDebugOutput.GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
@@ -239,5 +232,12 @@ public class GLDebug {
 			}
 		}
 		return false;
+	}
+
+	private static enum DebugMode {
+		GL43,
+		KHR,
+		ARB,
+		NONE;
 	}
 }
