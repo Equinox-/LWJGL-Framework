@@ -8,9 +8,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AttrLayout {
-	public int layout();
+	public int arraySize() default 1;
 
 	public int dimension() default -1;
 	
-	public int arraySize() default 1;
+	public int layout();
 }

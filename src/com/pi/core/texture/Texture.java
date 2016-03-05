@@ -46,14 +46,40 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 		}
 	}
 
-	private int texture;
-	private final int internalFormat;
+	public static void glActiveTexture(int n) {
+		GL13.glActiveTexture(GL13.GL_TEXTURE0 + n);
+		activeTextureUnit = n;
+	}
+	public static void unbind() {
+		if (currentTexture[activeTextureUnit] == null || currentTexture[activeTextureUnit].get() == null)
+			return;
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		currentTexture[activeTextureUnit] = null;
+		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
+	}
 
+	public static void unbind(int unit) {
+		if (currentTexture[unit] == null || currentTexture[unit].get() == null)
+			return;
+		if (GL.getCapabilities().GL_ARB_direct_state_access) {
+			ARBDirectStateAccess.glBindTextureUnit(unit, 0);
+		} else {
+			glActiveTexture(unit);
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+		}
+		currentTexture[activeTextureUnit] = null;
+		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
+	}
+	private int texture;
+
+	private final int internalFormat;
 	private final int width, height;
 	private int mipmapLevels;
 
 	private TextureWrap sWrap, tWrap;
+
 	private TextureFilter mipmapFilter;
+
 	private TextureFilter minFilter, magFilter;
 
 	public Texture(int width, int height, int internalFormat) {
@@ -73,14 +99,45 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 		this.mipmapLevels = 0;
 	}
 
-	public Texture wrap(TextureWrap sWrap, TextureWrap tWrap) {
-		if (sWrap == null)
-			throw new IllegalArgumentException("SWrap can't be null");
-		if (tWrap == null)
-			throw new IllegalArgumentException("TWrap can't be null");
-		this.sWrap = sWrap;
-		this.tWrap = tWrap;
-		return this;
+	@Override
+	public void bind() {
+		if (texture < 0)
+			throw new RuntimeException("Can't bind an unallocated texture.");
+		if (currentTexture[activeTextureUnit] != null && currentTexture[activeTextureUnit].get() == this)
+			return;
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		currentTexture[activeTextureUnit] = new WeakReference<>(this);
+		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
+	}
+
+	public void bind(int unit) {
+		if (texture < 0)
+			throw new RuntimeException("Can't bind an unallocated texture.");
+		if (currentTexture[unit] != null && currentTexture[unit].get() == this)
+			return;
+		if (GL.getCapabilities().GL_ARB_direct_state_access) {
+			ARBDirectStateAccess.glBindTextureUnit(unit, texture);
+		} else {
+			glActiveTexture(unit);
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		}
+		currentTexture[unit] = new WeakReference<>(this);
+		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
+	}
+
+	/**
+	 * The texture MUST be bound for this to work.
+	 */
+	protected void commitParameters() {
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, sWrap.glID);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, tWrap.glID);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, mipmapFilter != null
+				? MIPMAP_FILTER_TABLE[mipmapFilter.ordinal()][minFilter.ordinal()] : minFilter.glID);
+		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, magFilter.glID);
+	}
+
+	public void cpuFree() {
+		// Do nothing for the generic texture
 	}
 
 	public Texture filter(TextureFilter mipmap, TextureFilter minFilter, TextureFilter magFilter) {
@@ -97,22 +154,17 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 		return this;
 	}
 
-	public Texture mipmapLevels(int mipmapLevels) {
-		if (texture >= 0)
-			throw new IllegalStateException("Can't change the number of mipmap levels when texture is allocated.");
-		this.mipmapLevels = mipmapLevels;
-		return this;
+	public int getHeight() {
+		return height;
 	}
 
-	/**
-	 * The texture MUST be bound for this to work.
-	 */
-	protected void commitParameters() {
-		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, sWrap.glID);
-		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, tWrap.glID);
-		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, mipmapFilter != null
-				? MIPMAP_FILTER_TABLE[mipmapFilter.ordinal()][minFilter.ordinal()] : minFilter.glID);
-		GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, magFilter.glID);
+	@Override
+	public int getID() {
+		return texture;
+	}
+
+	public int getWidth() {
+		return width;
 	}
 
 	@Override
@@ -151,72 +203,20 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 		texture = -1;
 	}
 
-	@Override
-	public int getID() {
-		return texture;
+	public Texture mipmapLevels(int mipmapLevels) {
+		if (texture >= 0)
+			throw new IllegalStateException("Can't change the number of mipmap levels when texture is allocated.");
+		this.mipmapLevels = mipmapLevels;
+		return this;
 	}
 
-	public static void glActiveTexture(int n) {
-		GL13.glActiveTexture(GL13.GL_TEXTURE0 + n);
-		activeTextureUnit = n;
-	}
-
-	@Override
-	public void bind() {
-		if (texture < 0)
-			throw new RuntimeException("Can't bind an unallocated texture.");
-		if (currentTexture[activeTextureUnit] != null && currentTexture[activeTextureUnit].get() == this)
-			return;
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
-		currentTexture[activeTextureUnit] = new WeakReference<>(this);
-		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
-	}
-
-	public void bind(int unit) {
-		if (texture < 0)
-			throw new RuntimeException("Can't bind an unallocated texture.");
-		if (currentTexture[unit] != null && currentTexture[unit].get() == this)
-			return;
-		if (GL.getCapabilities().GL_ARB_direct_state_access) {
-			ARBDirectStateAccess.glBindTextureUnit(unit, texture);
-		} else {
-			glActiveTexture(unit);
-			GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
-		}
-		currentTexture[unit] = new WeakReference<>(this);
-		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
-	}
-
-	public static void unbind() {
-		if (currentTexture[activeTextureUnit] == null || currentTexture[activeTextureUnit].get() == null)
-			return;
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-		currentTexture[activeTextureUnit] = null;
-		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
-	}
-
-	public static void unbind(int unit) {
-		if (currentTexture[unit] == null || currentTexture[unit].get() == null)
-			return;
-		if (GL.getCapabilities().GL_ARB_direct_state_access) {
-			ARBDirectStateAccess.glBindTextureUnit(unit, 0);
-		} else {
-			glActiveTexture(unit);
-			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-		}
-		currentTexture[activeTextureUnit] = null;
-		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
-	}
-
-	public int getWidth() {
-		return width;
-	}
-
-	public int getHeight() {
-		return height;
-	}
-
-	public void cpuFree() {
-		// Do nothing for the generic texture
+	public Texture wrap(TextureWrap sWrap, TextureWrap tWrap) {
+		if (sWrap == null)
+			throw new IllegalArgumentException("SWrap can't be null");
+		if (tWrap == null)
+			throw new IllegalArgumentException("TWrap can't be null");
+		this.sWrap = sWrap;
+		this.tWrap = tWrap;
+		return this;
 	}
 }

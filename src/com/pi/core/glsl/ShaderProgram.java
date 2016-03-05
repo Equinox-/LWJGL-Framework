@@ -29,27 +29,11 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 	static final int MAX_TEXTURE_UNITS = 16;
 	private static ShaderProgram currentShader;
 
-	private int programID;
-	private final List<Integer> attachedObjects;
-
-	private final Map<String, ShaderUniform> uniformsByName;
-	private ShaderUniform[] uniformsByID;
-	private final Map<String, ShaderUniformBlock> uniformBlocksByName;
-	private ShaderUniformBlock[] uniformBlocksByID;
-
 	private final static Map<String, Integer> SHADER_TYPE_MAP;
 	private final static Map<Integer, String> SHADER_TYPE_MAP_INVERSE;
+
 	// Limits rebinding
 	private static final Texture[] ACTIVE_TEXTURE_UNITS = new Texture[MAX_TEXTURE_UNITS];
-	// Needs to be accessed by ShaderUniform; therefore not private
-	public Texture[] textureUnit;
-	public int[] textureUnitRefCount;
-
-	private static void insertShaderType(String t, int id) {
-		SHADER_TYPE_MAP.put(t, id);
-		SHADER_TYPE_MAP_INVERSE.put(id, t);
-	}
-
 	static {
 		SHADER_TYPE_MAP = new HashMap<>();
 		SHADER_TYPE_MAP_INVERSE = new HashMap<>();
@@ -60,23 +44,6 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 		insertShaderType("GL_FRAGMENT_SHADER", GL20.GL_FRAGMENT_SHADER);
 		insertShaderType("GL_COMPUTE_SHADER", GL43.GL_COMPUTE_SHADER);
 	}
-
-	public ShaderProgram() {
-		this.uniformsByName = new HashMap<>();
-		this.uniformBlocksByName = new HashMap<>();
-		this.attachedObjects = new ArrayList<>(2);
-		this.programID = -1;
-		this.textureUnit = new Texture[MAX_TEXTURE_UNITS];
-		this.textureUnitRefCount = new int[MAX_TEXTURE_UNITS];
-	}
-
-	@Override
-	protected void gpuAllocInternal() {
-		if (this.programID >= 0)
-			gpuFreeInternal();
-		this.programID = GL20.glCreateProgram();
-	}
-
 	@SuppressWarnings("unused")
 	private static int compileShader(String src, int type) {
 		String processedSource = ShaderPreprocessor.preprocess(src);
@@ -111,6 +78,42 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 		}
 		return shader;
 	}
+	public static ShaderProgram current() {
+		return currentShader;
+	}
+
+	private static void insertShaderType(String t, int id) {
+		SHADER_TYPE_MAP.put(t, id);
+		SHADER_TYPE_MAP_INVERSE.put(id, t);
+	}
+	public static void unbind() {
+		GL20.glUseProgram(0);
+		FrameCounter.increment(FrameParam.SHADER_CHANGE);
+		currentShader = null;
+	}
+	private int programID;
+	private final List<Integer> attachedObjects;
+	private final Map<String, ShaderUniform> uniformsByName;
+
+	private ShaderUniform[] uniformsByID;
+
+	private final Map<String, ShaderUniformBlock> uniformBlocksByName;
+
+	private ShaderUniformBlock[] uniformBlocksByID;
+
+	// Needs to be accessed by ShaderUniform; therefore not private
+	public Texture[] textureUnit;
+
+	public int[] textureUnitRefCount;
+
+	public ShaderProgram() {
+		this.uniformsByName = new HashMap<>();
+		this.uniformBlocksByName = new HashMap<>();
+		this.attachedObjects = new ArrayList<>(2);
+		this.programID = -1;
+		this.textureUnit = new Texture[MAX_TEXTURE_UNITS];
+		this.textureUnitRefCount = new int[MAX_TEXTURE_UNITS];
+	}
 
 	public ShaderProgram attach(int type, InputStream src) {
 		try {
@@ -121,12 +124,61 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 		return this;
 	}
 
+	@Override
+	public void bind() {
+		if (programID == -1)
+			throw new RuntimeException("Attempted to bind an unallocated shader.");
+		if (currentShader == this)
+			return;
+		GL20.glUseProgram(programID);
+		FrameCounter.increment(FrameParam.SHADER_CHANGE);
+		currentShader = this;
+	}
+
+	public void commitData() {
+		for (int i = 0; i < textureUnit.length; i++) {
+			if (ACTIVE_TEXTURE_UNITS[i] != textureUnit[i]) {
+				if (textureUnit[i] != null)
+					textureUnit[i].bind(i);
+				// Unbound textures just have an undefined state.
+				// else
+				// Texture.unbind(i);
+				ACTIVE_TEXTURE_UNITS[i] = textureUnit[i];
+			}
+		}
+		for (ShaderUniformBlock block : uniformBlocksByID) {
+			if (ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
+				block.uploadIfNeeded();
+			block.recheckBinding();
+		}
+		FrameCounter.increment(FrameParam.SHADER_DATA_COMMIT);
+	}
+
 	public ShaderProgram fragment(InputStream src) {
 		return attach(GL20.GL_FRAGMENT_SHADER, src);
 	}
 
-	public ShaderProgram vertex(InputStream src) {
-		return attach(GL20.GL_VERTEX_SHADER, src);
+	@Override
+	public int getID() {
+		return programID;
+	}
+
+	@Override
+	protected void gpuAllocInternal() {
+		if (this.programID >= 0)
+			gpuFreeInternal();
+		this.programID = GL20.glCreateProgram();
+	}
+
+	@Override
+	protected void gpuFreeInternal() {
+		unbind();
+		for (int obj : attachedObjects) {
+			GL20.glDetachShader(programID, obj);
+			GL20.glDeleteShader(obj);
+		}
+		GL20.glDeleteProgram(programID);
+		programID = -1;
 	}
 
 	public ShaderProgram joined(InputStream src) {
@@ -176,47 +228,6 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 		return this;
 	}
 
-	@Override
-	protected void gpuFreeInternal() {
-		unbind();
-		for (int obj : attachedObjects) {
-			GL20.glDetachShader(programID, obj);
-			GL20.glDeleteShader(obj);
-		}
-		GL20.glDeleteProgram(programID);
-		programID = -1;
-	}
-
-	public boolean using() {
-		return currentShader == this;
-	}
-
-	@Override
-	public int getID() {
-		return programID;
-	}
-
-	@Override
-	public void bind() {
-		if (programID == -1)
-			throw new RuntimeException("Attempted to bind an unallocated shader.");
-		if (currentShader == this)
-			return;
-		GL20.glUseProgram(programID);
-		FrameCounter.increment(FrameParam.SHADER_CHANGE);
-		currentShader = this;
-	}
-
-	public static void unbind() {
-		GL20.glUseProgram(0);
-		FrameCounter.increment(FrameParam.SHADER_CHANGE);
-		currentShader = null;
-	}
-
-	public static ShaderProgram current() {
-		return currentShader;
-	}
-
 	private void loadUniforms() {
 		int uniformBlockCount = GL20.glGetProgrami(programID, GL31.GL_ACTIVE_UNIFORM_BLOCKS);
 		uniformBlocksByID = new ShaderUniformBlock[uniformBlockCount];
@@ -237,14 +248,6 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 		}
 	}
 
-	public ShaderUniformBlock uniformBlock(int id) {
-		return uniformBlocksByID[id];
-	}
-
-	public ShaderUniformBlock uniformBlock(String name) {
-		return uniformBlocksByName.get(name);
-	}
-
 	public ShaderUniform uniform(int id) {
 		return uniformsByID[id];
 	}
@@ -257,22 +260,19 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 		return v;
 	}
 
-	public void commitData() {
-		for (int i = 0; i < textureUnit.length; i++) {
-			if (ACTIVE_TEXTURE_UNITS[i] != textureUnit[i]) {
-				if (textureUnit[i] != null)
-					textureUnit[i].bind(i);
-				// Unbound textures just have an undefined state.
-				// else
-				// Texture.unbind(i);
-				ACTIVE_TEXTURE_UNITS[i] = textureUnit[i];
-			}
-		}
-		for (ShaderUniformBlock block : uniformBlocksByID) {
-			if (ShaderUniformBlock.ALLOW_UTILITY_ACCESS)
-				block.uploadIfNeeded();
-			block.recheckBinding();
-		}
-		FrameCounter.increment(FrameParam.SHADER_DATA_COMMIT);
+	public ShaderUniformBlock uniformBlock(int id) {
+		return uniformBlocksByID[id];
+	}
+
+	public ShaderUniformBlock uniformBlock(String name) {
+		return uniformBlocksByName.get(name);
+	}
+
+	public boolean using() {
+		return currentShader == this;
+	}
+
+	public ShaderProgram vertex(InputStream src) {
+		return attach(GL20.GL_VERTEX_SHADER, src);
 	}
 }

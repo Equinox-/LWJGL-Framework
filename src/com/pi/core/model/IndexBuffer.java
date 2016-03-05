@@ -12,14 +12,6 @@ import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.util.GPUObject;
 
 public class IndexBuffer extends GPUObject<IndexBuffer> {
-	private final GLGenericBuffer indexBuffer;
-	private int indexType, indexSize;
-	private int indexCount;
-	private final PrimitiveType mode;
-
-	private IntBuffer intBuff;
-	private ShortBuffer shortBuff;
-
 	public static int chooseIndexSize(int maxVertexID) {
 		if (maxVertexID < (1 << 8)) {
 			return 1;
@@ -29,7 +21,6 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 			return 4;
 		}
 	}
-
 	public static int chooseIndexSize(int[] index, int offset, int rightOffset) {
 		int maxVertexID = 0;
 		for (int i = offset; i < rightOffset; i++)
@@ -46,7 +37,6 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 			return 4;
 		}
 	}
-
 	private static int indexTypeFromSize(int size) {
 		switch (size) {
 		case 1:
@@ -58,6 +48,20 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		default:
 			throw new RuntimeException("Invalid index size.");
 		}
+	}
+	private final GLGenericBuffer indexBuffer;
+
+	private int indexType, indexSize;
+	private int indexCount;
+
+	private final PrimitiveType mode;
+
+	private IntBuffer intBuff;
+
+	private ShortBuffer shortBuff;
+
+	public IndexBuffer(PrimitiveType mode, GLGenericBuffer indices, int indexSize) {
+		this(mode, indexSize, indices);
 	}
 
 	private IndexBuffer(PrimitiveType mode, int indexSize, GLGenericBuffer indexBuffer) {
@@ -74,62 +78,13 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		this(mode, indices, 0, indices.length);
 	}
 
-	public IndexBuffer(PrimitiveType mode, GLGenericBuffer indices, int indexSize) {
-		this(mode, indexSize, indices);
-	}
-
 	public IndexBuffer(PrimitiveType mode, int[] indices, int offset, int count) {
 		this(mode, chooseIndexSize(indices, offset, offset + count), count);
 		write(indices, offset, count);
 	}
 
-	public PrimitiveType mode() {
-		return mode;
-	}
-
-	public int indexSize() {
-		return indexSize;
-	}
-
-	public int indexCount() {
-		return indexCount;
-	}
-
 	public GLGenericBuffer buffer() {
 		return indexBuffer;
-	}
-
-	public void resize(int nCount, int nSize) {
-		if (indexSize * indexCount < nCount * nSize || indexSize * indexCount > (12 + nCount) * nSize) {
-			indexBuffer.resize(nCount * nSize);
-			this.intBuff = this.indexBuffer.integerImageAt(0);
-			this.shortBuff = this.indexBuffer.shortImageAt(0);
-		}
-		this.indexSize = nSize;
-		this.indexCount = nCount;
-		this.indexType = indexTypeFromSize(this.indexSize);
-	}
-
-	public void write(int[] indices, int offset, int count) {
-		this.indexCount = count;
-		final int rightOffset = offset + count;
-		switch (indexSize) {
-		case 1:
-			for (int i = offset; i < rightOffset; i++)
-				indexBuffer.put(i - offset, (byte) indices[i]);
-			break;
-		case 2:
-			for (int i = offset; i < rightOffset; i++)
-				shortBuff.put(i - offset, (short) indices[i]);
-			break;
-		case 4:
-			for (int i = offset; i < rightOffset; i++)
-				intBuff.put(i - offset, indices[i]);
-			break;
-		default:
-			// Should never, ever, ever happen
-			throw new RuntimeException("Invalid index size.");
-		}
 	}
 
 	public int getIndex(int k) {
@@ -159,14 +114,21 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		indexBuffer.gpuUpload();
 	}
 
+	public int indexCount() {
+		return indexCount;
+	}
+
+	public int indexSize() {
+		return indexSize;
+	}
+
+	public PrimitiveType mode() {
+		return mode;
+	}
+
 	public void render() {
 		indexBuffer.bind(BufferType.ELEMENT_ARRAY);
 		GL11.glDrawElements(mode.mode(), indexCount, indexType, 0);
-	}
-
-	public void renderOffset(int base) {
-		indexBuffer.bind(BufferType.ELEMENT_ARRAY);
-		GL32.glDrawElementsBaseVertex(mode.mode(), indexCount, indexType, 0, base);
 	}
 
 	public void renderInstances(int n) {
@@ -179,8 +141,46 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 		GL32.glDrawElementsInstancedBaseVertex(mode.mode(), indexCount, indexType, 0, n, base);
 	}
 
+	public void renderOffset(int base) {
+		indexBuffer.bind(BufferType.ELEMENT_ARRAY);
+		GL32.glDrawElementsBaseVertex(mode.mode(), indexCount, indexType, 0, base);
+	}
+
+	public void resize(int nCount, int nSize) {
+		if (indexSize * indexCount < nCount * nSize || indexSize * indexCount > (12 + nCount) * nSize) {
+			indexBuffer.resize(nCount * nSize);
+			this.intBuff = this.indexBuffer.integerImageAt(0);
+			this.shortBuff = this.indexBuffer.shortImageAt(0);
+		}
+		this.indexSize = nSize;
+		this.indexCount = nCount;
+		this.indexType = indexTypeFromSize(this.indexSize);
+	}
+
 	@Override
 	public String toString() {
 		return mode.name() + " x" + (indexCount / mode.stride());
+	}
+
+	public void write(int[] indices, int offset, int count) {
+		this.indexCount = count;
+		final int rightOffset = offset + count;
+		switch (indexSize) {
+		case 1:
+			for (int i = offset; i < rightOffset; i++)
+				indexBuffer.put(i - offset, (byte) indices[i]);
+			break;
+		case 2:
+			for (int i = offset; i < rightOffset; i++)
+				shortBuff.put(i - offset, (short) indices[i]);
+			break;
+		case 4:
+			for (int i = offset; i < rightOffset; i++)
+				intBuff.put(i - offset, indices[i]);
+			break;
+		default:
+			// Should never, ever, ever happen
+			throw new RuntimeException("Invalid index size.");
+		}
 	}
 }

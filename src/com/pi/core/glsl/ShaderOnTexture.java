@@ -17,6 +17,14 @@ public class ShaderOnTexture extends GPUObject<ShaderOnTexture> {
 		this.fbo.attachColor(result);
 	}
 
+	public FrameBuffer getFBO() {
+		return fbo;
+	}
+
+	public Texture getResult() {
+		return result;
+	}
+
 	@Override
 	protected void gpuAllocInternal() {
 		this.result.gpuAlloc();
@@ -29,10 +37,6 @@ public class ShaderOnTexture extends GPUObject<ShaderOnTexture> {
 		this.result.gpuFree();
 	}
 
-	public Texture getResult() {
-		return result;
-	}
-
 	public void render(ShaderProgram prog) {
 		GL11.glViewport(0, 0, result.getWidth(), result.getHeight());
 		fbo.bind();
@@ -41,10 +45,6 @@ public class ShaderOnTexture extends GPUObject<ShaderOnTexture> {
 		BasicShapes.shapes().getNDCScreenQuad().render();
 		ShaderProgram.unbind();
 		FrameBuffer.unbind();
-	}
-
-	public FrameBuffer getFBO() {
-		return fbo;
 	}
 
 }

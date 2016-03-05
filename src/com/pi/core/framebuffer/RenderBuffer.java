@@ -18,17 +18,6 @@ public class RenderBuffer extends GPUObject<RenderBuffer>implements FrameBufferA
 		this.msaaSamples = 0;
 	}
 
-	public RenderBuffer msaaSamples(int msaaSamples) {
-		if (glID >= 0)
-			throw new IllegalStateException("Can't change the sample count when the render buffer is allocated.");
-		this.msaaSamples = msaaSamples;
-		return this;
-	}
-
-	public boolean isMultiSampled() {
-		return msaaSamples > 0;
-	}
-
 	@Override
 	public int getID() {
 		return glID;
@@ -51,5 +40,16 @@ public class RenderBuffer extends GPUObject<RenderBuffer>implements FrameBufferA
 		if (glID >= 0)
 			GL30.glDeleteRenderbuffers(glID);
 		glID = -1;
+	}
+
+	public boolean isMultiSampled() {
+		return msaaSamples > 0;
+	}
+
+	public RenderBuffer msaaSamples(int msaaSamples) {
+		if (glID >= 0)
+			throw new IllegalStateException("Can't change the sample count when the render buffer is allocated.");
+		this.msaaSamples = msaaSamples;
+		return this;
 	}
 }

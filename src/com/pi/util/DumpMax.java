@@ -32,6 +32,11 @@ public class DumpMax {
 	public static void main(String[] args) {
 		GLWindow tmp = new GLWindow() {
 			@Override
+			public void dispose() {
+				// Nothing
+			}
+
+			@Override
 			public void init() {
 				for (Class c : clazz) {
 					for (Field f : c.getFields()) {
@@ -54,11 +59,6 @@ public class DumpMax {
 
 			@Override
 			public void update() {
-				// Nothing
-			}
-
-			@Override
-			public void dispose() {
 				// Nothing
 			}
 		};

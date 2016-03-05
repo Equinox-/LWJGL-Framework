@@ -13,7 +13,24 @@ import com.pi.core.util.GPUObject;
 public class VertexArrayObject extends GPUObject<VertexArrayObject>implements GLIdentifiable, Bindable {
 	private static WeakReference<VertexArrayObject> current = null;
 
+	public static void unbind() {
+		if (current == null)
+			return;
+		GL30.glBindVertexArray(0);
+		FrameCounter.increment(FrameParam.VAO_CHANGE);
+		current = null;
+	}
+
 	private int vao = -1;
+
+	@Override
+	public void bind() {
+		if (current != null && current.get() == this)
+			return;
+		GL30.glBindVertexArray(vao);
+		current = new WeakReference<>(this);
+		FrameCounter.increment(FrameParam.VAO_CHANGE);
+	}
 
 	@Override
 	public int getID() {
@@ -28,22 +45,5 @@ public class VertexArrayObject extends GPUObject<VertexArrayObject>implements GL
 	@Override
 	protected void gpuFreeInternal() {
 		GL30.glDeleteVertexArrays(vao);
-	}
-
-	@Override
-	public void bind() {
-		if (current != null && current.get() == this)
-			return;
-		GL30.glBindVertexArray(vao);
-		current = new WeakReference<>(this);
-		FrameCounter.increment(FrameParam.VAO_CHANGE);
-	}
-
-	public static void unbind() {
-		if (current == null)
-			return;
-		GL30.glBindVertexArray(0);
-		FrameCounter.increment(FrameParam.VAO_CHANGE);
-		current = null;
 	}
 }

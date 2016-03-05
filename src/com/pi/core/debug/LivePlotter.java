@@ -30,16 +30,6 @@ public class LivePlotter extends JFrame {
 		this.scale = scale;
 	}
 
-	private int x(int x) {
-		return (getWidth() - 2 * GEN_PAD) * (x - 1) / (chunks - 1) + GEN_PAD;
-	}
-
-	private int y(float y, float min, float max) {
-		if (max == min)
-			return (getHeight() - 2 * GEN_PAD - Y_TOP_PAD) / 2 + Y_TOP_PAD + GEN_PAD;
-		return (int) ((getHeight() - 2 * GEN_PAD - Y_TOP_PAD) * (1 - (y - min) / (max - min))) + Y_TOP_PAD + GEN_PAD;
-	}
-
 	public void log(float... v) {
 		if (v.length != legend.length)
 			throw new IllegalArgumentException("Must provide " + v.length + " entries");
@@ -69,5 +59,15 @@ public class LivePlotter extends JFrame {
 		strat.show();
 
 		curr = (curr + 1) % chunks;
+	}
+
+	private int x(int x) {
+		return (getWidth() - 2 * GEN_PAD) * (x - 1) / (chunks - 1) + GEN_PAD;
+	}
+
+	private int y(float y, float min, float max) {
+		if (max == min)
+			return (getHeight() - 2 * GEN_PAD - Y_TOP_PAD) / 2 + Y_TOP_PAD + GEN_PAD;
+		return (int) ((getHeight() - 2 * GEN_PAD - Y_TOP_PAD) * (1 - (y - min) / (max - min))) + Y_TOP_PAD + GEN_PAD;
 	}
 }

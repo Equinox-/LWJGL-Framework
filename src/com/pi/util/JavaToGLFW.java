@@ -11,24 +11,6 @@ public class JavaToGLFW {
 	private static final Map<Integer, Integer> jToG = new HashMap<>();
 	private static final Map<Integer, Integer> gToJ = new HashMap<>();
 
-	private static void ins(int java, int glfw) {
-		if (jToG.containsKey(java))
-			throw new IllegalStateException("Java key already registered");
-		jToG.put(java, glfw);
-		if (gToJ.containsKey(glfw))
-			throw new IllegalStateException("OpenGL key already registered");
-		gToJ.put(glfw, java);
-	}
-
-	public static int javaToGLFW(int java) {
-		Integer i = jToG.get(java);
-		return i != null ? i : -1;
-	}
-
-	public static int glfwToJava(int glfw) {
-		return gToJ.get(glfw);
-	}
-
 	static {
 		// ins(KeyEvent.VK_DEAD_TILDE, GLFW.GLFW_KEY_GRAVE_ACCENT);
 		ins(KeyEvent.VK_1, GLFW.GLFW_KEY_1);
@@ -146,5 +128,23 @@ public class JavaToGLFW {
 		ins(KeyEvent.VK_PRINTSCREEN, GLFW.GLFW_KEY_PRINT_SCREEN);
 		ins(KeyEvent.VK_SCROLL_LOCK, GLFW.GLFW_KEY_SCROLL_LOCK);
 		ins(KeyEvent.VK_PAUSE, GLFW.GLFW_KEY_PAUSE);
+	}
+
+	public static int glfwToJava(int glfw) {
+		return gToJ.get(glfw);
+	}
+
+	private static void ins(int java, int glfw) {
+		if (jToG.containsKey(java))
+			throw new IllegalStateException("Java key already registered");
+		jToG.put(java, glfw);
+		if (gToJ.containsKey(glfw))
+			throw new IllegalStateException("OpenGL key already registered");
+		gToJ.put(glfw, java);
+	}
+
+	public static int javaToGLFW(int java) {
+		Integer i = jToG.get(java);
+		return i != null ? i : -1;
 	}
 }

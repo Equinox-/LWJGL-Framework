@@ -17,24 +17,26 @@ import com.pi.math.vector.VectorBuff;
 import com.pi.math.volume.BoundingArea;
 
 public class VertexData<E> extends GPUObject<VertexData<E>> implements Iterable<E> {
+	public static interface PositionVertex<E> {
+		public VectorBuff position(E vtx);
+	}
 	private E[] vertexDB;
 	public final Class<E> vertexClass;
 	private int capacity;
 	private int count;
 	private final VertexLayout layout;
 	public final GLGenericBuffer bufferObject;
+
 	private VertexArrayObject vao = new VertexArrayObject();
 
-	private void init() {
-		cpuAlloc();
-	}
-
-	public E v(int i) {
-		return vertexDB[i];
-	}
-
-	public int count() {
-		return count;
+	public VertexData(Class<E> vertexClass, GLGenericBuffer data) {
+		this.vertexClass = vertexClass;
+		this.layout = new VertexLayout(vertexClass);
+		this.count = data.size() / this.layout.structureSize;
+		this.capacity = count;
+		this.layout.validate();
+		this.bufferObject = data;
+		init();
 	}
 
 	public VertexData(Class<E> vertexClass, int count) {
@@ -47,29 +49,76 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements Iterable<
 		init();
 	}
 
-	public VertexData(Class<E> vertexClass, GLGenericBuffer data) {
-		this.vertexClass = vertexClass;
-		this.layout = new VertexLayout(vertexClass);
-		this.count = data.size() / this.layout.structureSize;
-		this.capacity = count;
-		this.layout.validate();
-		this.bufferObject = data;
-		init();
+	public void activate() {
+		vao.bind();
 	}
 
-	public VertexData<E> resize(int n, int pad) {
-		int oc = vertexDB.length;
-		this.count = n;
-		if (oc < n || oc > n + pad) {
-			this.capacity = n + pad;
-			this.bufferObject.resize(capacity * this.layout.structureSize, 0);
-			cpuAlloc();
-		}
-		return this;
+	public int count() {
+		return count;
 	}
 
-	public int vertexSize() {
-		return layout.structureSize;
+	@SuppressWarnings("unchecked")
+	public void cpuAlloc() {
+		this.bufferObject.cpuAlloc();
+		this.vertexDB = (E[]) Array.newInstance(vertexClass, capacity);
+		populate(0, capacity);
+	}
+
+	public void cpuFree() {
+		this.bufferObject.cpuFree();
+		this.vertexDB = null;
+	}
+
+	@Override
+	protected void gpuAllocInternal() {
+		// Dump the buffer
+		vao.gpuAlloc();
+		vao.bind();
+
+		bufferObject.gpuAlloc();
+		setupVertexParams();
+		VertexArrayObject.unbind();
+	}
+
+	@Override
+	protected void gpuFreeInternal() {
+		vao.gpuFree();
+		bufferObject.gpuFree();
+	}
+
+	/**
+	 * If you changed the vertex data you need to resync the buffer. This does
+	 * that.
+	 */
+	@Override
+	protected void gpuUploadInternal() {
+		bufferObject.gpuUpload();
+	}
+
+	public void include(BoundingArea area, PositionVertex<? super E> cpy) {
+		for (int i = 0; i < vertexDB.length; i++)
+			area.include(cpy.position(vertexDB[i]));
+	}
+
+	private void init() {
+		cpuAlloc();
+	}
+
+	@Override
+	public Iterator<E> iterator() {
+		return new Iterator<E>() {
+			int head = 0;
+
+			@Override
+			public boolean hasNext() {
+				return head < count;
+			}
+
+			@Override
+			public E next() {
+				return vertexDB[head++];
+			}
+		};
 	}
 
 	private void populate(int left, int right) {
@@ -122,25 +171,15 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements Iterable<
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public void cpuAlloc() {
-		this.bufferObject.cpuAlloc();
-		this.vertexDB = (E[]) Array.newInstance(vertexClass, capacity);
-		populate(0, capacity);
-	}
-
-	public void cpuFree() {
-		this.bufferObject.cpuFree();
-		this.vertexDB = null;
-	}
-
-	/**
-	 * If you changed the vertex data you need to resync the buffer. This does
-	 * that.
-	 */
-	@Override
-	protected void gpuUploadInternal() {
-		bufferObject.gpuUpload();
+	public VertexData<E> resize(int n, int pad) {
+		int oc = vertexDB.length;
+		this.count = n;
+		if (oc < n || oc > n + pad) {
+			this.capacity = n + pad;
+			this.bufferObject.resize(capacity * this.layout.structureSize, 0);
+			cpuAlloc();
+		}
+		return this;
 	}
 
 	public void setupVertexParams() {
@@ -174,54 +213,15 @@ public class VertexData<E> extends GPUObject<VertexData<E>> implements Iterable<
 	}
 
 	@Override
-	protected void gpuAllocInternal() {
-		// Dump the buffer
-		vao.gpuAlloc();
-		vao.bind();
-
-		bufferObject.gpuAlloc();
-		setupVertexParams();
-		VertexArrayObject.unbind();
-	}
-
-	@Override
-	protected void gpuFreeInternal() {
-		vao.gpuFree();
-		bufferObject.gpuFree();
-	}
-
-	public void activate() {
-		vao.bind();
-	}
-
-	public static interface PositionVertex<E> {
-		public VectorBuff position(E vtx);
-	}
-
-	public void include(BoundingArea area, PositionVertex<? super E> cpy) {
-		for (int i = 0; i < vertexDB.length; i++)
-			area.include(cpy.position(vertexDB[i]));
-	}
-
-	@Override
 	public String toString() {
 		return vertexClass.getSimpleName() + " x" + count;
 	}
 
-	@Override
-	public Iterator<E> iterator() {
-		return new Iterator<E>() {
-			int head = 0;
+	public E v(int i) {
+		return vertexDB[i];
+	}
 
-			@Override
-			public boolean hasNext() {
-				return head < count;
-			}
-
-			@Override
-			public E next() {
-				return vertexDB[head++];
-			}
-		};
+	public int vertexSize() {
+		return layout.structureSize;
 	}
 }

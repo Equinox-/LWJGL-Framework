@@ -26,8 +26,10 @@ public class Model<E> extends GPUObject<Model<E>> {
 		this.indexes = index;
 	}
 
-	public final E vtx(int id) {
-		return vertexData.v(id);
+	public void cpuFree() {
+		vertexData.cpuFree();
+		for (IndexBuffer i : indexes)
+			i.buffer().cpuFree();
 	}
 
 	@Override
@@ -64,12 +66,6 @@ public class Model<E> extends GPUObject<Model<E>> {
 		indexes[0].render();
 	}
 
-	public void renderAll() {
-		vertexData.activate();
-		for (int i = 0; i < indexes.length; i++)
-			indexes[i].render();
-	}
-
 	public void render(int... indexBuffers) {
 		vertexData.activate();
 		for (int indexID : indexBuffers)
@@ -77,14 +73,18 @@ public class Model<E> extends GPUObject<Model<E>> {
 		// VertexData.deactivate(); Don't need this in theory.
 	}
 
+	public void renderAll() {
+		vertexData.activate();
+		for (int i = 0; i < indexes.length; i++)
+			indexes[i].render();
+	}
+
 	@Override
 	public String toString() {
 		return "Model[" + vertexData + ", " + Arrays.toString(indexes) + "]";
 	}
 
-	public void cpuFree() {
-		vertexData.cpuFree();
-		for (IndexBuffer i : indexes)
-			i.buffer().cpuFree();
+	public final E vtx(int id) {
+		return vertexData.v(id);
 	}
 }

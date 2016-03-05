@@ -32,6 +32,10 @@ public class ShaderUniformBlock {
 	private final int length;
 	private GLGenericBuffer bound;
 
+	public int dirtyMin;
+
+	public int dirtyMax;
+
 	public ShaderUniformBlock(ShaderProgram parent, int blockIndex, String blockName) {
 		this.blockName = blockName;
 		this.blockIndex = blockIndex;
@@ -44,12 +48,12 @@ public class ShaderUniformBlock {
 		// blockIndex + ", len=" + length + "]");
 	}
 
-	public String name() {
-		return blockName;
-	}
-
-	public int length() {
-		return length;
+	public GLGenericBuffer bound() {
+		if (bound == null) {
+			bound(new GLGenericBuffer(length).type(BufferType.UNIFORM).modify(BufferModifyHint.STREAM)
+					.access(BufferAccessHint.DRAW).gpuAlloc());
+		}
+		return bound;
 	}
 
 	public void bound(GLGenericBuffer b) {
@@ -60,20 +64,16 @@ public class ShaderUniformBlock {
 		this.bound = b;
 	}
 
-	public GLGenericBuffer bound() {
-		if (bound == null) {
-			bound(new GLGenericBuffer(length).type(BufferType.UNIFORM).modify(BufferModifyHint.STREAM)
-					.access(BufferAccessHint.DRAW).gpuAlloc());
-		}
-		return bound;
+	public int length() {
+		return length;
 	}
-
-	public int dirtyMin;
-	public int dirtyMax;
-
 	public void markDirty(int min, int max) {
 		this.dirtyMin = Math.min(dirtyMin, min);
 		this.dirtyMax = Math.max(dirtyMax, max);
+	}
+
+	public String name() {
+		return blockName;
 	}
 
 	public void recheckBinding() {
@@ -86,6 +86,12 @@ public class ShaderUniformBlock {
 		FrameCounter.increment(FrameParam.UNIFORM_BUFFER_INDEXED);
 	}
 
+	public void upload() {
+		bound().gpuUpload();
+		dirtyMin = Integer.MAX_VALUE;
+		dirtyMax = Integer.MIN_VALUE;
+	}
+
 	public void uploadIfNeeded() {
 		if (ShaderUniformBlock.PERSISTENT_BUFFER_STATE) {
 			if (dirtyMin >= dirtyMax)
@@ -96,11 +102,5 @@ public class ShaderUniformBlock {
 		} else {
 			upload();
 		}
-	}
-
-	public void upload() {
-		bound().gpuUpload();
-		dirtyMin = Integer.MAX_VALUE;
-		dirtyMax = Integer.MIN_VALUE;
 	}
 }

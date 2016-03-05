@@ -27,12 +27,17 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		}
 	}
 
+	public static void unbind(BufferType type) {
+		GL15.glBindBuffer(type.code(), 0);
+		FrameCounter.increment(FrameParam.BUFFER_BINDS);
+	}
 	private BufferAccessHint accessHint;
-	private BufferModifyHint modifyHint;
 
+	private BufferModifyHint modifyHint;
 	private int size;
 	private BufferType type;
 	protected E data;
+
 	private int bufferPtr;
 
 	public GLBuffer(E data) {
@@ -59,22 +64,52 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		return (R) this;
 	}
 
-	@SuppressWarnings("unchecked")
-	public R modify(BufferModifyHint a) {
-		if (a == null)
-			throw new IllegalArgumentException("The buffer modify hint must not be null.");
-		if (bufferPtr != -1)
-			throw new IllegalStateException("Can't change buffer hints while allocated on the GPU");
-		this.modifyHint = a;
-		return (R) this;
-	}
-
 	private void allocBufferStorage() {
 		int ahI = accessHint.ordinal();
 		int mhI = modifyHint.ordinal();
 		bind();
 		GL15.glBufferData(type.code(), size, HINT_TABLE[ahI][mhI]);
 	}
+
+	public void bind() {
+		bind(type);
+	}
+
+	public void bind(BufferType type) {
+		if (bufferPtr < 0)
+			throw new IllegalStateException("Can't bind an unallocated buffer");
+		GL15.glBindBuffer(type.code(), bufferPtr);
+		FrameCounter.increment(FrameParam.BUFFER_BINDS);
+	}
+
+	public void cpuAlloc() {
+		if (data == null)
+			data = genBuffer(size);
+	}
+
+	public void cpuFree() {
+		data = null;
+	}
+
+	public void dispose() {
+		gpuFreeInternal();
+		cpuFree();
+	}
+
+	protected abstract E genBuffer(int size);
+
+	public E getBacking() {
+		return data;
+	}
+
+	@Override
+	public int getID() {
+		return bufferPtr;
+	}
+
+	protected abstract void glBufferSubData(int target, long offset, E data);
+
+	protected abstract void glGetBufferSubData(int target, long offset, E data);
 
 	@Override
 	protected void gpuAllocInternal() {
@@ -87,39 +122,21 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 	}
 
 	@Override
+	protected void gpuDownloadInternal() {
+		if (bufferPtr == -1)
+			throw new RuntimeException("Can't sync from GPU when no buffer object exists.");
+		if (data == null)
+			cpuAlloc();
+		data.position(0);
+		bind();
+		glGetBufferSubData(type.code(), 0, data);
+	}
+
+	@Override
 	protected void gpuFreeInternal() {
 		if (bufferPtr >= 0)
 			GL15.glDeleteBuffers(bufferPtr);
 		bufferPtr = -1;
-	}
-
-	public void cpuAlloc() {
-		if (data == null)
-			data = genBuffer(size);
-	}
-
-	public void cpuFree() {
-		data = null;
-	}
-
-	public void bind(BufferType type) {
-		if (bufferPtr < 0)
-			throw new IllegalStateException("Can't bind an unallocated buffer");
-		GL15.glBindBuffer(type.code(), bufferPtr);
-		FrameCounter.increment(FrameParam.BUFFER_BINDS);
-	}
-
-	public void bind() {
-		bind(type);
-	}
-
-	public void unbind() {
-		unbind(type);
-	}
-
-	public static void unbind(BufferType type) {
-		GL15.glBindBuffer(type.code(), 0);
-		FrameCounter.increment(FrameParam.BUFFER_BINDS);
 	}
 
 	@Override
@@ -151,31 +168,26 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		FrameCounter.increment(FrameParam.BUFFER_THROUGHPUT, max - min);
 	}
 
-	@Override
-	protected void gpuDownloadInternal() {
-		if (bufferPtr == -1)
-			throw new RuntimeException("Can't sync from GPU when no buffer object exists.");
-		if (data == null)
-			cpuAlloc();
-		data.position(0);
-		bind();
-		glGetBufferSubData(type.code(), 0, data);
+	@SuppressWarnings("unchecked")
+	public R modify(BufferModifyHint a) {
+		if (a == null)
+			throw new IllegalArgumentException("The buffer modify hint must not be null.");
+		if (bufferPtr != -1)
+			throw new IllegalStateException("Can't change buffer hints while allocated on the GPU");
+		this.modifyHint = a;
+		return (R) this;
 	}
 
-	public void dispose() {
-		gpuFreeInternal();
-		cpuFree();
-	}
-
-	protected abstract E genBuffer(int size);
-
-	protected abstract void glGetBufferSubData(int target, long offset, E data);
-
-	protected abstract void glBufferSubData(int target, long offset, E data);
-
-	@Override
-	public int getID() {
-		return bufferPtr;
+	/**
+	 * Resizes the buffer. Warning: This DOES NOT preserve buffer contents. Can
+	 * be run even if buffer is allocated.
+	 * 
+	 * @param ns
+	 *            the new size
+	 * @return this buffer
+	 */
+	public R resize(int ns) {
+		return resize(ns, 32);
 	}
 
 	/**
@@ -202,20 +214,12 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		return (R) this;
 	}
 
-	/**
-	 * Resizes the buffer. Warning: This DOES NOT preserve buffer contents. Can
-	 * be run even if buffer is allocated.
-	 * 
-	 * @param ns
-	 *            the new size
-	 * @return this buffer
-	 */
-	public R resize(int ns) {
-		return resize(ns, 32);
-	}
-
 	public int size() {
 		return size;
+	}
+
+	public BufferType type() {
+		return type;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -226,11 +230,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		return (R) this;
 	}
 
-	public BufferType type() {
-		return type;
-	}
-
-	public E getBacking() {
-		return data;
+	public void unbind() {
+		unbind(type);
 	}
 }

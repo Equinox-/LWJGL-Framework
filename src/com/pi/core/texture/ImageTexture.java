@@ -12,8 +12,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
 public class ImageTexture extends Texture {
-	private BufferedImage img;
-
 	private static BufferedImage loadImage(InputStream f) {
 		try {
 			return ImageIO.read(f);
@@ -21,6 +19,15 @@ public class ImageTexture extends Texture {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
+	}
+
+	private BufferedImage img;
+
+	public ImageTexture(BufferedImage img, int internalFormat) {
+		super(img.getWidth(), img.getHeight(), internalFormat);
+		this.img = img;
+		super.mipmapLevels(
+				Math.min((int) Math.ceil(Math.log(Math.min(img.getWidth(), img.getHeight())) / Math.log(2)), 10));
 	}
 
 	public ImageTexture(InputStream f) {
@@ -31,20 +38,13 @@ public class ImageTexture extends Texture {
 		this(loadImage(f), internalFormat);
 	}
 
-	public ImageTexture(BufferedImage img, int internalFormat) {
-		super(img.getWidth(), img.getHeight(), internalFormat);
-		this.img = img;
-		super.mipmapLevels(
-				Math.min((int) Math.ceil(Math.log(Math.min(img.getWidth(), img.getHeight())) / Math.log(2)), 10));
+	@Override
+	public void cpuFree() {
+		img = null;
 	}
 
 	public final BufferedImage getBacking() {
 		return img;
-	}
-
-	@Override
-	public void cpuFree() {
-		img = null;
 	}
 
 	@Override

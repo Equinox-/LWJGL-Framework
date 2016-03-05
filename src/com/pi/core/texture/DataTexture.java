@@ -9,12 +9,6 @@ import org.lwjgl.opengl.GL30;
 import com.pi.math.vector.VectorBuff;
 
 public class DataTexture<T extends VectorBuff> extends Texture {
-	private FloatBuffer backing;
-	public T[][] vectors;
-
-	private int stashFormat;
-	private final int dimension;
-
 	private static int floatFormatForDimension(int dimension) {
 		if (dimension > 4 || dimension < 1)
 			throw new IllegalArgumentException("Vector textures must have a dimension between 1 and 4");
@@ -34,6 +28,12 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 																		// happen
 		}
 	}
+	private FloatBuffer backing;
+
+	public T[][] vectors;
+	private int stashFormat;
+
+	private final int dimension;
 
 	public DataTexture(int dimension, int width, int height) {
 		super(width, height, floatFormatForDimension(dimension));
@@ -72,14 +72,21 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 		cpuAlloc();
 	}
 
+	@SuppressWarnings("unchecked")
+	public void cpuAlloc() {
+		vectors = (T[][]) new VectorBuff[getWidth()][getHeight()];
+		backing = BufferUtils.createFloatBuffer(getWidth() * getHeight() * dimension);
+		for (int j = 0; j < getHeight(); j++) {
+			for (int i = 0; i < getWidth(); i++) {
+				vectors[i][j] = (T) VectorBuff.make(backing, ((j * getWidth()) + i) * dimension, dimension);
+			}
+		}
+	}
+
 	@Override
-	protected void gpuUploadInternal() {
-		super.bind();
-		super.commitParameters();
-		backing.position(0);
-		GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, super.getWidth(), super.getHeight(), stashFormat,
-				GL11.GL_FLOAT, backing);
-		super.unbind();
+	public void cpuFree() {
+		vectors = null;
+		backing = null;
 	}
 
 	@Override
@@ -91,20 +98,13 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 	}
 
 	@Override
-	public void cpuFree() {
-		vectors = null;
-		backing = null;
-	}
-
-	@SuppressWarnings("unchecked")
-	public void cpuAlloc() {
-		vectors = (T[][]) new VectorBuff[getWidth()][getHeight()];
-		backing = BufferUtils.createFloatBuffer(getWidth() * getHeight() * dimension);
-		for (int j = 0; j < getHeight(); j++) {
-			for (int i = 0; i < getWidth(); i++) {
-				vectors[i][j] = (T) VectorBuff.make(backing, ((j * getWidth()) + i) * dimension, dimension);
-			}
-		}
+	protected void gpuUploadInternal() {
+		super.bind();
+		super.commitParameters();
+		backing.position(0);
+		GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, super.getWidth(), super.getHeight(), stashFormat,
+				GL11.GL_FLOAT, backing);
+		super.unbind();
 	}
 
 	@Override

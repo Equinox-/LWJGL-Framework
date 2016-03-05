@@ -27,51 +27,12 @@ public abstract class GPUObject<K extends GPUObject<K>> {
 			ref = new WeakReference<>(this, WarningManager.queue);
 	}
 
-	protected abstract void gpuAllocInternal();
-
-	protected void gpuUploadInternal() {
-		throw new UnsupportedOperationException(getClass() + " doesn't support uploading to GPU");
+	public final boolean allocated() {
+		return allocThread != null;
 	}
 
-	protected void gpuDownloadInternal() {
-		throw new UnsupportedOperationException(getClass() + " doesn't support downloading from GPU");
-	}
-
-	protected abstract void gpuFreeInternal();
-
-	/**
-	 * Allocates and then uploads this object to the GPU.
-	 * 
-	 * @see #gpuAllocInternal()
-	 * @see #gpuUploadInternal()
-	 */
-	@SuppressWarnings("unchecked")
-	public final K gpuAllocAndUpload() {
-		gpuAlloc();
-		gpuUpload();
-		return (K) this;
-	}
-
-	/**
-	 * Uploads this object to the GPU. (Not always supported)
-	 */
-	@SuppressWarnings("unchecked")
-	public final K gpuUpload() {
-		if (!allocated())
-			throw new IllegalStateException("Can't upload when not allocated.");
-		gpuUploadInternal();
-		return (K) this;
-	}
-
-	/**
-	 * Downloads this object from the GPU. (Not always supported)
-	 */
-	@SuppressWarnings("unchecked")
-	public final K gpuDownload() {
-		if (!allocated())
-			throw new IllegalStateException("Can't download when not allocated.");
-		gpuDownloadInternal();
-		return (K) this;
+	public final boolean allocatedOnThisThread() {
+		return allocated() && allocThread == Thread.currentThread();
 	}
 
 	/**
@@ -89,6 +50,36 @@ public abstract class GPUObject<K extends GPUObject<K>> {
 	}
 
 	/**
+	 * Allocates and then uploads this object to the GPU.
+	 * 
+	 * @see #gpuAllocInternal()
+	 * @see #gpuUploadInternal()
+	 */
+	@SuppressWarnings("unchecked")
+	public final K gpuAllocAndUpload() {
+		gpuAlloc();
+		gpuUpload();
+		return (K) this;
+	}
+
+	protected abstract void gpuAllocInternal();
+
+	/**
+	 * Downloads this object from the GPU. (Not always supported)
+	 */
+	@SuppressWarnings("unchecked")
+	public final K gpuDownload() {
+		if (!allocated())
+			throw new IllegalStateException("Can't download when not allocated.");
+		gpuDownloadInternal();
+		return (K) this;
+	}
+
+	protected void gpuDownloadInternal() {
+		throw new UnsupportedOperationException(getClass() + " doesn't support downloading from GPU");
+	}
+
+	/**
 	 * Frees this object on the GPU.
 	 */
 	@SuppressWarnings("unchecked")
@@ -101,11 +92,20 @@ public abstract class GPUObject<K extends GPUObject<K>> {
 		return (K) this;
 	}
 
-	public final boolean allocated() {
-		return allocThread != null;
+	protected abstract void gpuFreeInternal();
+
+	/**
+	 * Uploads this object to the GPU. (Not always supported)
+	 */
+	@SuppressWarnings("unchecked")
+	public final K gpuUpload() {
+		if (!allocated())
+			throw new IllegalStateException("Can't upload when not allocated.");
+		gpuUploadInternal();
+		return (K) this;
 	}
 
-	public final boolean allocatedOnThisThread() {
-		return allocated() && allocThread == Thread.currentThread();
+	protected void gpuUploadInternal() {
+		throw new UnsupportedOperationException(getClass() + " doesn't support uploading to GPU");
 	}
 }

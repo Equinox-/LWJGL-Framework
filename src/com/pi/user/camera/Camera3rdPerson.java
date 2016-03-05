@@ -34,25 +34,6 @@ public class Camera3rdPerson implements Camera {
 		this.lastMoveProc = -1;
 	}
 
-	public Camera3rdPerson rates(float yawRate, float pitchRate, float offsetRate) {
-		return rates(yawRate, pitchRate, offsetRate, moveRate);
-	}
-
-	public Camera3rdPerson rates(float yawRate, float pitchRate, float offsetRate, float moveRate) {
-		this.yawRate = yawRate;
-		this.pitchRate = pitchRate;
-		this.offsetRate = offsetRate;
-		this.moveRate = moveRate;
-		return this;
-	}
-
-	public Camera3rdPerson position(float yaw, float pitch, float offset) {
-		this.yaw = yaw;
-		this.pitch = pitch;
-		this.offset = offset;
-		return this;
-	}
-
 	public Camera3rdPerson center(float x, float y, float z) {
 		this.x = -x;
 		this.y = -y;
@@ -72,16 +53,49 @@ public class Camera3rdPerson implements Camera {
 		return -z;
 	}
 
-	public float getYaw() {
-		return yaw;
+	public float getOffset() {
+		return offset;
 	}
 
 	public float getPitch() {
 		return pitch;
 	}
 
-	public float getOffset() {
-		return offset;
+	public float getYaw() {
+		return yaw;
+	}
+
+	public Camera3rdPerson position(float yaw, float pitch, float offset) {
+		this.yaw = yaw;
+		this.pitch = pitch;
+		this.offset = offset;
+		return this;
+	}
+
+	@Override
+	public VectorBuff3 position(VectorBuff3 tmp) {
+		float csB = (float) Math.cos(pitch) * -offset;
+		tmp.setV(csB * (float) Math.sin(yaw) - x, (float) Math.sin(pitch) * offset - y,
+				-csB * (float) Math.cos(yaw) - z);
+		return tmp;
+	}
+
+	public Camera3rdPerson rates(float yawRate, float pitchRate, float offsetRate) {
+		return rates(yawRate, pitchRate, offsetRate, moveRate);
+	}
+
+	public Camera3rdPerson rates(float yawRate, float pitchRate, float offsetRate, float moveRate) {
+		this.yawRate = yawRate;
+		this.pitchRate = pitchRate;
+		this.offsetRate = offsetRate;
+		this.moveRate = moveRate;
+		return this;
+	}
+
+	@Override
+	public String toString() {
+		return "Camera3rdPerson[yaw=" + Math.toDegrees(yaw) + ",pitch=" + Math.toDegrees(pitch) + ",offset=" + offset
+				+ "]";
 	}
 
 	@Override
@@ -137,19 +151,5 @@ public class Camera3rdPerson implements Camera {
 		view.preMultiplyTransform(x, y, z);
 		
 		return view;
-	}
-
-	@Override
-	public VectorBuff3 position(VectorBuff3 tmp) {
-		float csB = (float) Math.cos(pitch) * -offset;
-		tmp.setV(csB * (float) Math.sin(yaw) - x, (float) Math.sin(pitch) * offset - y,
-				-csB * (float) Math.cos(yaw) - z);
-		return tmp;
-	}
-
-	@Override
-	public String toString() {
-		return "Camera3rdPerson[yaw=" + Math.toDegrees(yaw) + ",pitch=" + Math.toDegrees(pitch) + ",offset=" + offset
-				+ "]";
 	}
 }

@@ -14,32 +14,6 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL33;
 
 public class FrameCounter {
-	private final int[] counters = new int[FrameParam.values().length];
-	private final int blend; // Blend stats over 10 frames.
-	private final long[][] frameTimes;
-	private final LivePlotter plot;
-	private final PrintStream print;
-	private final BlockingQueue<Integer> queueObjects = new LinkedBlockingQueue<>(50);
-
-	private static final ThreadLocal<FrameCounter> fCounts = ThreadLocal.withInitial(new Supplier<FrameCounter>() {
-		@Override
-		public FrameCounter get() {
-			return new FrameCounter();
-		}
-	});
-
-	public static FrameCounter counter() {
-		return fCounts.get();
-	}
-
-	public static void increment(FrameParam p) {
-		increment(p, 1);
-	}
-
-	public static void increment(FrameParam p, int c) {
-		counter().inc(p, c);
-	}
-
 	public static enum FrameParam {
 		FRAMES,
 		BUFFER_BINDS,
@@ -50,18 +24,6 @@ public class FrameCounter {
 		SHADER_DATA_COMMIT,
 		TEXTURE_BINDS,
 		UNIFORM_BUFFER_INDEXED;
-
-		private String namePad;
-
-		private final String unit;
-
-		private FrameParam(String unit) {
-			this.unit = unit;
-		}
-
-		private FrameParam() {
-			this("pf");
-		}
 
 		static {
 			int mlen = 0;
@@ -77,20 +39,47 @@ public class FrameCounter {
 				bs.delete(0, bs.length());
 			}
 		}
-	}
 
-	private int genQuery() {
-		Integer i = queueObjects.poll();
-		if (i != null)
-			return i.intValue();
-		else
-			return GL15.glGenQueries();
-	}
+		private String namePad;
 
-	private void checkinQuery(int i) {
-		if (!queueObjects.offer(i))
-			GL15.glDeleteQueries(i);
+		private final String unit;
+
+		private FrameParam() {
+			this("pf");
+		}
+
+		private FrameParam(String unit) {
+			this.unit = unit;
+		}
 	}
+	private static final ThreadLocal<FrameCounter> fCounts = ThreadLocal.withInitial(new Supplier<FrameCounter>() {
+		@Override
+		public FrameCounter get() {
+			return new FrameCounter();
+		}
+	});
+	public static FrameCounter counter() {
+		return fCounts.get();
+	}
+	public static void increment(FrameParam p) {
+		increment(p, 1);
+	}
+	public static void increment(FrameParam p, int c) {
+		counter().inc(p, c);
+	}
+	private final int[] counters = new int[FrameParam.values().length];
+
+	private final int blend; // Blend stats over 10 frames.
+
+	private final long[][] frameTimes;
+
+	private final LivePlotter plot;
+
+	private final PrintStream print;
+
+	private final BlockingQueue<Integer> queueObjects = new LinkedBlockingQueue<>(50);
+
+	private float lastFPS = 0;
 
 	private FrameCounter() {
 		boolean plot = false;
@@ -108,12 +97,6 @@ public class FrameCounter {
 		this.frameTimes = new long[blend][6];
 	}
 
-	public void inc(FrameParam p, int c) {
-		counters[p.ordinal()] += c;
-		if (p == FrameParam.FRAMES)
-			throw new IllegalArgumentException("Frames must use special updating system:  beginFrame/endFrame");
-	}
-
 	public void beginFrameRender() {
 		checkPrint();
 		try {
@@ -128,47 +111,9 @@ public class FrameCounter {
 		frameTimes[frames][2] = System.currentTimeMillis();
 	}
 
-	public void switchRenderToUpdate() {
-		final int frames = counters[FrameParam.FRAMES.ordinal()];
-		GL15.glEndQuery(GL30.GL_PRIMITIVES_GENERATED);
-		GL15.glEndQuery(GL33.GL_TIME_ELAPSED);
-
-		GL11.glFinish();
-		frameTimes[frames][3] = System.currentTimeMillis();
-
-		// Thingy
-		try {
-			@SuppressWarnings("unchecked")
-			List<Object[]> lst = (List<Object[]>) Class.forName("com.pi.Core").getMethod("_getFullReport").invoke(null);
-			for (Iterator<Object[]> itr = lst.iterator(); itr.hasNext();) {
-				if (!itr.next()[0].toString().startsWith("org.lwjgl.opengl.")) {
-					itr.remove();
-				}
-			}
-			// Class.forName("com.pi.Core").getMethod("_printReport",
-			// List.class, PrintStream.class, boolean.class)
-			// .invoke(null, lst, System.out, false);
-			// System.out.println();
-		} catch (Exception e) {
-		}
-	}
-
-	public void switchUpdateToSwap() {
-		final int frames = counters[FrameParam.FRAMES.ordinal()];
-		frameTimes[frames][4] = System.currentTimeMillis();
-	}
-
-	public void endFrameSwap() {
-		final int frames = counters[FrameParam.FRAMES.ordinal()];
-		GL11.glFinish();
-		frameTimes[frames][5] = System.currentTimeMillis();
-		counters[FrameParam.FRAMES.ordinal()]++;
-	}
-
-	private float lastFPS = 0;
-
-	public float fps() {
-		return lastFPS;
+	private void checkinQuery(int i) {
+		if (!queueObjects.offer(i))
+			GL15.glDeleteQueries(i);
 	}
 
 	private void checkPrint() {
@@ -209,5 +154,60 @@ public class FrameCounter {
 			if (print != null)
 				print.println();
 		}
+	}
+
+	public void endFrameSwap() {
+		final int frames = counters[FrameParam.FRAMES.ordinal()];
+		GL11.glFinish();
+		frameTimes[frames][5] = System.currentTimeMillis();
+		counters[FrameParam.FRAMES.ordinal()]++;
+	}
+
+	public float fps() {
+		return lastFPS;
+	}
+
+	private int genQuery() {
+		Integer i = queueObjects.poll();
+		if (i != null)
+			return i.intValue();
+		else
+			return GL15.glGenQueries();
+	}
+
+	public void inc(FrameParam p, int c) {
+		counters[p.ordinal()] += c;
+		if (p == FrameParam.FRAMES)
+			throw new IllegalArgumentException("Frames must use special updating system:  beginFrame/endFrame");
+	}
+
+	public void switchRenderToUpdate() {
+		final int frames = counters[FrameParam.FRAMES.ordinal()];
+		GL15.glEndQuery(GL30.GL_PRIMITIVES_GENERATED);
+		GL15.glEndQuery(GL33.GL_TIME_ELAPSED);
+
+		GL11.glFinish();
+		frameTimes[frames][3] = System.currentTimeMillis();
+
+		// Thingy
+		try {
+			@SuppressWarnings("unchecked")
+			List<Object[]> lst = (List<Object[]>) Class.forName("com.pi.Core").getMethod("_getFullReport").invoke(null);
+			for (Iterator<Object[]> itr = lst.iterator(); itr.hasNext();) {
+				if (!itr.next()[0].toString().startsWith("org.lwjgl.opengl.")) {
+					itr.remove();
+				}
+			}
+			// Class.forName("com.pi.Core").getMethod("_printReport",
+			// List.class, PrintStream.class, boolean.class)
+			// .invoke(null, lst, System.out, false);
+			// System.out.println();
+		} catch (Exception e) {
+		}
+	}
+
+	public void switchUpdateToSwap() {
+		final int frames = counters[FrameParam.FRAMES.ordinal()];
+		frameTimes[frames][4] = System.currentTimeMillis();
 	}
 }

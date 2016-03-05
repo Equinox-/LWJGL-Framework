@@ -5,11 +5,15 @@ import com.pi.core.wind.GLWindow;
 public class WindowFrameBuffer extends ResizingFrameBuffer {
 	private final GLWindow gl;
 
+	private int shiftSize = 0;
+
 	public WindowFrameBuffer(GLWindow gl) {
 		this.gl = gl;
 	}
 
-	private int shiftSize = 0;
+	public int shiftSize() {
+		return shiftSize;
+	}
 
 	/**
 	 * The shift size is the bitwise shift applied to dimensions. Size multiplier is 2^shift.
@@ -23,10 +27,6 @@ public class WindowFrameBuffer extends ResizingFrameBuffer {
 			throw new IllegalArgumentException("Shift must be >= 0");
 		this.shiftSize = shift;
 		return this;
-	}
-
-	public int shiftSize() {
-		return shiftSize;
 	}
 
 	@Override

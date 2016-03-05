@@ -14,13 +14,13 @@ public class BasicShapes {
 				}
 			});
 
-	public static BasicShapes shapes() {
-		return basic.get();
-	}
-
 	public static void removeShapes() {
 		shapes().gpuFree();
 		basic.remove();
+	}
+
+	public static BasicShapes shapes() {
+		return basic.get();
 	}
 
 	private Model<Vertex2D> ndcScreenQuad = null;

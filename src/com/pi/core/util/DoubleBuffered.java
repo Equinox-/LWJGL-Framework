@@ -8,17 +8,17 @@ public class DoubleBuffered<E> {
 		this.back = back;
 	}
 
-	public E getFront() {
-		return front;
+	public void flip() {
+		E tmp = front;
+		front = back;
+		back = tmp;
 	}
 
 	public E getBack() {
 		return back;
 	}
 
-	public void flip() {
-		E tmp = front;
-		front = back;
-		back = tmp;
+	public E getFront() {
+		return front;
 	}
 }

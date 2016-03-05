@@ -17,10 +17,31 @@ import com.pi.core.misc.VertexArrayObject;
 import com.pi.core.texture.Texture;
 
 public class GLDebug {
+	private static enum DebugMode {
+		GL43,
+		KHR,
+		ARB,
+		NONE;
+	}
 	private static boolean reportStacks = false;
 	private static DebugMode mode = DebugMode.NONE;
 	public static boolean reportNotifications = false;
+
 	private static int id = 0;
+
+	private static final GLDebugMessageCallback debug_callback = new GLDebugMessageCallback() {
+		@Override
+		public void invoke(int source, int type, int id, int severity, int length, long message, long userParam) {
+			debug(source, type, id, severity, length, message, userParam);
+		}
+	};
+
+	private static final GLDebugMessageARBCallback arb_debug_callback = new GLDebugMessageARBCallback() {
+		@Override
+		public void invoke(int source, int type, int id, int severity, int length, long message, long userParam) {
+			debug(source, type, id, severity, length, message, userParam);
+		}
+	};
 
 	public static boolean checkError() {
 		int error = GL11.glGetError();
@@ -30,6 +51,52 @@ public class GLDebug {
 			return true;
 		}
 		return false;
+	}
+
+	private static void debug(int source, int type, int id, int severity, int length, long message, long userParam) {
+		boolean error = (severity != KHRDebug.GL_DEBUG_SEVERITY_NOTIFICATION);
+		if (!error && !reportNotifications)
+			return;
+		(error ? System.err : System.out).printf("Source:%s\tType:%s\tID:%d\tSeverity:%s\tMessage:%s\n",
+				debugSource(source), debugType(type), id, debugSeverity(severity), MemoryUtil.memDecodeASCII(message));
+		if (reportStacks && error) {
+			StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+			for (int i = 5; i < Math.min(15, stack.length); i++)
+				System.err.println("\tat " + stack[i]);
+		}
+	}
+
+	private static String debugSeverity(int severity) {
+		switch (severity) {
+		case ARBDebugOutput.GL_DEBUG_SEVERITY_HIGH_ARB:
+			return "High";
+		case ARBDebugOutput.GL_DEBUG_SEVERITY_MEDIUM_ARB:
+			return "Medium";
+		case ARBDebugOutput.GL_DEBUG_SEVERITY_LOW_ARB:
+			return "Low";
+		case KHRDebug.GL_DEBUG_SEVERITY_NOTIFICATION:
+			return "Notification";
+		default:
+			return "Unknown[0x" + Integer.toString(severity, 16) + "]";
+		}
+	}
+	private static String debugSource(int source) {
+		switch (source) {
+		case ARBDebugOutput.GL_DEBUG_SOURCE_API_ARB:
+			return "OpenGL";
+		case ARBDebugOutput.GL_DEBUG_SOURCE_APPLICATION_ARB:
+			return "Application";
+		case ARBDebugOutput.GL_DEBUG_SOURCE_OTHER_ARB:
+			return "Other";
+		case ARBDebugOutput.GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+			return "Shader Compiler";
+		case ARBDebugOutput.GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+			return "Third Party";
+		case ARBDebugOutput.GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+			return "Window System";
+		default:
+			return "Unknown[0x" + Integer.toString(source, 16) + "]";
+		}
 	}
 
 	private static String debugType(int type) {
@@ -57,75 +124,77 @@ public class GLDebug {
 		}
 	}
 
-	private static String debugSource(int source) {
-		switch (source) {
-		case ARBDebugOutput.GL_DEBUG_SOURCE_API_ARB:
-			return "OpenGL";
-		case ARBDebugOutput.GL_DEBUG_SOURCE_APPLICATION_ARB:
-			return "Application";
-		case ARBDebugOutput.GL_DEBUG_SOURCE_OTHER_ARB:
-			return "Other";
-		case ARBDebugOutput.GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
-			return "Shader Compiler";
-		case ARBDebugOutput.GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
-			return "Third Party";
-		case ARBDebugOutput.GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
-			return "Window System";
-		default:
-			return "Unknown[0x" + Integer.toString(source, 16) + "]";
-		}
-	}
-
-	private static String debugSeverity(int severity) {
-		switch (severity) {
-		case ARBDebugOutput.GL_DEBUG_SEVERITY_HIGH_ARB:
-			return "High";
-		case ARBDebugOutput.GL_DEBUG_SEVERITY_MEDIUM_ARB:
-			return "Medium";
-		case ARBDebugOutput.GL_DEBUG_SEVERITY_LOW_ARB:
-			return "Low";
-		case KHRDebug.GL_DEBUG_SEVERITY_NOTIFICATION:
-			return "Notification";
-		default:
-			return "Unknown[0x" + Integer.toString(severity, 16) + "]";
-		}
-	}
-
-	private static void debug(int source, int type, int id, int severity, int length, long message, long userParam) {
-		boolean error = (severity != KHRDebug.GL_DEBUG_SEVERITY_NOTIFICATION);
-		if (!error && !reportNotifications)
-			return;
-		(error ? System.err : System.out).printf("Source:%s\tType:%s\tID:%d\tSeverity:%s\tMessage:%s\n",
-				debugSource(source), debugType(type), id, debugSeverity(severity), MemoryUtil.memDecodeASCII(message));
-		if (reportStacks && error) {
-			StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-			for (int i = 5; i < Math.min(15, stack.length); i++)
-				System.err.println("\tat " + stack[i]);
-		}
-	}
-
-	private static final GLDebugMessageCallback debug_callback = new GLDebugMessageCallback() {
-		@Override
-		public void invoke(int source, int type, int id, int severity, int length, long message, long userParam) {
-			debug(source, type, id, severity, length, message, userParam);
-		}
-	};
-	private static final GLDebugMessageARBCallback arb_debug_callback = new GLDebugMessageARBCallback() {
-		@Override
-		public void invoke(int source, int type, int id, int severity, int length, long message, long userParam) {
-			debug(source, type, id, severity, length, message, userParam);
-		}
-	};
-
-	private static enum DebugMode {
-		GL43,
-		KHR,
-		ARB,
-		NONE;
-	}
-
 	public static boolean isDebugging() {
 		return mode == DebugMode.ARB || mode == DebugMode.GL43 || mode == DebugMode.KHR;
+	}
+
+	public static void nameObject(FrameBuffer t, String name) {
+		if (!t.allocated())
+			throw new IllegalArgumentException("Can only name allocated objects.");
+		nameObject(GL30.GL_FRAMEBUFFER, t.getID(), name);
+	}
+
+	public static void nameObject(GLGenericBuffer t, String name) {
+		if (!t.allocated())
+			throw new IllegalArgumentException("Can only name allocated objects.");
+		nameObject(KHRDebug.GL_BUFFER, t.getID(), name);
+	}
+
+	public static void nameObject(int type, int id, String name) {
+		switch (mode) {
+		case GL43:
+			GL43.glObjectLabel(type, id, name);
+			break;
+		case KHR:
+			KHRDebug.glObjectLabel(type, id, name);
+			break;
+		default:
+			// Ignore
+		}
+	}
+
+	public static void nameObject(ShaderProgram t, String name) {
+		if (!t.allocated())
+			throw new IllegalArgumentException("Can only name allocated objects.");
+		nameObject(KHRDebug.GL_PROGRAM, t.getID(), name);
+	}
+
+	public static void nameObject(Texture t, String name) {
+		if (!t.allocated())
+			throw new IllegalArgumentException("Can only name allocated objects.");
+		nameObject(GL11.GL_TEXTURE, t.getID(), name);
+	}
+
+	public static void nameObject(VertexArrayObject t, String name) {
+		if (!t.allocated())
+			throw new IllegalArgumentException("Can only name allocated objects.");
+		nameObject(GL11.GL_VERTEX_ARRAY, t.getID(), name);
+	}
+
+	public static void popDebug() {
+		switch (mode) {
+		case GL43:
+			GL43.glPopDebugGroup();
+			break;
+		case KHR:
+			KHRDebug.glPopDebugGroup();
+			break;
+		default:
+			// Ignore
+		}
+	}
+
+	public static void pushDebug(String group) {
+		switch (mode) {
+		case GL43:
+			GL43.glPushDebugGroup(GL43.GL_DEBUG_SOURCE_APPLICATION, id++, MemoryUtil.memEncodeASCII(group));
+			break;
+		case KHR:
+			KHRDebug.glPushDebugGroup(KHRDebug.GL_DEBUG_SOURCE_APPLICATION, id++, MemoryUtil.memEncodeASCII(group));
+			break;
+		default:
+			// Ignore
+		}
 	}
 
 	public static boolean setupDebugOutput(boolean stack) {
@@ -170,74 +239,5 @@ public class GLDebug {
 			}
 		}
 		return false;
-	}
-
-	public static void nameObject(Texture t, String name) {
-		if (!t.allocated())
-			throw new IllegalArgumentException("Can only name allocated objects.");
-		nameObject(GL11.GL_TEXTURE, t.getID(), name);
-	}
-
-	public static void nameObject(GLGenericBuffer t, String name) {
-		if (!t.allocated())
-			throw new IllegalArgumentException("Can only name allocated objects.");
-		nameObject(KHRDebug.GL_BUFFER, t.getID(), name);
-	}
-
-	public static void nameObject(FrameBuffer t, String name) {
-		if (!t.allocated())
-			throw new IllegalArgumentException("Can only name allocated objects.");
-		nameObject(GL30.GL_FRAMEBUFFER, t.getID(), name);
-	}
-
-	public static void nameObject(VertexArrayObject t, String name) {
-		if (!t.allocated())
-			throw new IllegalArgumentException("Can only name allocated objects.");
-		nameObject(GL11.GL_VERTEX_ARRAY, t.getID(), name);
-	}
-
-	public static void nameObject(ShaderProgram t, String name) {
-		if (!t.allocated())
-			throw new IllegalArgumentException("Can only name allocated objects.");
-		nameObject(KHRDebug.GL_PROGRAM, t.getID(), name);
-	}
-
-	public static void nameObject(int type, int id, String name) {
-		switch (mode) {
-		case GL43:
-			GL43.glObjectLabel(type, id, name);
-			break;
-		case KHR:
-			KHRDebug.glObjectLabel(type, id, name);
-			break;
-		default:
-			// Ignore
-		}
-	}
-
-	public static void pushDebug(String group) {
-		switch (mode) {
-		case GL43:
-			GL43.glPushDebugGroup(GL43.GL_DEBUG_SOURCE_APPLICATION, id++, MemoryUtil.memEncodeASCII(group));
-			break;
-		case KHR:
-			KHRDebug.glPushDebugGroup(KHRDebug.GL_DEBUG_SOURCE_APPLICATION, id++, MemoryUtil.memEncodeASCII(group));
-			break;
-		default:
-			// Ignore
-		}
-	}
-
-	public static void popDebug() {
-		switch (mode) {
-		case GL43:
-			GL43.glPopDebugGroup();
-			break;
-		case KHR:
-			KHRDebug.glPopDebugGroup();
-			break;
-		default:
-			// Ignore
-		}
 	}
 }

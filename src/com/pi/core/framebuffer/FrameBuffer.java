@@ -19,9 +19,30 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 
 	private static WeakReference<FrameBuffer> current;
 
+	private static void attachObject(int attachmentPoint,
+			FrameBufferAttachable t) {
+		if (t.getID() < 0)
+			throw new IllegalStateException("Can't bind an unallocated object");
+		if (t instanceof Texture)
+			GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, attachmentPoint,
+					GL11.GL_TEXTURE_2D, t.getID(), 0);
+		else if (t instanceof RenderBuffer)
+			GL30.glFramebufferRenderbuffer(GL30.GL_FRAMEBUFFER,
+					attachmentPoint, GL30.GL_RENDERBUFFER, t.getID());
+	}
+	public static FrameBuffer current() {
+		return current == null ? null : current.get();
+	}
+	public static void unbind() {
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		current = null;
+	}
 	private int fbo;
+
 	private Set<FrameBufferAttachable> colorAttachments;
+
 	private FrameBufferAttachable depthAttachment;
+
 	private FrameBufferAttachable stencilAttachment;
 
 	public FrameBuffer() {
@@ -29,12 +50,6 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 		this.colorAttachments = new HashSet<>();
 		this.depthAttachment = null;
 		this.stencilAttachment = null;
-	}
-
-	private void ensureModify() {
-		if (fbo >= 0)
-			throw new IllegalStateException(
-					"Can't modify an allocated framebuffer.");
 	}
 
 	public boolean attachColor(FrameBufferAttachable t) {
@@ -47,11 +62,6 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 		return colorAttachments.add(t);
 	}
 
-	public boolean detachColor(FrameBufferAttachable t) {
-		ensureModify();
-		return colorAttachments.remove(t);
-	}
-
 	public void attachDepth(FrameBufferAttachable t) {
 		ensureModify();
 		if (t == null)
@@ -62,11 +72,9 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 		depthAttachment = t;
 	}
 
-	public FrameBufferAttachable detachDepth() {
-		ensureModify();
-		FrameBufferAttachable a = depthAttachment;
-		depthAttachment = null;
-		return a;
+	public void attachDepthStencil(FrameBufferAttachable t) {
+		attachStencil(t);
+		attachDepth(t);
 	}
 
 	public void attachStencil(FrameBufferAttachable t) {
@@ -79,16 +87,27 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 		stencilAttachment = t;
 	}
 
-	public FrameBufferAttachable detachStencil() {
-		ensureModify();
-		FrameBufferAttachable a = stencilAttachment;
-		stencilAttachment = null;
-		return a;
+	@Override
+	public void bind() {
+		if (fbo < 0)
+			throw new IllegalStateException(
+					"Can't bind an unallocated framebuffer");
+		if (current != null && current.get() == this)
+			return;
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo);
+		current = new WeakReference<>(this);
 	}
 
-	public void attachDepthStencil(FrameBufferAttachable t) {
-		attachStencil(t);
-		attachDepth(t);
+	public boolean detachColor(FrameBufferAttachable t) {
+		ensureModify();
+		return colorAttachments.remove(t);
+	}
+
+	public FrameBufferAttachable detachDepth() {
+		ensureModify();
+		FrameBufferAttachable a = depthAttachment;
+		depthAttachment = null;
+		return a;
 	}
 
 	public FrameBufferAttachable detachDepthStencil() {
@@ -101,16 +120,34 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 		return a;
 	}
 
-	private static void attachObject(int attachmentPoint,
-			FrameBufferAttachable t) {
-		if (t.getID() < 0)
-			throw new IllegalStateException("Can't bind an unallocated object");
-		if (t instanceof Texture)
-			GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, attachmentPoint,
-					GL11.GL_TEXTURE_2D, t.getID(), 0);
-		else if (t instanceof RenderBuffer)
-			GL30.glFramebufferRenderbuffer(GL30.GL_FRAMEBUFFER,
-					attachmentPoint, GL30.GL_RENDERBUFFER, t.getID());
+	public FrameBufferAttachable detachStencil() {
+		ensureModify();
+		FrameBufferAttachable a = stencilAttachment;
+		stencilAttachment = null;
+		return a;
+	}
+
+	private void ensureModify() {
+		if (fbo >= 0)
+			throw new IllegalStateException(
+					"Can't modify an allocated framebuffer.");
+	}
+
+	public Set<FrameBufferAttachable> getColorAttachments() {
+		return colorAttachments;
+	}
+
+	public FrameBufferAttachable getDepthAttachment() {
+		return depthAttachment;
+	}
+
+	@Override
+	public int getID() {
+		return fbo;
+	}
+
+	public FrameBufferAttachable getStencilAttachment() {
+		return stencilAttachment;
 	}
 
 	@Override
@@ -171,42 +208,5 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 		if (fbo >= 0)
 			GL30.glDeleteFramebuffers(fbo);
 		fbo = -1;
-	}
-
-	@Override
-	public int getID() {
-		return fbo;
-	}
-
-	@Override
-	public void bind() {
-		if (fbo < 0)
-			throw new IllegalStateException(
-					"Can't bind an unallocated framebuffer");
-		if (current != null && current.get() == this)
-			return;
-		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo);
-		current = new WeakReference<>(this);
-	}
-
-	public static void unbind() {
-		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
-		current = null;
-	}
-
-	public static FrameBuffer current() {
-		return current == null ? null : current.get();
-	}
-
-	public FrameBufferAttachable getDepthAttachment() {
-		return depthAttachment;
-	}
-
-	public FrameBufferAttachable getStencilAttachment() {
-		return stencilAttachment;
-	}
-
-	public Set<FrameBufferAttachable> getColorAttachments() {
-		return colorAttachments;
 	}
 }

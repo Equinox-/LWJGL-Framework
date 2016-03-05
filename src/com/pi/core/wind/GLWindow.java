@@ -44,13 +44,13 @@ public abstract class GLWindow {
 			throw new RuntimeException("Unable to initialize GLFW");
 		BufferProvider.provider(new BufferProvider() {
 			@Override
-			protected FloatBuffer nFloatBuffer(int n) {
-				return BufferUtils.createFloatBuffer(n);
+			protected ByteBuffer nByteBuffer(int n) {
+				return BufferUtils.createByteBuffer(n);
 			}
 
 			@Override
-			protected ByteBuffer nByteBuffer(int n) {
-				return BufferUtils.createByteBuffer(n);
+			protected FloatBuffer nFloatBuffer(int n) {
+				return BufferUtils.createFloatBuffer(n);
 			}
 		});
 
@@ -99,13 +99,41 @@ public abstract class GLWindow {
 		GLFW.glfwShowWindow(windowID);
 	}
 
+	public abstract void dispose();
+
+	public float fps() {
+		return FrameCounter.counter().fps();
+	}
+
+	public GLWindowEvents getEvents() {
+		return windowEvents;
+	}
+
+	public long getWindowID() {
+		return windowID;
+	}
+
 	public abstract void init();
 
 	public abstract void render();
 
-	public abstract void update();
+	public void setPosition(int x, int y) {
+		GLFW.glfwSetWindowPos(windowID, x, y);
+	}
 
-	public abstract void dispose();
+	public void setSize(int w, int h) {
+		if (fullscreen)
+			throw new UnsupportedOperationException("Not allowing resolution changes in full screen context");
+		GLFW.glfwSetWindowSize(windowID, w, h);
+	}
+
+	public void setTitle(String s) {
+		GLFW.glfwSetWindowTitle(windowID, s);
+	}
+
+	public void shutdown() {
+		running = false;
+	}
 
 	public void start() {
 		errorCallback = Callbacks.errorCallbackPrint(System.err);
@@ -149,37 +177,9 @@ public abstract class GLWindow {
 		WarningManager.termReferenceWatch();
 	}
 
-	public float fps() {
-		return FrameCounter.counter().fps();
-	}
+	public abstract void update();
 
 	public boolean valid() {
 		return running && GLFW.glfwWindowShouldClose(windowID) != GL11.GL_TRUE;
-	}
-
-	public GLWindowEvents getEvents() {
-		return windowEvents;
-	}
-
-	public long getWindowID() {
-		return windowID;
-	}
-
-	public void shutdown() {
-		running = false;
-	}
-
-	public void setTitle(String s) {
-		GLFW.glfwSetWindowTitle(windowID, s);
-	}
-
-	public void setSize(int w, int h) {
-		if (fullscreen)
-			throw new UnsupportedOperationException("Not allowing resolution changes in full screen context");
-		GLFW.glfwSetWindowSize(windowID, w, h);
-	}
-
-	public void setPosition(int x, int y) {
-		GLFW.glfwSetWindowPos(windowID, x, y);
 	}
 }

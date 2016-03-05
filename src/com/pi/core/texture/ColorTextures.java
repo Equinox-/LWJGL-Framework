@@ -17,13 +17,13 @@ public class ColorTextures {
 				}
 			});
 
-	public static ColorTextures textures() {
-		return basic.get();
-	}
-
 	public static void removeTextures() {
 		textures().gpuFree();
 		basic.remove();
+	}
+
+	public static ColorTextures textures() {
+		return basic.get();
 	}
 
 	private final Map<Integer, Texture> colorTextures = new HashMap<>();
