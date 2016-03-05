@@ -12,6 +12,14 @@ import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.util.GPUObject;
 
 public class IndexBuffer extends GPUObject<IndexBuffer> {
+	private final GLGenericBuffer indexBuffer;
+	private int indexType, indexSize;
+	private int indexCount;
+	private final PrimitiveType mode;
+
+	private IntBuffer intBuff;
+	private ShortBuffer shortBuff;
+
 	public static int chooseIndexSize(int maxVertexID) {
 		if (maxVertexID < (1 << 8)) {
 			return 1;
@@ -21,6 +29,7 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 			return 4;
 		}
 	}
+
 	public static int chooseIndexSize(int[] index, int offset, int rightOffset) {
 		int maxVertexID = 0;
 		for (int i = offset; i < rightOffset; i++)
@@ -37,6 +46,7 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 			return 4;
 		}
 	}
+
 	private static int indexTypeFromSize(int size) {
 		switch (size) {
 		case 1:
@@ -49,16 +59,6 @@ public class IndexBuffer extends GPUObject<IndexBuffer> {
 			throw new RuntimeException("Invalid index size.");
 		}
 	}
-	private final GLGenericBuffer indexBuffer;
-
-	private int indexType, indexSize;
-	private int indexCount;
-
-	private final PrimitiveType mode;
-
-	private IntBuffer intBuff;
-
-	private ShortBuffer shortBuff;
 
 	public IndexBuffer(PrimitiveType mode, GLGenericBuffer indices, int indexSize) {
 		this(mode, indexSize, indices);

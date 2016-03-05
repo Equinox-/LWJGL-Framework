@@ -9,6 +9,12 @@ import org.lwjgl.opengl.GL30;
 import com.pi.math.vector.VectorBuff;
 
 public class DataTexture<T extends VectorBuff> extends Texture {
+	private FloatBuffer backing;
+	public T[][] vectors;
+
+	private int stashFormat;
+	private final int dimension;
+
 	private static int floatFormatForDimension(int dimension) {
 		if (dimension > 4 || dimension < 1)
 			throw new IllegalArgumentException("Vector textures must have a dimension between 1 and 4");
@@ -28,12 +34,6 @@ public class DataTexture<T extends VectorBuff> extends Texture {
 																		// happen
 		}
 	}
-	private FloatBuffer backing;
-
-	public T[][] vectors;
-	private int stashFormat;
-
-	private final int dimension;
 
 	public DataTexture(int dimension, int width, int height) {
 		super(width, height, floatFormatForDimension(dimension));

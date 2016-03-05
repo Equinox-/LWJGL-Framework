@@ -16,6 +16,12 @@ import com.pi.math.vector.VectorBuff;
 public class ConwaysLife extends GLWindow {
 	private static final int W = 256, H = 256;
 
+	private DoubleBuffered<FrameBuffer> frameBuffers;
+	private DoubleBuffered<DataTexture<VectorBuff>> textures;
+
+	private ShaderProgram conway;
+	private ShaderProgram render;
+
 	private static ShaderProgram createShader(String name) {
 		ShaderProgram p = new ShaderProgram();
 		p.vertex(ConwaysLife.class.getResourceAsStream(name + ".vs"));
@@ -24,16 +30,10 @@ public class ConwaysLife extends GLWindow {
 		p.link();
 		return p;
 	}
+
 	public static void main(String[] args) {
 		new ConwaysLife().start();
 	}
-
-	private DoubleBuffered<FrameBuffer> frameBuffers;
-	private DoubleBuffered<DataTexture<VectorBuff>> textures;
-
-	private ShaderProgram conway;
-
-	private ShaderProgram render;
 
 	@Override
 	public void dispose() {

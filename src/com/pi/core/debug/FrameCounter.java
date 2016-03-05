@@ -20,27 +20,27 @@ public class FrameCounter {
 			return new FrameCounter();
 		}
 	});
-	public static FrameCounter counter() {
-		return fCounts.get();
-	}
-	public static void increment(FrameParam p) {
-		increment(p, 1);
-	}
-	public static void increment(FrameParam p, int c) {
-		counter().inc(p, c);
-	}
 	private final int[] counters = new int[FrameParam.values().length];
 	private final int blend; // Blend stats over 10 frames.
-
 	private final long[][] frameTimes;
-
 	private final LivePlotter plot;
-
 	private final PrintStream print;
 
 	private final BlockingQueue<Integer> queueObjects = new LinkedBlockingQueue<>(50);
 
 	private float lastFPS = 0;
+
+	public static FrameCounter counter() {
+		return fCounts.get();
+	}
+
+	public static void increment(FrameParam p) {
+		increment(p, 1);
+	}
+
+	public static void increment(FrameParam p, int c) {
+		counter().inc(p, c);
+	}
 
 	private FrameCounter() {
 		boolean plot = false;

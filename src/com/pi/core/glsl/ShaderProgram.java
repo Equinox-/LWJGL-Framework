@@ -44,6 +44,18 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 		insertShaderType("GL_FRAGMENT_SHADER", GL20.GL_FRAGMENT_SHADER);
 		insertShaderType("GL_COMPUTE_SHADER", GL43.GL_COMPUTE_SHADER);
 	}
+	private int programID;
+	private final List<Integer> attachedObjects;
+
+	private final Map<String, ShaderUniform> uniformsByName;
+	private ShaderUniform[] uniformsByID;
+	private final Map<String, ShaderUniformBlock> uniformBlocksByName;
+	private ShaderUniformBlock[] uniformBlocksByID;
+	// Needs to be accessed by ShaderUniform; therefore not private
+	public Texture[] textureUnit;
+
+	public int[] textureUnitRefCount;
+
 	@SuppressWarnings("unused")
 	private static int compileShader(String src, int type) {
 		String processedSource = ShaderPreprocessor.preprocess(src);
@@ -78,6 +90,7 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 		}
 		return shader;
 	}
+
 	public static ShaderProgram current() {
 		return currentShader;
 	}
@@ -86,25 +99,12 @@ public class ShaderProgram extends GPUObject<ShaderProgram> implements Bindable,
 		SHADER_TYPE_MAP.put(t, id);
 		SHADER_TYPE_MAP_INVERSE.put(id, t);
 	}
+
 	public static void unbind() {
 		GL20.glUseProgram(0);
 		FrameCounter.increment(FrameParam.SHADER_CHANGE);
 		currentShader = null;
 	}
-	private int programID;
-	private final List<Integer> attachedObjects;
-	private final Map<String, ShaderUniform> uniformsByName;
-
-	private ShaderUniform[] uniformsByID;
-
-	private final Map<String, ShaderUniformBlock> uniformBlocksByName;
-
-	private ShaderUniformBlock[] uniformBlocksByID;
-
-	// Needs to be accessed by ShaderUniform; therefore not private
-	public Texture[] textureUnit;
-
-	public int[] textureUnitRefCount;
 
 	public ShaderProgram() {
 		this.uniformsByName = new HashMap<>();

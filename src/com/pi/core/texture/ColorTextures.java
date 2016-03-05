@@ -17,6 +17,8 @@ public class ColorTextures {
 				}
 			});
 
+	private final Map<Integer, Texture> colorTextures = new HashMap<>();
+
 	public static void removeTextures() {
 		textures().gpuFree();
 		basic.remove();
@@ -25,8 +27,6 @@ public class ColorTextures {
 	public static ColorTextures textures() {
 		return basic.get();
 	}
-
-	private final Map<Integer, Texture> colorTextures = new HashMap<>();
 
 	public Texture getColorTexture(int argb) {
 		Texture t = colorTextures.get(argb);

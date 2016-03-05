@@ -13,6 +13,8 @@ import com.pi.core.util.GPUObject;
 public class VertexArrayObject extends GPUObject<VertexArrayObject>implements GLIdentifiable, Bindable {
 	private static WeakReference<VertexArrayObject> current = null;
 
+	private int vao = -1;
+
 	public static void unbind() {
 		if (current == null)
 			return;
@@ -20,8 +22,6 @@ public class VertexArrayObject extends GPUObject<VertexArrayObject>implements GL
 		FrameCounter.increment(FrameParam.VAO_CHANGE);
 		current = null;
 	}
-
-	private int vao = -1;
 
 	@Override
 	public void bind() {

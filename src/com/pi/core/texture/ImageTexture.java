@@ -12,6 +12,8 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
 public class ImageTexture extends Texture {
+	private BufferedImage img;
+
 	private static BufferedImage loadImage(InputStream f) {
 		try {
 			return ImageIO.read(f);
@@ -20,8 +22,6 @@ public class ImageTexture extends Texture {
 			throw new RuntimeException(e);
 		}
 	}
-
-	private BufferedImage img;
 
 	public ImageTexture(BufferedImage img, int internalFormat) {
 		super(img.getWidth(), img.getHeight(), internalFormat);

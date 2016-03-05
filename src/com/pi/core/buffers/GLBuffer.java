@@ -27,18 +27,18 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		}
 	}
 
+	private BufferAccessHint accessHint;
+	private BufferModifyHint modifyHint;
+
+	private int size;
+	private BufferType type;
+	protected E data;
+	private int bufferPtr;
+
 	public static void unbind(BufferType type) {
 		GL15.glBindBuffer(type.code(), 0);
 		FrameCounter.increment(FrameParam.BUFFER_BINDS);
 	}
-	private BufferAccessHint accessHint;
-
-	private BufferModifyHint modifyHint;
-	private int size;
-	private BufferType type;
-	protected E data;
-
-	private int bufferPtr;
 
 	public GLBuffer(E data) {
 		this(data, BufferType.ARRAY);

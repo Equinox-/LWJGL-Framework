@@ -14,6 +14,8 @@ public class BasicShapes {
 				}
 			});
 
+	private Model<Vertex2D> ndcScreenQuad = null;
+
 	public static void removeShapes() {
 		shapes().gpuFree();
 		basic.remove();
@@ -22,8 +24,6 @@ public class BasicShapes {
 	public static BasicShapes shapes() {
 		return basic.get();
 	}
-
-	private Model<Vertex2D> ndcScreenQuad = null;
 
 	public Model<Vertex2D> getNDCScreenQuad() {
 		if (ndcScreenQuad == null) {

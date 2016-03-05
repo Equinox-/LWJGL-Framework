@@ -21,17 +21,17 @@ class VertexLayout {
 	private static final int MAX_ATTR_COUNT = 64; // Realistically 16 on most
 													// GPUs
 
+	public final int structureSize;
+	public final Field[] attrMapping;
+	public final int[] attrOffset, attrSize, attrType, attrIndex;
+	public final boolean[] attrNormalize;
+
 	private static void getFields(List<Field> fields, Class<?> clazz) {
 		for (Field f : clazz.getDeclaredFields())
 			fields.add(f);
 		if (clazz.getSuperclass() != null)
 			getFields(fields, clazz.getSuperclass());
 	}
-	public final int structureSize;
-	public final Field[] attrMapping;
-	public final int[] attrOffset, attrSize, attrType, attrIndex;
-
-	public final boolean[] attrNormalize;
 
 	public VertexLayout(Class<?> clazz) {
 		int structSize = 0;

@@ -20,9 +20,6 @@ import com.pi.math.vector.Vector;
 import com.pi.math.vector.VectorBuff;
 
 public final class ShaderUniform {
-	private static final int boolToInt(boolean b) {
-		return b ? 1 : 0;
-	}
 	private final ShaderProgram prog;
 	private final String name;
 	private final int size;
@@ -30,8 +27,11 @@ public final class ShaderUniform {
 	private final int[] location;
 	private final int[] samplerID;
 	private final int uniformBlockIndex;
-
 	private int activeIndex;
+
+	private static final int boolToInt(boolean b) {
+		return b ? 1 : 0;
+	}
 
 	public ShaderUniform(ShaderProgram prog, int id, int maxNameLength) {
 		IntBuffer sizeBuff = BufferUtils.createIntBuffer(1);

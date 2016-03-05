@@ -19,6 +19,11 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 
 	private static WeakReference<FrameBuffer> current;
 
+	private int fbo;
+	private Set<FrameBufferAttachable> colorAttachments;
+	private FrameBufferAttachable depthAttachment;
+	private FrameBufferAttachable stencilAttachment;
+
 	private static void attachObject(int attachmentPoint,
 			FrameBufferAttachable t) {
 		if (t.getID() < 0)
@@ -30,20 +35,15 @@ public class FrameBuffer extends GPUObject<FrameBuffer> implements
 			GL30.glFramebufferRenderbuffer(GL30.GL_FRAMEBUFFER,
 					attachmentPoint, GL30.GL_RENDERBUFFER, t.getID());
 	}
+
 	public static FrameBuffer current() {
 		return current == null ? null : current.get();
 	}
+
 	public static void unbind() {
 		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
 		current = null;
 	}
-	private int fbo;
-
-	private Set<FrameBufferAttachable> colorAttachments;
-
-	private FrameBufferAttachable depthAttachment;
-
-	private FrameBufferAttachable stencilAttachment;
 
 	public FrameBuffer() {
 		this.fbo = -1;

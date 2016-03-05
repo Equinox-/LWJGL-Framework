@@ -46,10 +46,21 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 		}
 	}
 
+	private int texture;
+	private final int internalFormat;
+
+	private final int width, height;
+	private int mipmapLevels;
+
+	private TextureWrap sWrap, tWrap;
+	private TextureFilter mipmapFilter;
+	private TextureFilter minFilter, magFilter;
+
 	public static void glActiveTexture(int n) {
 		GL13.glActiveTexture(GL13.GL_TEXTURE0 + n);
 		activeTextureUnit = n;
 	}
+
 	public static void unbind() {
 		if (currentTexture[activeTextureUnit] == null || currentTexture[activeTextureUnit].get() == null)
 			return;
@@ -70,17 +81,6 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 		currentTexture[activeTextureUnit] = null;
 		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
-	private int texture;
-
-	private final int internalFormat;
-	private final int width, height;
-	private int mipmapLevels;
-
-	private TextureWrap sWrap, tWrap;
-
-	private TextureFilter mipmapFilter;
-
-	private TextureFilter minFilter, magFilter;
 
 	public Texture(int width, int height, int internalFormat) {
 		this.width = width;
