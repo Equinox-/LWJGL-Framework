@@ -1,7 +1,5 @@
 package com.pi.core.glsl;
 
-import java.lang.ref.WeakReference;
-
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL31;
 
@@ -11,6 +9,7 @@ import com.pi.core.buffers.BufferType;
 import com.pi.core.buffers.GLGenericBuffer;
 import com.pi.core.debug.FrameCounter;
 import com.pi.core.debug.FrameCounter.FrameParam;
+import com.pi.util.ReferenceTable;
 
 public class ShaderUniformBlock {
 	/**
@@ -24,8 +23,7 @@ public class ShaderUniformBlock {
 	 */
 	public static final boolean ALLOW_UTILITY_ACCESS = false;
 
-	@SuppressWarnings("unchecked")
-	private static final WeakReference<GLGenericBuffer>[] bound_ubos = new WeakReference[128];
+	private static final ReferenceTable<GLGenericBuffer> bound_ubos = new ReferenceTable<>(128);
 
 	private final int blockIndex;
 	private final String blockName;
@@ -67,6 +65,7 @@ public class ShaderUniformBlock {
 	public int length() {
 		return length;
 	}
+
 	public void markDirty(int min, int max) {
 		this.dirtyMin = Math.min(dirtyMin, min);
 		this.dirtyMax = Math.max(dirtyMax, max);
@@ -77,10 +76,10 @@ public class ShaderUniformBlock {
 	}
 
 	public void recheckBinding() {
-		if (blockIndex < bound_ubos.length) {
-			if (bound_ubos[blockIndex] != null && bound_ubos[blockIndex].get() == bound)
+		if (blockIndex < bound_ubos.size()) {
+			if (bound_ubos.isAttached(blockIndex, bound))
 				return;
-			bound_ubos[blockIndex] = new WeakReference<>(bound);
+			bound_ubos.attach(blockIndex, bound);
 		}
 		GL30.glBindBufferBase(GL31.GL_UNIFORM_BUFFER, blockIndex, bound.getID());
 		FrameCounter.increment(FrameParam.UNIFORM_BUFFER_INDEXED);

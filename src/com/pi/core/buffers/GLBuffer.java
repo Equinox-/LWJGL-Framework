@@ -8,20 +8,28 @@ import com.pi.core.debug.FrameCounter;
 import com.pi.core.debug.FrameCounter.FrameParam;
 import com.pi.core.util.GLIdentifiable;
 import com.pi.core.util.GPUObject;
+import com.pi.core.util.GLRef;
+import com.pi.util.ReferenceTable;
 
 abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUObject<R> implements GLIdentifiable {
 	private static final int[][] HINT_TABLE;
+	@SuppressWarnings("rawtypes")
+	private static final ReferenceTable<GLBuffer> bound = new ReferenceTable<>(1);
 
 	static {
 		BufferAccessHint[] ahv = BufferAccessHint.values();
 		BufferModifyHint[] mhv = BufferModifyHint.values();
 		HINT_TABLE = new int[ahv.length][mhv.length];
 		for (int a = 0; a < ahv.length; a++) {
-			for (int m = 0; m < mhv.length; m++) {
+			for (int m = 0; m < mhv.length; m++)
+
+			{
+				String constName = "GL_" + mhv[m].name() + "_" + ahv[a].name();
 				try {
-					HINT_TABLE[a][m] = GL15.class.getField("GL_" + mhv[m].name() + "_" + ahv[a].name()).getInt(null);
+					HINT_TABLE[a][m] = GL15.class.getField(constName).getInt(null);
 				} catch (Exception e) {
-					throw new RuntimeException("Illegal lookup when generating hint table", e);
+					throw new UnsupportedOperationException(
+							"Illegal lookup when generating hint table: GL15." + constName, e);
 				}
 			}
 		}
@@ -33,11 +41,14 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 	private int size;
 	private BufferType type;
 	protected E data;
-	private int bufferPtr;
+	private int glref;
 
 	public static void unbind(BufferType type) {
+		if (bound.isEmpty(0))
+			return;
 		GL15.glBindBuffer(type.code(), 0);
 		FrameCounter.increment(FrameParam.BUFFER_BINDS);
+		bound.empty(0);
 	}
 
 	public GLBuffer(E data) {
@@ -47,7 +58,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 	public GLBuffer(E data, BufferType type) {
 		this.size = data.capacity();
 		this.data = data;
-		this.bufferPtr = -1;
+		this.glref = GLRef.NULL;
 		this.type = type;
 
 		this.accessHint = BufferAccessHint.DRAW;
@@ -58,7 +69,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 	public R access(BufferAccessHint a) {
 		if (a == null)
 			throw new IllegalArgumentException("The buffer access hint must not be null.");
-		if (bufferPtr != -1)
+		if (GLRef.notNull(glref))
 			throw new IllegalStateException("Can't change buffer hints while allocated on the GPU");
 		this.accessHint = a;
 		return (R) this;
@@ -76,10 +87,13 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 	}
 
 	public void bind(BufferType type) {
-		if (bufferPtr < 0)
+		if (GLRef.isNull(glref))
 			throw new IllegalStateException("Can't bind an unallocated buffer");
-		GL15.glBindBuffer(type.code(), bufferPtr);
+		if (bound.isAttached(0, this))
+			return;
+		GL15.glBindBuffer(type.code(), glref);
 		FrameCounter.increment(FrameParam.BUFFER_BINDS);
+		bound.attach(0, this);
 	}
 
 	public void cpuAlloc() {
@@ -104,7 +118,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 
 	@Override
 	public int getID() {
-		return bufferPtr;
+		return glref;
 	}
 
 	protected abstract void glBufferSubData(int target, long offset, E data);
@@ -113,18 +127,16 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 
 	@Override
 	protected void gpuAllocInternal() {
-		if (bufferPtr != -1)
-			gpuFreeInternal();
-		bufferPtr = GL15.glGenBuffers();
-		if (bufferPtr == -1)
-			throw new IllegalStateException("Failed to generate buffer");
+		glref = GL15.glGenBuffers();
+		if (GLRef.isNull(glref))
+			throw new NullPointerException("Failed to generate buffer");
 		allocBufferStorage();
 	}
 
 	@Override
 	protected void gpuDownloadInternal() {
-		if (bufferPtr == -1)
-			throw new RuntimeException("Can't sync from GPU when no buffer object exists.");
+		if (GLRef.isNull(glref))
+			throw new IllegalStateException("Can't sync from GPU when no buffer object exists.");
 		if (data == null)
 			cpuAlloc();
 		data.position(0);
@@ -134,15 +146,15 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 
 	@Override
 	protected void gpuFreeInternal() {
-		if (bufferPtr >= 0)
-			GL15.glDeleteBuffers(bufferPtr);
-		bufferPtr = -1;
+		if (GLRef.notNull(glref))
+			GL15.glDeleteBuffers(glref);
+		glref = GLRef.NULL;
 	}
 
 	@Override
 	protected void gpuUploadInternal() {
-		if (bufferPtr == -1)
-			throw new RuntimeException("Can't sync to GPU when no buffer object exists.");
+		if (GLRef.isNull(glref))
+			throw new IllegalStateException("Can't sync to GPU when no buffer object exists.");
 		data.position(0);
 		data.limit(size);
 		bind();
@@ -152,11 +164,12 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		FrameCounter.increment(FrameParam.BUFFER_THROUGHPUT, data.capacity());
 	}
 
-	public void gpuUploadPartial(int min, int max) {
-		if (bufferPtr == -1)
-			throw new RuntimeException("Can't sync to GPU when no buffer object exists.");
-		min = Math.max(min, 0);
-		max = Math.min(max, size - 1);
+	public void gpuUploadPartial(int minR, int maxR) {
+		if (GLRef.isNull(glref))
+			throw new IllegalStateException("Can't sync to GPU when no buffer object exists.");
+		// Ensure safety.
+		int min = Math.max(minR, 0);
+		int max = Math.min(maxR, size - 1);
 		if (max <= min)
 			return;
 		data.position(min);
@@ -172,7 +185,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 	public R modify(BufferModifyHint a) {
 		if (a == null)
 			throw new IllegalArgumentException("The buffer modify hint must not be null.");
-		if (bufferPtr != -1)
+		if (GLRef.notNull(glref))
 			throw new IllegalStateException("Can't change buffer hints while allocated on the GPU");
 		this.modifyHint = a;
 		return (R) this;
@@ -224,7 +237,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 
 	@SuppressWarnings("unchecked")
 	public R type(BufferType t) {
-		if (bufferPtr != -1)
+		if (GLRef.notNull(glref))
 			throw new IllegalStateException("Can't change buffer type when allocated.");
 		this.type = t;
 		return (R) this;

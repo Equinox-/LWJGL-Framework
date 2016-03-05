@@ -1,6 +1,5 @@
 package com.pi.core.texture;
 
-import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -17,13 +16,14 @@ import com.pi.core.debug.FrameCounter;
 import com.pi.core.debug.FrameCounter.FrameParam;
 import com.pi.core.framebuffer.FrameBufferAttachable;
 import com.pi.core.util.Bindable;
+import com.pi.core.util.GLRef;
 import com.pi.core.util.GPUObject;
+import com.pi.util.ReferenceTable;
 
 public class Texture extends GPUObject<Texture> implements Bindable, FrameBufferAttachable {
 	private static final int MAX_TEXTURE_UNITS = 64;
 	private static int activeTextureUnit = 0;
-	@SuppressWarnings("unchecked")
-	private static final WeakReference<Texture>[] currentTexture = new WeakReference[MAX_TEXTURE_UNITS];
+	private static final ReferenceTable<Texture> bound = new ReferenceTable<>(MAX_TEXTURE_UNITS);
 	private static final int[][] MIPMAP_FILTER_TABLE;
 	private static final int[] DEPTH_FORMATS = { GL11.GL_DEPTH_COMPONENT, GL14.GL_DEPTH_COMPONENT16,
 			GL14.GL_DEPTH_COMPONENT24, GL14.GL_DEPTH_COMPONENT32, GL30.GL_DEPTH24_STENCIL8, GL30.GL_DEPTH32F_STENCIL8,
@@ -46,7 +46,7 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 		}
 	}
 
-	private int texture;
+	private int glref;
 	private final int internalFormat;
 
 	private final int width, height;
@@ -62,15 +62,15 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 	}
 
 	public static void unbind() {
-		if (currentTexture[activeTextureUnit] == null || currentTexture[activeTextureUnit].get() == null)
+		if (bound.isEmpty(activeTextureUnit))
 			return;
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-		currentTexture[activeTextureUnit] = null;
+		bound.empty(activeTextureUnit);
 		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
 
 	public static void unbind(int unit) {
-		if (currentTexture[unit] == null || currentTexture[unit].get() == null)
+		if (bound.isEmpty(unit))
 			return;
 		if (GL.getCapabilities().GL_ARB_direct_state_access) {
 			ARBDirectStateAccess.glBindTextureUnit(unit, 0);
@@ -78,7 +78,7 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 			glActiveTexture(unit);
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
 		}
-		currentTexture[activeTextureUnit] = null;
+		bound.empty(unit);
 		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
 
@@ -87,7 +87,7 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 		this.height = height;
 		this.internalFormat = internalFormat;
 
-		this.texture = -1;
+		this.glref = GLRef.NULL;
 
 		this.sWrap = TextureWrap.REPEAT;
 		this.tWrap = TextureWrap.REPEAT;
@@ -101,27 +101,27 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 
 	@Override
 	public void bind() {
-		if (texture < 0)
+		if (GLRef.isNull(glref))
 			throw new RuntimeException("Can't bind an unallocated texture.");
-		if (currentTexture[activeTextureUnit] != null && currentTexture[activeTextureUnit].get() == this)
+		if (bound.isAttached(activeTextureUnit, this))
 			return;
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
-		currentTexture[activeTextureUnit] = new WeakReference<>(this);
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, glref);
+		bound.attach(activeTextureUnit, this);
 		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
 
 	public void bind(int unit) {
-		if (texture < 0)
+		if (GLRef.isNull(glref))
 			throw new RuntimeException("Can't bind an unallocated texture.");
-		if (currentTexture[unit] != null && currentTexture[unit].get() == this)
+		if (bound.isAttached(unit, this))
 			return;
 		if (GL.getCapabilities().GL_ARB_direct_state_access) {
-			ARBDirectStateAccess.glBindTextureUnit(unit, texture);
+			ARBDirectStateAccess.glBindTextureUnit(unit, glref);
 		} else {
 			glActiveTexture(unit);
-			GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, glref);
 		}
-		currentTexture[unit] = new WeakReference<>(this);
+		bound.attach(unit, this);
 		FrameCounter.increment(FrameParam.TEXTURE_BINDS);
 	}
 
@@ -160,7 +160,7 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 
 	@Override
 	public int getID() {
-		return texture;
+		return glref;
 	}
 
 	public int getWidth() {
@@ -169,9 +169,9 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 
 	@Override
 	protected void gpuAllocInternal() {
-		if (texture >= 0)
-			gpuFreeInternal();
-		texture = GL11.glGenTextures();
+		glref = GL11.glGenTextures();
+		if (GLRef.isNull(glref))
+			throw new NullPointerException("Failed to allocate texture");
 		bind();
 		if (GL.getCapabilities().OpenGL45) {
 			GL45.glTextureStorage2D(GL11.GL_TEXTURE_2D, mipmapLevels, internalFormat, width, height);
@@ -197,14 +197,14 @@ public class Texture extends GPUObject<Texture> implements Bindable, FrameBuffer
 
 	@Override
 	protected void gpuFreeInternal() {
-		if (texture < 0)
+		if (GLRef.isNull(glref))
 			return;
-		GL11.glDeleteTextures(texture);
-		texture = -1;
+		GL11.glDeleteTextures(glref);
+		glref = GLRef.NULL;
 	}
 
 	public Texture mipmapLevels(int mipmapLevels) {
-		if (texture >= 0)
+		if (GLRef.notNull(glref))
 			throw new IllegalStateException("Can't change the number of mipmap levels when texture is allocated.");
 		this.mipmapLevels = mipmapLevels;
 		return this;
