@@ -31,6 +31,8 @@ public abstract class GLWindow {
 
 	protected boolean frameCounter = false;
 
+	private int targetFPS = -1;
+
 	public GLWindow() {
 		this(3, 3);
 	}
@@ -146,6 +148,7 @@ public abstract class GLWindow {
 		init();
 
 		while (valid()) {
+			long begin = System.currentTimeMillis();
 			boolean fc = frameCounter;
 			if (fc)
 				FrameCounter.counter().beginFrameRender();
@@ -162,6 +165,17 @@ public abstract class GLWindow {
 				GL11.glFinish();
 			if (fc)
 				FrameCounter.counter().endFrameSwap();
+			if (targetFPS >= 1) {
+				long nextFrame = begin + 1000 / targetFPS;
+				long curr = System.currentTimeMillis();
+				while (nextFrame > curr + 10) {
+					try {
+						Thread.sleep(10);
+					} catch (Exception e) {
+					}
+					curr = System.currentTimeMillis();
+				}
+			}
 		}
 
 		dispose();
@@ -175,6 +189,14 @@ public abstract class GLWindow {
 		GLFW.glfwDestroyWindow(windowID);
 		GLFW.glfwTerminate();
 		WarningManager.termReferenceWatch();
+	}
+
+	public void targetFPS(int fps) {
+		this.targetFPS = fps;
+	}
+
+	public void targetFPS() {
+		this.targetFPS = -1;
 	}
 
 	public abstract void update();
