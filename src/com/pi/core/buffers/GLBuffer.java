@@ -172,6 +172,7 @@ abstract class GLBuffer<E extends Buffer, R extends GLBuffer<E, R>> extends GPUO
 		int max = Math.min(maxR, size - 1);
 		if (max <= min)
 			return;
+		data.limit(data.capacity());
 		data.position(min);
 		data.limit(max);
 		bind();
